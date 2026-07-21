@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e13eb0b4b1a06a458c872e6799245bd, type: 3}
+  m_Name: CCTVVisualProfile
+  m_EditorClassIdentifier: 
+  renderTextureSize: {x: 1280, y: 720}
+  depthBufferBits: 16
+  distortionStrength: 0.08
+  chromaticAberration: 0.004
+  tintColor: {r: 0.48, g: 0.68, b: 0.58, a: 1}
+  desaturation: 0.25
+  brightness: 1.5
+  contrast: 1.02
+  vignetteStrength: 0.35
+  vignetteSoftness: 0.55
+  scanlineStrength: 0.26
+  scanlineCount: 420
+  noiseStrength: 0.03
+  noiseSpeed: 1.5
+  transitionPeakNoiseStrength: 0.2
+  transitionPeakScanlineStrength: 0.25
+  transitionPeakChromaticAberration: 0.02
+  transitionPeakBrightness: 1
+  transitionPeakContrast: 1.2

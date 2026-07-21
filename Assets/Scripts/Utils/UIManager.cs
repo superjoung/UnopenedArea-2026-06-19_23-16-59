@@ -5,6 +5,8 @@ using UI.Util;
 public enum UIName
 {
     None,
+    CCTVSceneUI,            // CCTV 위에 표현될 고정 UI
+    ReportContentFrame,     // 보고서 아이템 프레임 UI
 }
 
 public class UIManager : Singleton<UIManager>

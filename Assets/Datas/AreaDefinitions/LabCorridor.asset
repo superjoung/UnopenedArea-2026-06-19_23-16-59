@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fe42f0179b29d743b10a6df589a5402, type: 3}
   m_Name: LabCorridor
   m_EditorClassIdentifier: 
-  areaId: Lab_Corridor
+  areaId: 100
   displayName: "\uC5F0\uAD6C\uC2E4\uBCF5\uB3C4"
-  backgroundSprite: {fileID: 21300000, guid: 16a92f0beb0838843bb79290a7630e13, type: 3}
+  areaPrefab: {fileID: 1636892523527193590, guid: 4fcc482fd04e305428eeedefcc86e74d, type: 3}
+  backgroundSprite: {fileID: -2444801725204505117, guid: fe390328327b15f4fb942c4bfa754aa3, type: 3}
   imageSizePixels: {x: 3100, y: 500}
   pixelsPerUnit: 100
   areaCenter: {x: 0, y: 0}

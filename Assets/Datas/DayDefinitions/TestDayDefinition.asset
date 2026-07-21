@@ -17,3 +17,19 @@ MonoBehaviour:
   maxMissed: 3
   activeAreas:
   - {fileID: 11400000, guid: 9d13d1b21e63abb4594f360b587d5f4e, type: 2}
+  - {fileID: 11400000, guid: fc8ee4399cd0c2443a7ca9013befb3db, type: 2}
+  - {fileID: 11400000, guid: 626dfe864efcc494f84bfe42dc893136, type: 2}
+  fixedSchedule: []
+  enableRandomSchedule: 1
+  randomMinIntervalSec: 10
+  randomMaxIntervalSec: 20
+  randomPool:
+  - anomaly: {fileID: 11400000, guid: 2929c5f3ddd306c46b9a707aff5a91fa, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 7a2328bfa9ca1e648b317f62bcc5dfba, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 85ec6dcc30697084297305fd4264abf6, type: 2}
+    weight: 1
+    allowRepeat: 1

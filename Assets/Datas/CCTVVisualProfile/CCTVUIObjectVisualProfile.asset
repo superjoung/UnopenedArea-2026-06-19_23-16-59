@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6bab38ba693faa4f8b565ac4bee8a9e, type: 3}
+  m_Name: CCTVUIObjectVisualProfile
+  m_EditorClassIdentifier: 
+  tintColor: {r: 1, g: 1, b: 1, a: 1}
+  desaturation: 0
+  brightness: 1
+  scanlineStrength: 0
+  scanlineCount: 50
+  noiseStrength: 0
+  noiseSpeed: 0
+  flickerStrength: 0
+  glitchStrength: 0
+  chromaticAberration: 0

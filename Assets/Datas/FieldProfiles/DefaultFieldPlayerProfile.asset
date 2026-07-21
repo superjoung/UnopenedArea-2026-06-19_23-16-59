@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20672867675042398c302ae105a7ab0b, type: 3}
+  m_Name: DefaultFieldPlayerProfile
+  m_EditorClassIdentifier: 
+  moveSpeed: 4
+  acceleration: 25
+  deceleration: 30
+  headRotationLimit: 80
+  headRotationSmooth: 18
+  visionRadius: 4
+  visionInnerAngle: 25
+  visionOuterAngle: 55
+  visionIntensity: 1.2
+  cameraFollowSmooth: 0.12
+  cameraXMin: -20
+  cameraXMax: 20
