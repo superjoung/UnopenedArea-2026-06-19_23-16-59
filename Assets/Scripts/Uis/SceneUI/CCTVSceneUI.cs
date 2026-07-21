@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using DG.Tweening;
@@ -46,6 +47,11 @@ public class CCTVSceneUI : BaseUI
     [SerializeField] private AnomalyService anomalyService;
     [SerializeField] private DayRuntimeController dayRuntimeController;
     [SerializeField] private CCTVScreenEffectController screenEffectController;
+    [SerializeField] private CCTVPanController panController;
+
+    [Header("Success Report Noise")]
+    [SerializeField] private CCTVNoiseProfile successReportNoiseProfile;
+    [SerializeField, Min(0.01f)] private float fallbackSuccessReportNoiseDuration = 1.1f;
 
     [Header("False Report Noise")]
     [SerializeField] private CCTVNoiseProfile falseReportNoiseProfile;
@@ -57,6 +63,7 @@ public class CCTVSceneUI : BaseUI
     private float _reportFullHeight = 0.0f;
     private float _reportDefaultHeight = 0.0f;
     private bool _isReport = false;
+    private bool _isNormalizingReport;
     private Tween _slideTween;
     private CCTVUIEffectController _uiEffectController;
 
@@ -127,6 +134,7 @@ public class CCTVSceneUI : BaseUI
                 dayRuntimeController.RegisterCorrectReport();
 
             Debug.Log($"[INFO] CCTVSceneUI::OnClickReportSendButton - 정상 보고 anomaly={anomalyId}");
+            StartCoroutine(CompleteSuccessfulReportRoutine(matchedRuntime));
         }
         else
         {
@@ -242,6 +250,72 @@ public class CCTVSceneUI : BaseUI
             screenEffectController.PlayNoise(falseReportNoiseProfile);
         else
             screenEffectController.PlayTransitionNoise(fallbackFalseReportNoiseDuration);
+    }
+
+    private IEnumerator CompleteSuccessfulReportRoutine(AnomalyRuntime runtime)
+    {
+        if (_isNormalizingReport || runtime == null || anomalyService == null)
+            yield break;
+
+        _isNormalizingReport = true;
+        CloseReportPanel();
+        SetReportSendInteractable(false);
+
+        if (panController != null)
+            panController.SetInputLocked(true);
+
+        float noiseDuration = GetSuccessNoiseDuration();
+        if (screenEffectController != null)
+        {
+            if (successReportNoiseProfile != null)
+                screenEffectController.PlayNoise(successReportNoiseProfile);
+            else
+                screenEffectController.PlayTransitionNoise(fallbackSuccessReportNoiseDuration);
+        }
+
+        // 노이즈가 화면을 충분히 가린 중간 지점에 기준 상태를 복원한다.
+        float restoreDelay = noiseDuration * 0.5f;
+        if (restoreDelay > 0f)
+            yield return new WaitForSecondsRealtime(restoreDelay);
+
+        anomalyService.CompleteNormalization(runtime);
+
+        float remainingDuration = Mathf.Max(0f, noiseDuration - restoreDelay);
+        if (remainingDuration > 0f)
+            yield return new WaitForSecondsRealtime(remainingDuration);
+
+        if (panController != null)
+            panController.SetInputLocked(false);
+
+        SetReportSendInteractable(true);
+        _isNormalizingReport = false;
+    }
+
+    private float GetSuccessNoiseDuration()
+    {
+        return successReportNoiseProfile != null
+            ? successReportNoiseProfile.TotalTimedDuration
+            : fallbackSuccessReportNoiseDuration;
+    }
+
+    private void CloseReportPanel()
+    {
+        RectTransform panel = GetObject((int)Objects.ReportBackGround)?.GetComponent<RectTransform>();
+        if (panel == null)
+            return;
+
+        _slideTween?.Kill();
+        _slideTween = panel
+            .DOAnchorPosY(-_reportFullHeight, 0.2f)
+            .SetEase(Ease.OutQuint);
+        _isReport = false;
+    }
+
+    private void SetReportSendInteractable(bool interactable)
+    {
+        Button button = GetButton((int)Buttons.ReportSendButton);
+        if (button != null)
+            button.interactable = interactable;
     }
 
     private void ChangeReportImage()
@@ -595,6 +669,9 @@ public class CCTVSceneUI : BaseUI
 
         if (screenEffectController == null)
             screenEffectController = FindObjectOfType<CCTVScreenEffectController>();
+
+        if (panController == null)
+            panController = FindObjectOfType<CCTVPanController>();
     }
 
     private void OnDestroy()

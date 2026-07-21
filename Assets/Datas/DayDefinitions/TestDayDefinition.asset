@@ -19,6 +19,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9d13d1b21e63abb4594f360b587d5f4e, type: 2}
   - {fileID: 11400000, guid: fc8ee4399cd0c2443a7ca9013befb3db, type: 2}
   - {fileID: 11400000, guid: 626dfe864efcc494f84bfe42dc893136, type: 2}
+  tutorialAnomaly: {fileID: 11400000, guid: 2929c5f3ddd306c46b9a707aff5a91fa, type: 2}
+  tutorialRequiredChannelSwitches: 3
+  tutorialFallbackElapsedSec: 60
+  enableEmergencyDispatch: 1
+  emergencyRequiredCorrectReports: 3
+  emergencyTriggerProgress: 0.7
   fixedSchedule: []
   enableRandomSchedule: 1
   randomMinIntervalSec: 10

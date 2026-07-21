@@ -13,6 +13,7 @@ public class AnomalyService : MonoBehaviour
     private readonly List<AnomalyRuntime> activeAnomalies = new List<AnomalyRuntime>();
 
     public System.Action<AnomalyRuntime> AnomalyMissed;
+    public System.Action<AnomalyRuntime> AnomalyResolved;
     public IReadOnlyList<AnomalyRuntime> ActiveAnomalies => activeAnomalies;
     public bool TimersPaused => timersPaused;
 
@@ -75,7 +76,22 @@ public class AnomalyService : MonoBehaviour
         RestoreAreaBaseline(runtime.Definition.AreaId);
         runtime.ChangeState(AnomalyState.Resolved);
         activeAnomalies.Remove(runtime);
+        AnomalyResolved?.Invoke(runtime);
         Debug.Log($"[AnomalyService] Resolved anomaly={runtime.Definition.AnomalyId}");
+    }
+
+    public void CompleteNormalization(AnomalyRuntime runtime)
+    {
+        if (runtime == null || !activeAnomalies.Contains(runtime))
+            return;
+
+        if (runtime.State != AnomalyState.Normalizing)
+        {
+            Debug.LogWarning($"[AnomalyService] CompleteNormalization ignored. anomaly={runtime.Definition.AnomalyId}, state={runtime.State}");
+            return;
+        }
+
+        Resolve(runtime);
     }
 
     public bool TryReportAnomaly(AreaId areaId, ReportTargetId targetId, AnomalyReportType reportType, out AnomalyRuntime matchedRuntime)
@@ -108,7 +124,7 @@ public class AnomalyService : MonoBehaviour
                 continue;
 
             matchedRuntime = runtime;
-            Resolve(runtime);
+            runtime.ChangeState(AnomalyState.Normalizing);
             return true;
         }
 

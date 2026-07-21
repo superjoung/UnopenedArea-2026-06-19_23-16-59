@@ -13,14 +13,21 @@ public class GameManager : Singleton<GameManager>
     public int CurrentDayFailureCount { get; private set; }
     public int CurrentDayMaxFailureCount { get; private set; }
 
+    private bool reportInputEnabled = true;
+
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.W))
+        if (reportInputEnabled && Input.GetKeyDown(KeyCode.W))
         {
             Debug.Log("[INFO] GameManager::Update - OpenReport Event");
 
             OpenReport?.Invoke();
         }
+    }
+
+    public void SetReportInputEnabled(bool enabled)
+    {
+        reportInputEnabled = enabled;
     }
 
     public void NotifyCCTVAreaChanged(string cctvLabel, string areaName)

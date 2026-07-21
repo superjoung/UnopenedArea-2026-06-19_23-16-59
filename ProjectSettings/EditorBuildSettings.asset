@@ -5,9 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/CCTVTest.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
+  - enabled: 1
+    path: Assets/Scenes/Day1.unity
+    guid: a7e1a54e24b8474b8e755d3136b6d9af
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 313446f4a6c4402ba8e581c1876782ca, type: 3}
   m_UseUCBPForAssetBundles: 0

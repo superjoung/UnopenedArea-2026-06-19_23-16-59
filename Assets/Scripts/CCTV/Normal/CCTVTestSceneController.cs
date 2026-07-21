@@ -24,7 +24,9 @@ public class CCTVTestSceneController : MonoBehaviour
     private readonly List<CCTVChannelRuntime> channels = new List<CCTVChannelRuntime>();
     private int currentChannelIndex;
     private bool isSwitchingChannel;
+    private bool cctvInputEnabled = true;
 
+    public System.Action<CCTVChannelRuntime> ChannelSelected;
     public IReadOnlyList<CCTVChannelRuntime> Channels => channels;
     public DayDefinition CurrentDayDefinition => dayDefinition;
     public CCTVChannelRuntime CurrentChannel =>
@@ -57,6 +59,9 @@ public class CCTVTestSceneController : MonoBehaviour
 
     private void Update()
     {
+        if (!cctvInputEnabled)
+            return;
+
         if (Input.GetKeyDown(KeyCode.Q))
             SelectPreviousChannel();
 
@@ -90,6 +95,11 @@ public class CCTVTestSceneController : MonoBehaviour
         }
 
         StartCoroutine(SwitchChannelRoutine(index));
+    }
+
+    public void SetCCTVInputEnabled(bool enabled)
+    {
+        cctvInputEnabled = enabled;
     }
 
     public void SelectNextChannel()
@@ -170,6 +180,7 @@ public class CCTVTestSceneController : MonoBehaviour
         }
 
         NotifyCCTVAreaChanged(area);
+        ChannelSelected?.Invoke(channels[currentChannelIndex]);
         Debug.Log($"[CCTV] Selected {channels[currentChannelIndex].ChannelLabel} - {area.DisplayName} ({area.AreaId})");
     }
 
