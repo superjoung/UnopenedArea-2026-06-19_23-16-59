@@ -133,6 +133,9 @@ public class CCTVSceneUI : BaseUI
             if (dayRuntimeController != null)
                 dayRuntimeController.RegisterCorrectReport();
 
+            if (GameManager.Instance != null)
+                GameManager.Instance.NotifyDayCorrectReport(matchedRuntime);
+
             Debug.Log($"[INFO] CCTVSceneUI::OnClickReportSendButton - 정상 보고 anomaly={anomalyId}");
             StartCoroutine(CompleteSuccessfulReportRoutine(matchedRuntime));
         }
@@ -142,6 +145,9 @@ public class CCTVSceneUI : BaseUI
 
             if (dayRuntimeController != null)
                 dayRuntimeController.RegisterWrongReport();
+
+            if (GameManager.Instance != null)
+                GameManager.Instance.NotifyDayWrongReport();
 
             PlayFalseReportNoise();
         }
@@ -645,6 +651,12 @@ public class CCTVSceneUI : BaseUI
         for (int i = parent.childCount - 1; i >= 0; i--)
         {
             Transform child = parent.GetChild(i);
+
+            // Destroy는 프레임 종료 시점에 실행된다. 목록을 연 직후 다시 갱신하면
+            // 이전 채널/구역의 버튼이 새 버튼과 한 프레임 겹쳐 보일 수 있으므로,
+            // 먼저 즉시 숨긴 뒤 안전하게 제거한다.
+            child.gameObject.SetActive(false);
+
             if (Application.isPlaying)
                 Destroy(child.gameObject);
             else

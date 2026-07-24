@@ -23,16 +23,20 @@ public class Day1FlowController : MonoBehaviour
     [SerializeField] private AnomalyScheduler anomalyScheduler;
     [SerializeField] private AnomalyService anomalyService;
     [SerializeField] private CCTVTestSceneController sceneController;
+    [SerializeField] private FieldModeController fieldModeController;
 
     [Header("Temporary Debug Input")]
     [SerializeField] private bool useKeyboardAdvance = true;
     [SerializeField] private KeyCode emergencyRecoveryKey = KeyCode.E;
+    [SerializeField] private bool enableDebugEmergencyShortcut = true;
+    [SerializeField] private KeyCode debugEmergencyKey = KeyCode.F7;
 
     private DayDefinition dayDefinition;
     private int channelSwitchCount;
     private bool tutorialActivationRequested;
     private bool tutorialFinished;
     private bool emergencyDispatchStarted;
+    private bool emergencyFieldModeStarted;
 
     public Day1FlowState State { get; private set; } = Day1FlowState.None;
     public int ChannelSwitchCount => channelSwitchCount;
@@ -87,7 +91,13 @@ public class Day1FlowController : MonoBehaviour
                 TryStartEmergencyDispatch();
         }
 
-        if (useKeyboardAdvance && State == Day1FlowState.EmergencyDispatch && Input.GetKeyDown(emergencyRecoveryKey))
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (enableDebugEmergencyShortcut && Input.GetKeyDown(debugEmergencyKey))
+            ForceEmergencyDispatchForDebug();
+#endif
+
+        if (useKeyboardAdvance && !emergencyFieldModeStarted &&
+            State == Day1FlowState.EmergencyDispatch && Input.GetKeyDown(emergencyRecoveryKey))
             CompleteEmergencyObjective();
     }
 
@@ -113,6 +123,7 @@ public class Day1FlowController : MonoBehaviour
         tutorialActivationRequested = false;
         tutorialFinished = false;
         emergencyDispatchStarted = false;
+        emergencyFieldModeStarted = false;
 
         if (dayRuntimeController != null)
             dayRuntimeController.StartDay();
@@ -207,12 +218,38 @@ public class Day1FlowController : MonoBehaviour
         if (!hasRequiredReports || !reachedProgress)
             return;
 
+        BeginEmergencyDispatch(false);
+    }
+
+    /// <summary>
+    /// 에디터/개발 빌드에서 현장 카메라 전환만 빠르게 검증한다.
+    /// 튜토리얼 이상현상이 끝난 뒤 F7을 누르면 일반 이상현상 대기 없이 정전을 시작한다.
+    /// </summary>
+    public void ForceEmergencyDispatchForDebug()
+    {
+        if (State != Day1FlowState.Monitoring || !tutorialFinished || emergencyDispatchStarted)
+        {
+            Debug.LogWarning("[Day1FlowController] Debug emergency requires Monitoring state after the tutorial is finished.");
+            return;
+        }
+
+        BeginEmergencyDispatch(true);
+    }
+
+    private void BeginEmergencyDispatch(bool isDebug)
+    {
         emergencyDispatchStarted = true;
         PauseForEmergencyDispatch();
-        ChangeState(
-            Day1FlowState.EmergencyDispatch,
-            $"정전 발생. 현장 복구가 필요합니다. 임시 테스트에서는 {emergencyRecoveryKey} 키로 배전반을 복구합니다."
-        );
+        emergencyFieldModeStarted = fieldModeController != null && fieldModeController.EnterFieldMode();
+
+        string message = emergencyFieldModeStarted
+            ? "정전 발생. 설비실로 이동하십시오."
+            : $"정전 발생. 현장 복구가 필요합니다. 임시 테스트에서는 {emergencyRecoveryKey} 키로 배전반을 복구합니다.";
+
+        if (isDebug)
+            message = $"[DEBUG] {message}";
+
+        ChangeState(Day1FlowState.EmergencyDispatch, message);
     }
 
     /// <summary>
@@ -224,9 +261,28 @@ public class Day1FlowController : MonoBehaviour
         if (State != Day1FlowState.EmergencyDispatch)
             return;
 
-        ChangeState(Day1FlowState.EmergencyRecovery, "배전반 복구 완료. CCTV 전력을 재가동합니다.");
+        // 전력은 복구됐지만 플레이어는 아직 현장에 있다. 제어실 문까지 돌아가기 전에는
+        // 타이머와 스케줄러를 재개하지 않아 현장에 있는 플레이어가 보이지 않는 이상현상으로
+        // 실패하는 일을 막는다.
+        ChangeState(Day1FlowState.EmergencyRecovery, "전력 복구 완료. 제어실로 돌아가 CCTV를 재가동하십시오.");
+    }
+
+    /// <summary>
+    /// 현장 맵의 제어실 복귀 문/지점이 호출한다. 화면 복귀를 끝낸 뒤에만 감시 루프를 재개한다.
+    /// </summary>
+    public void ReturnToControlRoom()
+    {
+        if (State != Day1FlowState.EmergencyRecovery)
+            return;
+
+        if (emergencyFieldModeStarted && (fieldModeController == null || !fieldModeController.ExitFieldMode()))
+        {
+            Debug.LogWarning("[Day1FlowController] Control-room return failed because field mode could not exit.");
+            return;
+        }
+
         ResumeAfterEmergencyDispatch();
-        ChangeState(Day1FlowState.Monitoring, "전력이 복구되었습니다. 감시 업무를 계속합니다.");
+        ChangeState(Day1FlowState.Monitoring, "제어실에 복귀했습니다. 감시 업무를 계속합니다.");
     }
 
     private void HandleDayCleared()
@@ -335,5 +391,8 @@ public class Day1FlowController : MonoBehaviour
 
         if (sceneController == null)
             sceneController = FindObjectOfType<CCTVTestSceneController>();
+
+        if (fieldModeController == null)
+            fieldModeController = FindFirstObjectByType<FieldModeController>();
     }
 }

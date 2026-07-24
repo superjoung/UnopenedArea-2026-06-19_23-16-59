@@ -7,6 +7,8 @@ public class GameManager : Singleton<GameManager>
     public System.Action<float, float> DayTimeChanged;
     public System.Action<int, int> DayFailureCountChanged;
     public System.Action<AnomalyRuntime> DayMissedAnomaly;
+    public System.Action<AnomalyRuntime> DayCorrectReport;
+    public System.Action DayWrongReport;
 
     public string CurrentCCTVLabel { get; private set; }
     public string CurrentAreaName { get; private set; }
@@ -53,6 +55,16 @@ public class GameManager : Singleton<GameManager>
     public void NotifyDayMissedAnomaly(AnomalyRuntime runtime)
     {
         DayMissedAnomaly?.Invoke(runtime);
+    }
+
+    public void NotifyDayCorrectReport(AnomalyRuntime runtime)
+    {
+        DayCorrectReport?.Invoke(runtime);
+    }
+
+    public void NotifyDayWrongReport()
+    {
+        DayWrongReport?.Invoke();
     }
 }
 

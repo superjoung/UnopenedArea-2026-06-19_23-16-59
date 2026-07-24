@@ -42,6 +42,23 @@ public class FieldCameraFollowController : MonoBehaviour
         velocity = Vector3.zero;
     }
 
+    /// <summary>
+    /// Places the camera at its follow target immediately. Use this when
+    /// entering field mode so the first visible frame does not glide upward.
+    /// </summary>
+    public void SnapToTarget()
+    {
+        if (target == null || profile == null)
+            return;
+
+        Vector3 position = GetDesiredPosition();
+        if (snapToPixelGrid)
+            position = SnapToPixelGrid(position);
+
+        transform.position = position;
+        velocity = Vector3.zero;
+    }
+
     private void FollowTarget(float deltaTime)
     {
         if (updateMode == FieldCameraFollowUpdateMode.None)
@@ -50,11 +67,7 @@ public class FieldCameraFollowController : MonoBehaviour
         if (target == null || profile == null)
             return;
 
-        Vector3 desired = target.position + offset;
-        if (clampX)
-            desired.x = Mathf.Clamp(desired.x, profile.CameraXMin, profile.CameraXMax);
-
-        desired.z = offset.z;
+        Vector3 desired = GetDesiredPosition();
         float smoothTime = Mathf.Max(0.0001f, profile.CameraFollowSmooth);
         Vector3 nextPosition = Vector3.SmoothDamp(transform.position, desired, ref velocity, smoothTime, Mathf.Infinity, deltaTime);
 
@@ -62,6 +75,16 @@ public class FieldCameraFollowController : MonoBehaviour
             nextPosition = SnapToPixelGrid(nextPosition);
 
         transform.position = nextPosition;
+    }
+
+    private Vector3 GetDesiredPosition()
+    {
+        Vector3 desired = target.position + offset;
+        if (clampX)
+            desired.x = Mathf.Clamp(desired.x, profile.CameraXMin, profile.CameraXMax);
+
+        desired.z = offset.z;
+        return desired;
     }
 
     private Vector3 SnapToPixelGrid(Vector3 position)
