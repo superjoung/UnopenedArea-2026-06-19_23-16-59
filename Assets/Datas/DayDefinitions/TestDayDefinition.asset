@@ -36,6 +36,27 @@ MonoBehaviour:
   - anomaly: {fileID: 11400000, guid: 7a2328bfa9ca1e648b317f62bcc5dfba, type: 2}
     weight: 1
     allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: fd240f65b0a9fed4aa548a6e5626b358, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: fd240f65b0a9fed4aa548a6e5626b358, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: f90ec369eb033c641b77afda9cc566c8, type: 2}
+    weight: 1
+    allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 85ec6dcc30697084297305fd4264abf6, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: ba1faf59ff8fd3040b3db76e03dd1630, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: bd19066717dfac54cb7b073a3284ff2a, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: bd19066717dfac54cb7b073a3284ff2a, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: bd19066717dfac54cb7b073a3284ff2a, type: 2}
     weight: 1
     allowRepeat: 1

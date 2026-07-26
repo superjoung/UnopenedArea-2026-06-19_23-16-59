@@ -73,6 +73,11 @@ public class CCTVSceneUI : BaseUI
     private ReportTargetId selectedTargetId = ReportTargetId.None;
     private AnomalyReportType selectedReportType = AnomalyReportType.None;
 
+    // 화면에 보이는 문구와 실제 보고 값이 어긋나지 않도록, 각 선택 목록을 유지한다.
+    private readonly List<ReportSelectOption> areaReportOptions = new List<ReportSelectOption>();
+    private readonly List<ReportSelectOption> objectReportOptions = new List<ReportSelectOption>();
+    private readonly List<ReportSelectOption> typeReportOptions = new List<ReportSelectOption>();
+
     public AreaId SelectedAreaId => selectedAreaId;
     public string SelectedObjectId => selectedObjectId;
     public ReportTargetId SelectedTargetId => selectedTargetId;
@@ -403,6 +408,7 @@ public class CCTVSceneUI : BaseUI
             return;
 
         ClearContent(areaContentParent.transform);
+        areaReportOptions.Clear();
 
         // 구역 후보는 현재 일차에 생성된 CCTV 채널 기준이며, 중복 AreaId는 한 번만 표시한다.
         foreach (CCTVAreaDefinition area in GetReportAreaDefinitions())
@@ -414,7 +420,7 @@ public class CCTVSceneUI : BaseUI
                 ? CCTVReportLabelProvider.GetAreaLabel(area.AreaId)
                 : area.DisplayName;
 
-            CreateReportContentItem(areaContentParent.transform, new ReportSelectOption
+            var option = new ReportSelectOption
             {
                 Kind = ReportSelectKind.Area,
                 Label = label,
@@ -422,8 +428,12 @@ public class CCTVSceneUI : BaseUI
                 ObjectId = null,
                 TargetId = ReportTargetId.None,
                 ReportType = AnomalyReportType.None,
-            });
+            };
+            areaReportOptions.Add(option);
+            CreateReportContentItem(areaContentParent.transform, option);
         }
+
+        EnsureAreaSelection();
     }
 
     private void RefreshObjectReportContents()
@@ -433,6 +443,7 @@ public class CCTVSceneUI : BaseUI
             return;
 
         ClearContent(objectContentParent.transform);
+        objectReportOptions.Clear();
 
         CCTVAreaInstance instance = GetSelectedOrCurrentAreaInstance();
         if (instance == null)
@@ -448,7 +459,7 @@ public class CCTVSceneUI : BaseUI
                 ? CCTVReportLabelProvider.GetTargetLabel(sceneObject.TargetId)
                 : sceneObject.DisplayName;
 
-            CreateReportContentItem(objectContentParent.transform, new ReportSelectOption
+            var option = new ReportSelectOption
             {
                 Kind = ReportSelectKind.Object,
                 Label = label,
@@ -456,8 +467,12 @@ public class CCTVSceneUI : BaseUI
                 ObjectId = sceneObject.ObjectId,
                 TargetId = sceneObject.TargetId,
                 ReportType = AnomalyReportType.None,
-            });
+            };
+            objectReportOptions.Add(option);
+            CreateReportContentItem(objectContentParent.transform, option);
         }
+
+        EnsureObjectSelection();
     }
 
     private void RefreshTypeReportContents()
@@ -467,6 +482,7 @@ public class CCTVSceneUI : BaseUI
             return;
 
         ClearContent(typeContentParent.transform);
+        typeReportOptions.Clear();
 
         // 타입 후보는 고정 목록이다. 현재 활성 이상현상 타입만 보여주면 정답 힌트가 되기 때문이다.
         AnomalyReportType[] reportTypes =
@@ -481,7 +497,7 @@ public class CCTVSceneUI : BaseUI
 
         foreach (AnomalyReportType reportType in reportTypes)
         {
-            CreateReportContentItem(typeContentParent.transform, new ReportSelectOption
+            var option = new ReportSelectOption
             {
                 Kind = ReportSelectKind.AnomalyType,
                 Label = CCTVReportLabelProvider.GetReportTypeLabel(reportType),
@@ -489,8 +505,12 @@ public class CCTVSceneUI : BaseUI
                 ObjectId = null,
                 TargetId = ReportTargetId.None,
                 ReportType = reportType,
-            });
+            };
+            typeReportOptions.Add(option);
+            CreateReportContentItem(typeContentParent.transform, option);
         }
+
+        EnsureTypeSelection();
     }
 
     private void CreateReportContentItem(Transform parent, ReportSelectOption option)
@@ -512,27 +532,71 @@ public class CCTVSceneUI : BaseUI
         switch (option.Kind)
         {
             case ReportSelectKind.Area:
-                selectedAreaId = option.AreaId;
-                selectedObjectId = null;
-                selectedTargetId = ReportTargetId.None;
-                SetText(Texts.AreaReportText, option.Label);
-                RefreshObjectReportContents();
+                ApplyAreaSelection(option);
                 break;
             case ReportSelectKind.Object:
-                if (option.AreaId != AreaId.None)
-                    selectedAreaId = option.AreaId;
-
-                selectedObjectId = option.ObjectId;
-                selectedTargetId = option.TargetId;
-                SetText(Texts.ObjectReportText, option.Label);
+                ApplyObjectSelection(option);
                 break;
             case ReportSelectKind.AnomalyType:
-                selectedReportType = option.ReportType;
-                SetText(Texts.TypeReportText, option.Label);
+                ApplyTypeSelection(option);
                 break;
         }
 
         Debug.Log($"[INFO] CCTVSceneUI::OnReportOptionSelected - kind={option.Kind}, label={option.Label}, area={selectedAreaId}, object={selectedObjectId}, target={selectedTargetId}, type={selectedReportType}");
+    }
+
+    /// <summary>
+    /// 목록을 최초 생성했을 때만 0번 항목을 실제 보고값으로 확정한다.
+    /// 이후 사용자가 적은 선택은 후보 목록이 달라져도 자동으로 덮어쓰지 않는다.
+    /// </summary>
+    private void EnsureAreaSelection()
+    {
+        if (areaReportOptions.Count == 0)
+            return;
+
+        if (selectedAreaId == AreaId.None)
+            ApplyAreaSelection(areaReportOptions[0]);
+    }
+
+    private void EnsureObjectSelection()
+    {
+        if (objectReportOptions.Count == 0)
+            return;
+
+        if (selectedTargetId == ReportTargetId.None)
+            ApplyObjectSelection(objectReportOptions[0]);
+    }
+
+    private void EnsureTypeSelection()
+    {
+        if (typeReportOptions.Count == 0)
+            return;
+
+        if (selectedReportType == AnomalyReportType.None)
+            ApplyTypeSelection(typeReportOptions[0]);
+    }
+
+    private void ApplyAreaSelection(ReportSelectOption option)
+    {
+        selectedAreaId = option.AreaId;
+        SetText(Texts.AreaReportText, option.Label);
+        RefreshObjectReportContents();
+    }
+
+    private void ApplyObjectSelection(ReportSelectOption option)
+    {
+        if (option.AreaId != AreaId.None)
+            selectedAreaId = option.AreaId;
+
+        selectedObjectId = option.ObjectId;
+        selectedTargetId = option.TargetId;
+        SetText(Texts.ObjectReportText, option.Label);
+    }
+
+    private void ApplyTypeSelection(ReportSelectOption option)
+    {
+        selectedReportType = option.ReportType;
+        SetText(Texts.TypeReportText, option.Label);
     }
 
     public void SetCCTVAreaInfo(string channelLabel, string areaName)

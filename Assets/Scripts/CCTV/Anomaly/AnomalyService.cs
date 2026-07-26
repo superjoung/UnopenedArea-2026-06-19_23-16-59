@@ -10,8 +10,13 @@ public class AnomalyService : MonoBehaviour
     [Header("Runtime")]
     [SerializeField] private bool timersPaused;
 
-    private readonly List<AnomalyRuntime> activeAnomalies = new List<AnomalyRuntime>();
+    [Header("Missed Warning")]
+    [SerializeField, Min(0.1f)] private float missedWarningLeadTimeSec = 5f;
 
+    private readonly List<AnomalyRuntime> activeAnomalies = new List<AnomalyRuntime>();
+    private readonly HashSet<AnomalyRuntime> urgencyNotifiedAnomalies = new HashSet<AnomalyRuntime>();
+
+    public System.Action<AnomalyRuntime> AnomalyUrgencyStarted;
     public System.Action<AnomalyRuntime> AnomalyMissed;
     public System.Action<AnomalyRuntime> AnomalyResolved;
     public IReadOnlyList<AnomalyRuntime> ActiveAnomalies => activeAnomalies;
@@ -32,6 +37,14 @@ public class AnomalyService : MonoBehaviour
         {
             AnomalyRuntime runtime = activeAnomalies[i];
             runtime.Tick(Time.deltaTime);
+
+            if (runtime.State == AnomalyState.Active &&
+                runtime.RemainingActiveTimeSec <= missedWarningLeadTimeSec &&
+                urgencyNotifiedAnomalies.Add(runtime))
+            {
+                AnomalyUrgencyStarted?.Invoke(runtime);
+                Debug.Log($"[AnomalyService] Missed-warning urgency started. anomaly={runtime.Definition.AnomalyId}, remaining={runtime.RemainingActiveTimeSec:0.00}s");
+            }
 
             if (runtime.IsTimedOut)
                 MarkMissed(runtime);
@@ -76,6 +89,7 @@ public class AnomalyService : MonoBehaviour
         RestoreAreaBaseline(runtime.Definition.AreaId);
         runtime.ChangeState(AnomalyState.Resolved);
         activeAnomalies.Remove(runtime);
+        urgencyNotifiedAnomalies.Remove(runtime);
         AnomalyResolved?.Invoke(runtime);
         Debug.Log($"[AnomalyService] Resolved anomaly={runtime.Definition.AnomalyId}");
     }
@@ -280,6 +294,7 @@ public class AnomalyService : MonoBehaviour
         runtime.ChangeState(AnomalyState.Missed);
         RestoreAreaBaseline(runtime.Definition.AreaId);
         activeAnomalies.Remove(runtime);
+        urgencyNotifiedAnomalies.Remove(runtime);
         AnomalyMissed?.Invoke(runtime);
         Debug.Log($"[AnomalyService] Missed anomaly={runtime.Definition.AnomalyId}, area={runtime.Definition.AreaId}. Restored baseline.");
     }

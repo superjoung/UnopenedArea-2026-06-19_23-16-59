@@ -24,9 +24,11 @@ public class Day1FlowController : MonoBehaviour
     [SerializeField] private AnomalyService anomalyService;
     [SerializeField] private CCTVTestSceneController sceneController;
     [SerializeField] private FieldModeController fieldModeController;
+    [SerializeField] private Day1AreaTransitionController areaTransitionController;
+    [SerializeField] private TransitionEffect transitionEffect;
 
     [Header("Temporary Debug Input")]
-    [SerializeField] private bool useKeyboardAdvance = true;
+    [SerializeField] private bool useKeyboardAdvance = false;
     [SerializeField] private KeyCode emergencyRecoveryKey = KeyCode.E;
     [SerializeField] private bool enableDebugEmergencyShortcut = true;
     [SerializeField] private KeyCode debugEmergencyKey = KeyCode.F7;
@@ -70,7 +72,8 @@ public class Day1FlowController : MonoBehaviour
 
         SubscribeEvents();
         PauseNormalAnomalies();
-        ChangeState(Day1FlowState.Briefing, "제4관측동 폐쇄 전 상태 기록을 시작합니다. Enter 키로 브리핑을 진행합니다.");
+        areaTransitionController?.EnterMainRoom();
+        ChangeState(Day1FlowState.Briefing, "제4관측동 폐쇄 전 상태 기록을 시작합니다. 메인룸의 전화기를 확인하십시오.");
     }
 
     private void Update()
@@ -96,9 +99,6 @@ public class Day1FlowController : MonoBehaviour
             ForceEmergencyDispatchForDebug();
 #endif
 
-        if (useKeyboardAdvance && !emergencyFieldModeStarted &&
-            State == Day1FlowState.EmergencyDispatch && Input.GetKeyDown(emergencyRecoveryKey))
-            CompleteEmergencyObjective();
     }
 
     private void OnDestroy()
@@ -111,7 +111,85 @@ public class Day1FlowController : MonoBehaviour
         if (State != Day1FlowState.Briefing)
             return;
 
-        ChangeState(Day1FlowState.BaselineReview, "모든 CCTV의 정상 배치를 확인하십시오. Enter 키로 감시를 시작합니다.");
+        ChangeState(Day1FlowState.BaselineReview, "전화 지시를 수령했습니다. 메인룸의 CCTV를 눌러 감시를 시작하십시오.");
+    }
+
+    public void AcceptPhoneMission()
+    {
+        if (State == Day1FlowState.Briefing)
+            BeginBaselineReview();
+    }
+
+    /// <summary>
+    /// 메인룸 CCTV 상호작용에서 호출합니다. 첫 진입은 감시 시작, 복구 뒤 진입은 감시 재개입니다.
+    /// </summary>
+    public void EnterCCTVFromMainRoom()
+    {
+        if (State != Day1FlowState.BaselineReview && State != Day1FlowState.EmergencyRecovery)
+            return;
+
+        if (areaTransitionController != null && !areaTransitionController.EnterCCTV())
+            return;
+
+        if (State == Day1FlowState.BaselineReview)
+        {
+            BeginMonitoring();
+            return;
+        }
+
+        ResumeAfterEmergencyDispatch();
+        ChangeState(Day1FlowState.Monitoring, "CCTV 감시를 재개합니다.");
+    }
+
+    /// <summary>메인룸 문 상호작용에서 호출합니다.</summary>
+    public void EnterFieldFromMainRoom()
+    {
+        if (State != Day1FlowState.EmergencyDispatch || emergencyFieldModeStarted)
+            return;
+
+        if (transitionEffect == null)
+            transitionEffect = FindFirstObjectByType<TransitionEffect>();
+
+        if (areaTransitionController != null && transitionEffect != null)
+        {
+            if (transitionEffect.TryPlayDoorToField(
+                    () => TryEnterFieldFromMainRoom(),
+                    NotifyFieldEntered))
+            {
+                return;
+            }
+
+            if (transitionEffect.IsPlaying)
+                return;
+        }
+
+        if (!TryEnterFieldFromMainRoom())
+            return;
+
+        NotifyFieldEntered();
+    }
+
+    private bool TryEnterFieldFromMainRoom()
+    {
+        if (State != Day1FlowState.EmergencyDispatch || emergencyFieldModeStarted)
+            return false;
+
+        bool entered = areaTransitionController != null
+            ? areaTransitionController.EnterField()
+            : fieldModeController != null && fieldModeController.EnterFieldMode();
+        if (!entered)
+            return false;
+
+        emergencyFieldModeStarted = true;
+        return true;
+    }
+
+    private void NotifyFieldEntered()
+    {
+        if (!emergencyFieldModeStarted)
+            return;
+
+        FlowMessageChanged?.Invoke("외부 현장에 진입했습니다. 배전반을 복구한 뒤 문으로 메인룸에 돌아가십시오.");
     }
 
     public void BeginMonitoring()
@@ -240,11 +318,39 @@ public class Day1FlowController : MonoBehaviour
     {
         emergencyDispatchStarted = true;
         PauseForEmergencyDispatch();
-        emergencyFieldModeStarted = fieldModeController != null && fieldModeController.EnterFieldMode();
+
+        if (transitionEffect == null)
+            transitionEffect = FindFirstObjectByType<TransitionEffect>();
+
+        if (areaTransitionController != null && transitionEffect != null &&
+            transitionEffect.TryPlayBlackout(
+                areaTransitionController.EnterMainRoom,
+                () => FinishEmergencyDispatch(isDebug)))
+        {
+            return;
+        }
+
+        FinishEmergencyDispatch(isDebug);
+    }
+
+    private void FinishEmergencyDispatch(bool isDebug)
+    {
+        if (areaTransitionController != null)
+        {
+            emergencyFieldModeStarted = false;
+            areaTransitionController.EnterMainRoom();
+        }
+        else
+        {
+            // 메인룸 전환 컨트롤러가 아직 연결되지 않은 기존 테스트 씬은 이전 현장 직행 흐름을 유지한다.
+            emergencyFieldModeStarted = fieldModeController != null && fieldModeController.EnterFieldMode();
+        }
 
         string message = emergencyFieldModeStarted
             ? "정전 발생. 설비실로 이동하십시오."
             : $"정전 발생. 현장 복구가 필요합니다. 임시 테스트에서는 {emergencyRecoveryKey} 키로 배전반을 복구합니다.";
+
+        message = "정전 발생. 메인룸의 문을 통해 외부 현장으로 이동하십시오.";
 
         if (isDebug)
             message = $"[DEBUG] {message}";
@@ -275,14 +381,18 @@ public class Day1FlowController : MonoBehaviour
         if (State != Day1FlowState.EmergencyRecovery)
             return;
 
-        if (emergencyFieldModeStarted && (fieldModeController == null || !fieldModeController.ExitFieldMode()))
+        if (areaTransitionController != null)
+        {
+            areaTransitionController.EnterMainRoom();
+        }
+        else if (emergencyFieldModeStarted && (fieldModeController == null || !fieldModeController.ExitFieldMode()))
         {
             Debug.LogWarning("[Day1FlowController] Control-room return failed because field mode could not exit.");
             return;
         }
 
-        ResumeAfterEmergencyDispatch();
-        ChangeState(Day1FlowState.Monitoring, "제어실에 복귀했습니다. 감시 업무를 계속합니다.");
+        emergencyFieldModeStarted = false;
+        FlowMessageChanged?.Invoke("메인룸에 복귀했습니다. CCTV를 눌러 감시 업무를 재개하십시오.");
     }
 
     private void HandleDayCleared()
@@ -394,5 +504,11 @@ public class Day1FlowController : MonoBehaviour
 
         if (fieldModeController == null)
             fieldModeController = FindFirstObjectByType<FieldModeController>();
+
+        if (areaTransitionController == null)
+            areaTransitionController = FindFirstObjectByType<Day1AreaTransitionController>();
+
+        if (transitionEffect == null)
+            transitionEffect = FindFirstObjectByType<TransitionEffect>();
     }
 }
