@@ -186,7 +186,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 49610606
-  m_fontColor: {r: 0.43295518, g: 1, b: 0.95793676, a: 0.006654332}
+  m_fontColor: {r: 0.43295518, g: 1, b: 0.95793676, a: 0.0059862924}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -791,58 +791,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 98481096}
   m_CullTransparentMesh: 1
---- !u!21 &126032856
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: ReportBackGround_CCTV_UI_Panel_Runtime
-  m_Shader: {fileID: 4800000, guid: ec239ae2aedd33e4dbe5b1f14b729ee3, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _Brightness: 1
-    - _ChromaticAberration: 0
-    - _ColorMask: 15
-    - _Desaturation: 0
-    - _EffectIntensity: 1
-    - _FlickerStrength: 0
-    - _GlitchStrength: 0
-    - _NoiseSpeed: 0
-    - _NoiseStrength: 0
-    - _NoiseTime: 176.50124
-    - _ScanlineCount: 50
-    - _ScanlineStrength: 0
-    - _Stencil: 0
-    - _StencilComp: 8
-    - _StencilOp: 0
-    - _StencilReadMask: 255
-    - _StencilWriteMask: 255
-    - _UseUIAlphaClip: 0
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _TintColor: {r: 1, g: 1, b: 1, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &156223344
 GameObject:
   m_ObjectHideFlags: 0
@@ -900,6 +848,58 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2929c5f3ddd306c46b9a707aff5a91fa, type: 2}
   - {fileID: 11400000, guid: 7a2328bfa9ca1e648b317f62bcc5dfba, type: 2}
   - {fileID: 11400000, guid: 85ec6dcc30697084297305fd4264abf6, type: 2}
+--- !u!21 &162759770
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ReportBackGround_CCTV_UI_Panel_Runtime
+  m_Shader: {fileID: 4800000, guid: ec239ae2aedd33e4dbe5b1f14b729ee3, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Brightness: 1
+    - _ChromaticAberration: 0
+    - _ColorMask: 15
+    - _Desaturation: 0
+    - _EffectIntensity: 1
+    - _FlickerStrength: 0
+    - _GlitchStrength: 0
+    - _NoiseSpeed: 0
+    - _NoiseStrength: 0
+    - _NoiseTime: 12.059894
+    - _ScanlineCount: 50
+    - _ScanlineStrength: 0
+    - _Stencil: 0
+    - _StencilComp: 8
+    - _StencilOp: 0
+    - _StencilReadMask: 255
+    - _StencilWriteMask: 255
+    - _UseUIAlphaClip: 0
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _TintColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1 &182759723
 GameObject:
   m_ObjectHideFlags: 0
@@ -1492,6 +1492,20 @@ MonoBehaviour:
   doorFadeInDuration: 0.5
   doorBlackoutHoldDuration: 0.2
   doorFadeOutDuration: 0.3
+  anomalyEye1Panel: {fileID: 1081543668}
+  anomalyEye2Panel: {fileID: 938040907}
+  anomalyQuickBlinkCount: 2
+  anomalyQuickCloseDuration: 0.07
+  anomalyQuickOpenDuration: 0.05
+  anomalyQuickBlinkInterval: 0.07
+  anomalyPauseBeforeSlowClose: 0.5
+  anomalySlowCloseDuration: 1
+  anomalyClosedHoldAfterChange: 0.5
+  anomalySnapOpenDuration: 0.3
+  anomalyClosedInsetRatio: 0.5
+  anomalyQuickBlinkEase: 6
+  anomalySlowCloseEase: 5
+  anomalySnapOpenEase: 6
 --- !u!1 &297260941
 GameObject:
   m_ObjectHideFlags: 0
@@ -1915,6 +1929,7 @@ MonoBehaviour:
   areaView: {fileID: 2090929919}
   timersPaused: 0
   missedWarningLeadTimeSec: 5
+  transitionEffect: {fileID: 0}
 --- !u!1 &414275875
 GameObject:
   m_ObjectHideFlags: 0
@@ -3851,7 +3866,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 126032856}
+  m_Material: {fileID: 162759770}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -4339,6 +4354,81 @@ Transform:
   - {fileID: 1787862881}
   m_Father: {fileID: 1433547044}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &938040906
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 938040907}
+  - component: {fileID: 938040909}
+  - component: {fileID: 938040908}
+  m_Layer: 5
+  m_Name: Eye2Panel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &938040907
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 938040906}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1473290253}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: -540}
+  m_SizeDelta: {x: 0, y: -1080}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &938040908
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 938040906}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &938040909
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 938040906}
+  m_CullTransparentMesh: 1
 --- !u!1 &999191719
 GameObject:
   m_ObjectHideFlags: 0
@@ -4855,6 +4945,81 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 400, y: 200}
   m_Pivot: {x: 1, y: 1}
+--- !u!1 &1081543667
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1081543668}
+  - component: {fileID: 1081543670}
+  - component: {fileID: 1081543669}
+  m_Layer: 5
+  m_Name: Eye1Panel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1081543668
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1081543667}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1473290253}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 540}
+  m_SizeDelta: {x: 0, y: -1080}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1081543669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1081543667}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1081543670
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1081543667}
+  m_CullTransparentMesh: 1
 --- !u!1 &1087556151
 GameObject:
   m_ObjectHideFlags: 0
@@ -5328,7 +5493,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 49610606
-  m_fontColor: {r: 0.43295518, g: 1, b: 0.95793676, a: 0.006654332}
+  m_fontColor: {r: 0.43295518, g: 1, b: 0.95793676, a: 0.0059862924}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -6463,6 +6628,8 @@ RectTransform:
   - {fileID: 1652584672}
   - {fileID: 643012067}
   - {fileID: 875918521}
+  - {fileID: 1081543668}
+  - {fileID: 938040907}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -6989,6 +7156,9 @@ MonoBehaviour:
   fallbackSuccessReportNoiseDuration: 1.1
   falseReportNoiseProfile: {fileID: 11400000, guid: bb969304b012a0b45b14558d55a633b1, type: 2}
   fallbackFalseReportNoiseDuration: 2
+  missedSignalLossNoiseProfile: {fileID: 11400000, guid: 3eac44e2ee4e4bc4aa51c653d51e91a2, type: 2}
+  missedFeedFreezeDuration: 0.1
+  missedTimeGlitchInterval: 0.05
   ReportSprites:
   - {fileID: 2881306688264789129, guid: 7dba3233d1ce7634ba27bb6c9bd4dad3, type: 3}
   - {fileID: -7612740012447542524, guid: f7be1e587e49c9647893465bbd14010e, type: 3}

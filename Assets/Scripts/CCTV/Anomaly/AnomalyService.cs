@@ -13,6 +13,10 @@ public class AnomalyService : MonoBehaviour
     [Header("Missed Warning")]
     [SerializeField, Min(0.1f)] private float missedWarningLeadTimeSec = 5f;
 
+    [Header("Appearance Presentation")]
+    [Tooltip("이상현상 실제 적용 직전에 눈꺼풀 연출로 화면을 가립니다. 미지정 시 즉시 적용됩니다.")]
+    [SerializeField] private TransitionEffect transitionEffect;
+
     private readonly List<AnomalyRuntime> activeAnomalies = new List<AnomalyRuntime>();
     private readonly HashSet<AnomalyRuntime> urgencyNotifiedAnomalies = new HashSet<AnomalyRuntime>();
 
@@ -208,6 +212,17 @@ public class AnomalyService : MonoBehaviour
     {
         if (runtime.Definition.WarningDurationSec > 0f)
             yield return WaitForAnomalySeconds(runtime.Definition.WarningDurationSec);
+
+        // 상태 변경은 눈꺼풀이 완전히 닫힌 뒤에 적용한다.
+        if (transitionEffect == null)
+            transitionEffect = FindFirstObjectByType<TransitionEffect>();
+
+        if (transitionEffect != null)
+        {
+            float appearanceLeadTime = transitionEffect.PlayAnomalyAppearanceBlink();
+            if (appearanceLeadTime > 0f)
+                yield return WaitForAnomalySeconds(appearanceLeadTime);
+        }
 
         foreach (AnomalyAction action in runtime.Definition.Actions)
         {

@@ -5,6 +5,7 @@ Shader "Unrecorded Area/CCTV CRT"
         [PerRendererData] _MainTex ("Texture", 2D) = "white" {}
         _DistortionStrength ("Distortion Strength", Range(0, 0.3)) = 0.08
         _ChromaticAberration ("Chromatic Aberration", Range(0, 0.03)) = 0.004
+        _HorizontalTearStrength ("Horizontal Tear Strength", Range(0, 0.08)) = 0
         _TintColor ("Tint Color", Color) = (0.48, 0.68, 0.58, 1)
         _Desaturation ("Desaturation", Range(0, 1)) = 0.25
         _Brightness ("Brightness", Range(0.25, 2)) = 0.9
@@ -46,6 +47,7 @@ Shader "Unrecorded Area/CCTV CRT"
             float4 _MainTex_ST;
             float _DistortionStrength;
             float _ChromaticAberration;
+            float _HorizontalTearStrength;
             float4 _TintColor;
             float _Desaturation;
             float _Brightness;
@@ -99,6 +101,11 @@ Shader "Unrecorded Area/CCTV CRT"
             fixed4 frag(v2f i) : SV_Target
             {
                 float2 uv = DistortUV(i.uv);
+
+                // 짧은 시간 동안 수평 밴드마다 다른 X 오프셋을 주어 CCTV 신호 찢김을 만든다.
+                float tearBand = floor(uv.y * 90.0 + _NoiseTime * 18.0);
+                float tearOffset = (hash21(float2(tearBand, floor(_NoiseTime * 20.0))) - 0.5) * 2.0;
+                uv.x += tearOffset * _HorizontalTearStrength;
 
                 if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0)
                     return fixed4(0.0, 0.0, 0.0, 1.0);

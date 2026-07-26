@@ -57,6 +57,11 @@ public class CCTVSceneUI : BaseUI
     [SerializeField] private CCTVNoiseProfile falseReportNoiseProfile;
     [SerializeField, Min(0.01f)] private float fallbackFalseReportNoiseDuration = 2f;
 
+    [Header("Missed Signal Loss")]
+    [SerializeField] private CCTVNoiseProfile missedSignalLossNoiseProfile;
+    [SerializeField, Min(0f)] private float missedFeedFreezeDuration = 0.1f;
+    [SerializeField, Min(0.02f)] private float missedTimeGlitchInterval = 0.05f;
+
     public Sprite[] ReportSprites;  // 오보고에 따른 보고서 이미지 변경 리스트
 
     // 보고 패널은 기본 높이까지만 열리는 상태와 선택 리스트를 보여주는 전체 높이 상태를 나눠 사용한다.
@@ -66,6 +71,7 @@ public class CCTVSceneUI : BaseUI
     private bool _isNormalizingReport;
     private Tween _slideTween;
     private CCTVUIEffectController _uiEffectController;
+    private Coroutine missedSignalLossCoroutine;
 
     // 보고 제출 시 사용할 내부 선택값. UI 표시 문자열이 아니라 enum/id 값을 저장한다.
     private AreaId selectedAreaId = AreaId.None;
@@ -624,8 +630,60 @@ public class CCTVSceneUI : BaseUI
     private void OnMissedAnomaly(AnomalyRuntime runtime)
     {
         string anomalyId = runtime != null && runtime.Definition != null ? runtime.Definition.AnomalyId : "Unknown";
-        Debug.Log($"[INFO] CCTVSceneUI::OnMissedAnomaly - 미보고 노이즈 실행 anomaly={anomalyId}");
-        PlayFalseReportNoise();
+        Debug.Log($"[INFO] CCTVSceneUI::OnMissedAnomaly - 미보고 신호 유실 연출 실행 anomaly={anomalyId}");
+
+        if (missedSignalLossCoroutine != null)
+            StopCoroutine(missedSignalLossCoroutine);
+
+        missedSignalLossCoroutine = StartCoroutine(PlayMissedSignalLossRoutine());
+    }
+
+    private IEnumerator PlayMissedSignalLossRoutine()
+    {
+        ResolveReferences();
+        if (screenEffectController == null)
+        {
+            PlayFalseReportNoise();
+            missedSignalLossCoroutine = null;
+            yield break;
+        }
+
+        if (missedFeedFreezeDuration > 0f)
+            yield return screenEffectController.FreezeFeedRoutine(missedFeedFreezeDuration);
+
+        float noiseDuration = missedSignalLossNoiseProfile != null
+            ? missedSignalLossNoiseProfile.TotalTimedDuration
+            : fallbackFalseReportNoiseDuration;
+
+        if (missedSignalLossNoiseProfile != null)
+            screenEffectController.PlayNoise(missedSignalLossNoiseProfile);
+        else
+            screenEffectController.PlayTransitionNoise(noiseDuration);
+
+        yield return StartCoroutine(GlitchTimeTextRoutine(noiseDuration));
+        missedSignalLossCoroutine = null;
+    }
+
+    private IEnumerator GlitchTimeTextRoutine(float duration)
+    {
+        TMP_Text timeText = GetText((int)Texts.TimeText);
+        string originalText = timeText != null ? timeText.text : string.Empty;
+        float elapsed = 0f;
+
+        while (timeText != null && elapsed < duration)
+        {
+            timeText.text = $"{Random.Range(0, 100):00}:{Random.Range(0, 100):00}";
+            yield return new WaitForSecondsRealtime(missedTimeGlitchInterval);
+            elapsed += missedTimeGlitchInterval;
+        }
+
+        if (timeText != null)
+        {
+            if (dayRuntimeController != null)
+                SetDayTimeInfo(dayRuntimeController.ElapsedSec, dayRuntimeController.DurationSec);
+            else
+                timeText.text = originalText;
+        }
     }
 
     private void SyncCurrentCCTVAreaInfo()
@@ -753,6 +811,9 @@ public class CCTVSceneUI : BaseUI
     private void OnDestroy()
     {
         _slideTween?.Kill();
+
+        if (missedSignalLossCoroutine != null)
+            StopCoroutine(missedSignalLossCoroutine);
 
         if (GameManager.Instance != null)
         {

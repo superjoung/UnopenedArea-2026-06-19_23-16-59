@@ -7,6 +7,7 @@ public class CCTVScreenEffectController : MonoBehaviour
 {
     private static readonly int DistortionStrengthId = Shader.PropertyToID("_DistortionStrength");
     private static readonly int ChromaticAberrationId = Shader.PropertyToID("_ChromaticAberration");
+    private static readonly int HorizontalTearStrengthId = Shader.PropertyToID("_HorizontalTearStrength");
     private static readonly int TintColorId = Shader.PropertyToID("_TintColor");
     private static readonly int DesaturationId = Shader.PropertyToID("_Desaturation");
     private static readonly int BrightnessId = Shader.PropertyToID("_Brightness");
@@ -172,6 +173,23 @@ public class CCTVScreenEffectController : MonoBehaviour
         fallbackNoiseDurationOverride = Mathf.Max(0.01f, duration);
         noiseCoroutine = StartCoroutine(PlayNoiseRoutine(null));
         return noiseCoroutine;
+    }
+
+    /// <summary>
+    /// 현재 렌더 텍스처를 잠시 그대로 유지해 CCTV 피드가 멈춘 것처럼 보이게 합니다.
+    /// </summary>
+    public IEnumerator FreezeFeedRoutine(float duration)
+    {
+        EnsureReferences();
+        if (worldCamera == null || duration <= 0f)
+            yield break;
+
+        bool wasEnabled = worldCamera.enabled;
+        worldCamera.enabled = false;
+        yield return new WaitForSecondsRealtime(duration);
+
+        if (worldCamera != null)
+            worldCamera.enabled = wasEnabled;
     }
 
     public IEnumerator PlayTransitionNoiseRoutine(float duration)
@@ -346,6 +364,7 @@ public class CCTVScreenEffectController : MonoBehaviour
 
         runtimeMaterial.SetFloat(DistortionStrengthId, activeProfile != null ? activeProfile.DistortionStrength : 0.08f);
         runtimeMaterial.SetFloat(ChromaticAberrationId, Mathf.Lerp(baseChromaticAberration, GetPeakChromaticAberration(), amount));
+        runtimeMaterial.SetFloat(HorizontalTearStrengthId, Mathf.Lerp(0f, GetPeakHorizontalTearStrength(), amount));
         runtimeMaterial.SetColor(TintColorId, activeProfile != null ? activeProfile.TintColor : new Color(0.48f, 0.68f, 0.58f, 1f));
         runtimeMaterial.SetFloat(DesaturationId, activeProfile != null ? activeProfile.Desaturation : 0.25f);
         runtimeMaterial.SetFloat(BrightnessId, Mathf.Lerp(baseBrightness, GetPeakBrightness(), amount));
@@ -372,6 +391,11 @@ public class CCTVScreenEffectController : MonoBehaviour
     private float GetPeakChromaticAberration()
     {
         return activeNoiseProfile != null ? activeNoiseProfile.PeakChromaticAberration : fallbackPeakChromaticAberration;
+    }
+
+    private float GetPeakHorizontalTearStrength()
+    {
+        return activeNoiseProfile != null ? activeNoiseProfile.PeakHorizontalTearStrength : 0f;
     }
 
     private float GetPeakBrightness()

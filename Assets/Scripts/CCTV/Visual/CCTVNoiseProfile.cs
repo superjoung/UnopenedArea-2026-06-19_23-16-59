@@ -13,6 +13,7 @@ public class CCTVNoiseProfile : ScriptableObject
     [SerializeField, Range(0f, 1f)] private float peakNoiseStrength = 0.22f;
     [SerializeField, Range(0f, 0.4f)] private float peakScanlineStrength = 0.18f;
     [SerializeField, Range(0f, 0.03f)] private float peakChromaticAberration = 0.012f;
+    [SerializeField, Range(0f, 0.08f)] private float peakHorizontalTearStrength;
     [SerializeField, Range(0.25f, 2f)] private float peakBrightness = 0.65f;
     [SerializeField, Range(0.25f, 2f)] private float peakContrast = 1.35f;
 
@@ -23,6 +24,7 @@ public class CCTVNoiseProfile : ScriptableObject
     public float PeakNoiseStrength => peakNoiseStrength;
     public float PeakScanlineStrength => peakScanlineStrength;
     public float PeakChromaticAberration => peakChromaticAberration;
+    public float PeakHorizontalTearStrength => peakHorizontalTearStrength;
     public float PeakBrightness => peakBrightness;
     public float PeakContrast => peakContrast;
 
