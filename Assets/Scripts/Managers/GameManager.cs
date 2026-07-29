@@ -17,6 +17,8 @@ public class GameManager : Singleton<GameManager>
 
     private bool reportInputEnabled = true;
 
+    public bool ReportInputEnabled => reportInputEnabled;
+
     private void Update()
     {
         if (reportInputEnabled && Input.GetKeyDown(KeyCode.W))

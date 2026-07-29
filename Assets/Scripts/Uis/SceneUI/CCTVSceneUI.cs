@@ -48,6 +48,7 @@ public class CCTVSceneUI : BaseUI
     [SerializeField] private DayRuntimeController dayRuntimeController;
     [SerializeField] private CCTVScreenEffectController screenEffectController;
     [SerializeField] private CCTVPanController panController;
+    [SerializeField] private Day1FlowController day1FlowController;
 
     [Header("Success Report Noise")]
     [SerializeField] private CCTVNoiseProfile successReportNoiseProfile;
@@ -66,6 +67,7 @@ public class CCTVSceneUI : BaseUI
     private bool _isNormalizingReport;
     private Tween _slideTween;
     private CCTVUIEffectController _uiEffectController;
+    private Coroutine deferredMissedNoiseCoroutine;
 
     // 보고 제출 시 사용할 내부 선택값. UI 표시 문자열이 아니라 enum/id 값을 저장한다.
     private AreaId selectedAreaId = AreaId.None;
@@ -625,7 +627,25 @@ public class CCTVSceneUI : BaseUI
     {
         string anomalyId = runtime != null && runtime.Definition != null ? runtime.Definition.AnomalyId : "Unknown";
         Debug.Log($"[INFO] CCTVSceneUI::OnMissedAnomaly - 미보고 노이즈 실행 anomaly={anomalyId}");
+
+        ResolveReferences();
+        if (day1FlowController != null && day1FlowController.IsEmergencyPresentationLocked)
+        {
+            if (deferredMissedNoiseCoroutine == null)
+                deferredMissedNoiseCoroutine = StartCoroutine(PlayDeferredMissedNoiseRoutine());
+            return;
+        }
+
         PlayFalseReportNoise();
+    }
+
+    private IEnumerator PlayDeferredMissedNoiseRoutine()
+    {
+        while (day1FlowController != null && day1FlowController.IsEmergencyPresentationLocked)
+            yield return null;
+
+        PlayFalseReportNoise();
+        deferredMissedNoiseCoroutine = null;
     }
 
     private void SyncCurrentCCTVAreaInfo()
@@ -748,11 +768,17 @@ public class CCTVSceneUI : BaseUI
 
         if (panController == null)
             panController = FindObjectOfType<CCTVPanController>();
+
+        if (day1FlowController == null)
+            day1FlowController = FindFirstObjectByType<Day1FlowController>();
     }
 
     private void OnDestroy()
     {
         _slideTween?.Kill();
+
+        if (deferredMissedNoiseCoroutine != null)
+            StopCoroutine(deferredMissedNoiseCoroutine);
 
         if (GameManager.Instance != null)
         {

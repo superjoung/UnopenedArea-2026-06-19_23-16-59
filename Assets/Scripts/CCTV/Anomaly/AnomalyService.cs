@@ -13,6 +13,10 @@ public class AnomalyService : MonoBehaviour
     [Header("Missed Warning")]
     [SerializeField, Min(0.1f)] private float missedWarningLeadTimeSec = 5f;
 
+    [Header("Appearance Presentation")]
+    [Tooltip("이상현상 실제 적용 직전에 눈꺼풀 연출로 화면을 가립니다. 미지정 시 자동 탐색합니다.")]
+    [SerializeField] private TransitionEffect transitionEffect;
+
     private readonly List<AnomalyRuntime> activeAnomalies = new List<AnomalyRuntime>();
     private readonly HashSet<AnomalyRuntime> urgencyNotifiedAnomalies = new HashSet<AnomalyRuntime>();
 
@@ -26,6 +30,7 @@ public class AnomalyService : MonoBehaviour
     {
         if (areaView == null)
             areaView = FindObjectOfType<CCTVAreaView>();
+
     }
 
     private void Update()
@@ -208,6 +213,35 @@ public class AnomalyService : MonoBehaviour
     {
         if (runtime.Definition.WarningDurationSec > 0f)
             yield return WaitForAnomalySeconds(runtime.Definition.WarningDurationSec);
+
+        if (transitionEffect == null)
+            transitionEffect = FindFirstObjectByType<TransitionEffect>();
+
+        if (transitionEffect != null)
+        {
+            float appearanceLeadTime = transitionEffect.PlayAnomalyAppearanceBlink();
+            if (appearanceLeadTime > 0f)
+                yield return new WaitForSecondsRealtime(appearanceLeadTime);
+
+            foreach (AnomalyAction action in runtime.Definition.Actions)
+            {
+                if (action == null)
+                    continue;
+
+                if (action.DelaySec > 0f)
+                yield return new WaitForSecondsRealtime(action.DelaySec);
+
+                ApplyAction(runtime.Definition, instance, action);
+            }
+
+            float presentationTailDuration = Mathf.Max(0f, transitionEffect.AnomalyBlinkTotalDuration - appearanceLeadTime);
+            if (presentationTailDuration > 0f)
+                yield return new WaitForSecondsRealtime(presentationTailDuration);
+
+            runtime.ActivateTimer();
+            Debug.Log($"[AnomalyService] Activated anomaly={runtime.Definition.AnomalyId}, area={runtime.Definition.AreaId}, duration={runtime.RemainingActiveTimeSec}");
+            yield break;
+        }
 
         foreach (AnomalyAction action in runtime.Definition.Actions)
         {

@@ -29,6 +29,7 @@ public class CCTVTestSceneController : MonoBehaviour
     public System.Action<CCTVChannelRuntime> ChannelSelected;
     public IReadOnlyList<CCTVChannelRuntime> Channels => channels;
     public DayDefinition CurrentDayDefinition => dayDefinition;
+    public bool CCTVInputEnabled => cctvInputEnabled;
     public CCTVChannelRuntime CurrentChannel =>
         channels.Count == 0 ? null : channels[currentChannelIndex];
 
