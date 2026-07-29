@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public enum Day1FlowState
@@ -26,6 +27,10 @@ public class Day1FlowController : MonoBehaviour
     [SerializeField] private FieldModeController fieldModeController;
     [SerializeField] private Day1AreaTransitionController areaTransitionController;
     [SerializeField] private TransitionEffect transitionEffect;
+    [SerializeField] private CCTVScreenEffectController screenEffectController;
+
+    [Header("Tutorial Presentation")]
+    [SerializeField, Min(0f)] private float tutorialChannelActivationDelay = 0.5f;
 
     [Header("Temporary Debug Input")]
     [SerializeField] private bool useKeyboardAdvance = false;
@@ -39,10 +44,26 @@ public class Day1FlowController : MonoBehaviour
     private bool tutorialFinished;
     private bool emergencyDispatchStarted;
     private bool emergencyFieldModeStarted;
+    private Coroutine tutorialChannelActivationRoutine;
+    private Coroutine emergencyDispatchRoutine;
+    private PresentationLockMode presentationLockMode;
+    private bool presentationPausedDay;
+    private bool presentationGenerationWasPaused;
+    private bool presentationAnomalyTimersWerePaused;
+    private bool presentationCctvInputWasEnabled;
+    private bool presentationReportInputWasEnabled;
+
+    private enum PresentationLockMode
+    {
+        None = 0,
+        Emergency = 1,
+    }
 
     public Day1FlowState State { get; private set; } = Day1FlowState.None;
     public int ChannelSwitchCount => channelSwitchCount;
     public bool TutorialFinished => tutorialFinished;
+    public bool IsPresentationLocked => presentationLockMode != PresentationLockMode.None;
+    public bool IsEmergencyPresentationLocked => presentationLockMode == PresentationLockMode.Emergency;
 
     public System.Action<Day1FlowState> StateChanged;
     public System.Action<string> FlowMessageChanged;
@@ -103,6 +124,11 @@ public class Day1FlowController : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (tutorialChannelActivationRoutine != null)
+            StopCoroutine(tutorialChannelActivationRoutine);
+        if (emergencyDispatchRoutine != null)
+            StopCoroutine(emergencyDispatchRoutine);
+
         UnsubscribeEvents();
     }
 
@@ -218,20 +244,14 @@ public class Day1FlowController : MonoBehaviour
         if (dayDefinition == null || dayDefinition.TutorialAnomaly == null || anomalyService == null)
             return;
 
-        bool reachedChannelCondition = channelSwitchCount >= dayDefinition.TutorialRequiredChannelSwitches;
         bool reachedTimeCondition = dayRuntimeController != null &&
-                                    dayRuntimeController.ElapsedSec >= dayDefinition.TutorialFallbackElapsedSec;
+                                     dayRuntimeController.ElapsedSec >= dayDefinition.TutorialFallbackElapsedSec;
 
-        if (!reachedChannelCondition && !reachedTimeCondition)
-            return;
-
-        AnomalyRuntime runtime = anomalyService.Activate(dayDefinition.TutorialAnomaly);
-        if (runtime == null)
+        if (!reachedTimeCondition)
             return;
 
         tutorialActivationRequested = true;
-        FlowMessageChanged?.Invoke("기준 화면과 일치하지 않는 항목을 보고하십시오.");
-        Debug.Log($"[Day1FlowController] Tutorial anomaly started. id={dayDefinition.TutorialAnomaly.AnomalyId}, channelSwitches={channelSwitchCount}, elapsed={dayRuntimeController.ElapsedSec:F1}");
+        ActivateTutorialAnomaly();
     }
 
     private void HandleChannelSelected(CCTVChannelRuntime channel)
@@ -241,6 +261,38 @@ public class Day1FlowController : MonoBehaviour
 
         channelSwitchCount++;
         Debug.Log($"[Day1FlowController] Tutorial channel switch progress {channelSwitchCount}/{dayDefinition.TutorialRequiredChannelSwitches}. channel={channel?.ChannelLabel}");
+
+        if (channelSwitchCount < dayDefinition.TutorialRequiredChannelSwitches)
+            return;
+
+        tutorialActivationRequested = true;
+        tutorialChannelActivationRoutine = StartCoroutine(ActivateTutorialAfterChannelDelay());
+    }
+
+    private IEnumerator ActivateTutorialAfterChannelDelay()
+    {
+        if (tutorialChannelActivationDelay > 0f)
+            yield return new WaitForSecondsRealtime(tutorialChannelActivationDelay);
+
+        if (State == Day1FlowState.Monitoring)
+            ActivateTutorialAnomaly();
+        else
+            tutorialActivationRequested = false;
+
+        tutorialChannelActivationRoutine = null;
+    }
+
+    private void ActivateTutorialAnomaly()
+    {
+        AnomalyRuntime runtime = anomalyService.Activate(dayDefinition.TutorialAnomaly);
+        if (runtime == null)
+        {
+            tutorialActivationRequested = false;
+            return;
+        }
+
+        FlowMessageChanged?.Invoke("기준 화면과 일치하지 않는 항목을 보고하십시오.");
+        Debug.Log($"[Day1FlowController] Tutorial anomaly started. id={dayDefinition.TutorialAnomaly.AnomalyId}, channelSwitches={channelSwitchCount}, elapsed={dayRuntimeController.ElapsedSec:F1}");
     }
 
     private void HandleAnomalyResolved(AnomalyRuntime runtime)
@@ -316,7 +368,18 @@ public class Day1FlowController : MonoBehaviour
 
     private void BeginEmergencyDispatch(bool isDebug)
     {
+        if (emergencyDispatchStarted)
+            return;
+
         emergencyDispatchStarted = true;
+        emergencyDispatchRoutine = StartCoroutine(BeginEmergencyDispatchRoutine(isDebug));
+    }
+
+    private IEnumerator BeginEmergencyDispatchRoutine(bool isDebug)
+    {
+        while (transitionEffect != null && transitionEffect.IsAnomalyBlinkPlaying)
+            yield return null;
+
         PauseForEmergencyDispatch();
 
         if (transitionEffect == null)
@@ -327,10 +390,12 @@ public class Day1FlowController : MonoBehaviour
                 areaTransitionController.EnterMainRoom,
                 () => FinishEmergencyDispatch(isDebug)))
         {
-            return;
+            emergencyDispatchRoutine = null;
+            yield break;
         }
 
         FinishEmergencyDispatch(isDebug);
+        emergencyDispatchRoutine = null;
     }
 
     private void FinishEmergencyDispatch(bool isDebug)
@@ -416,32 +481,73 @@ public class Day1FlowController : MonoBehaviour
 
     private void PauseForEmergencyDispatch()
     {
-        if (anomalyScheduler != null)
-            anomalyScheduler.SetGenerationPaused(true);
-
-        if (dayRuntimeController != null)
-            dayRuntimeController.PauseDay();
-
-        if (sceneController != null)
-            sceneController.SetCCTVInputEnabled(false);
-
-        if (GameManager.Instance != null)
-            GameManager.Instance.SetReportInputEnabled(false);
+        BeginEmergencyPresentationLock();
     }
 
     private void ResumeAfterEmergencyDispatch()
     {
-        if (dayRuntimeController != null)
-            dayRuntimeController.ResumeDay();
+        EndEmergencyPresentationLock();
+    }
+
+    private void BeginEmergencyPresentationLock()
+    {
+        if (presentationLockMode == PresentationLockMode.Emergency)
+            return;
+
+        BeginPresentationLock(PresentationLockMode.Emergency);
+    }
+
+    private void EndEmergencyPresentationLock()
+    {
+        EndPresentationLock(PresentationLockMode.Emergency);
+    }
+
+    private void BeginPresentationLock(PresentationLockMode lockMode)
+    {
+        if (IsPresentationLocked)
+            return;
+
+        ResolveReferences();
+        presentationLockMode = lockMode;
+        presentationPausedDay = dayRuntimeController != null && dayRuntimeController.State == DayRuntimeState.Running;
+        presentationGenerationWasPaused = anomalyScheduler != null && anomalyScheduler.GenerationPaused;
+        presentationAnomalyTimersWerePaused = anomalyService != null && anomalyService.TimersPaused;
+        presentationCctvInputWasEnabled = sceneController == null || sceneController.CCTVInputEnabled;
+        presentationReportInputWasEnabled = GameManager.Instance == null || GameManager.Instance.ReportInputEnabled;
+
+        if (presentationPausedDay)
+            dayRuntimeController.PauseDay();
+        else if (anomalyService != null)
+            anomalyService.SetTimersPaused(true);
 
         if (anomalyScheduler != null)
-            anomalyScheduler.SetGenerationPaused(false);
-
+            anomalyScheduler.SetGenerationPaused(true);
+        if (screenEffectController != null)
+            screenEffectController.StopActiveNoise();
         if (sceneController != null)
-            sceneController.SetCCTVInputEnabled(true);
-
+            sceneController.SetCCTVInputEnabled(false);
         if (GameManager.Instance != null)
-            GameManager.Instance.SetReportInputEnabled(true);
+            GameManager.Instance.SetReportInputEnabled(false);
+    }
+
+    private void EndPresentationLock(PresentationLockMode expectedLockMode)
+    {
+        if (presentationLockMode != expectedLockMode)
+            return;
+
+        if (presentationPausedDay && dayRuntimeController != null)
+            dayRuntimeController.ResumeDay();
+        else if (anomalyService != null)
+            anomalyService.SetTimersPaused(presentationAnomalyTimersWerePaused);
+
+        if (anomalyScheduler != null)
+            anomalyScheduler.SetGenerationPaused(presentationGenerationWasPaused);
+        if (sceneController != null)
+            sceneController.SetCCTVInputEnabled(presentationCctvInputWasEnabled);
+        if (GameManager.Instance != null)
+            GameManager.Instance.SetReportInputEnabled(presentationReportInputWasEnabled);
+
+        presentationLockMode = PresentationLockMode.None;
     }
 
     private void ChangeState(Day1FlowState nextState, string message)
@@ -510,5 +616,8 @@ public class Day1FlowController : MonoBehaviour
 
         if (transitionEffect == null)
             transitionEffect = FindFirstObjectByType<TransitionEffect>();
+
+        if (screenEffectController == null)
+            screenEffectController = FindFirstObjectByType<CCTVScreenEffectController>();
     }
 }

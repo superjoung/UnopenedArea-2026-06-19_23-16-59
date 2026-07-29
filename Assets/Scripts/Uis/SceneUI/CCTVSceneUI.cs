@@ -48,6 +48,7 @@ public class CCTVSceneUI : BaseUI
     [SerializeField] private DayRuntimeController dayRuntimeController;
     [SerializeField] private CCTVScreenEffectController screenEffectController;
     [SerializeField] private CCTVPanController panController;
+    [SerializeField] private Day1FlowController day1FlowController;
 
     [Header("Success Report Noise")]
     [SerializeField] private CCTVNoiseProfile successReportNoiseProfile;
@@ -635,7 +636,17 @@ public class CCTVSceneUI : BaseUI
         if (missedSignalLossCoroutine != null)
             StopCoroutine(missedSignalLossCoroutine);
 
-        missedSignalLossCoroutine = StartCoroutine(PlayMissedSignalLossRoutine());
+        missedSignalLossCoroutine = StartCoroutine(PlayMissedSignalLossAfterEmergencyRoutine());
+    }
+
+    private IEnumerator PlayMissedSignalLossAfterEmergencyRoutine()
+    {
+        ResolveReferences();
+        while (day1FlowController != null && day1FlowController.IsEmergencyPresentationLocked)
+            yield return null;
+
+        yield return PlayMissedSignalLossRoutine();
+        missedSignalLossCoroutine = null;
     }
 
     private IEnumerator PlayMissedSignalLossRoutine()
@@ -644,7 +655,6 @@ public class CCTVSceneUI : BaseUI
         if (screenEffectController == null)
         {
             PlayFalseReportNoise();
-            missedSignalLossCoroutine = null;
             yield break;
         }
 
@@ -661,7 +671,6 @@ public class CCTVSceneUI : BaseUI
             screenEffectController.PlayTransitionNoise(noiseDuration);
 
         yield return StartCoroutine(GlitchTimeTextRoutine(noiseDuration));
-        missedSignalLossCoroutine = null;
     }
 
     private IEnumerator GlitchTimeTextRoutine(float duration)
@@ -806,6 +815,9 @@ public class CCTVSceneUI : BaseUI
 
         if (panController == null)
             panController = FindObjectOfType<CCTVPanController>();
+
+        if (day1FlowController == null)
+            day1FlowController = FindFirstObjectByType<Day1FlowController>();
     }
 
     private void OnDestroy()

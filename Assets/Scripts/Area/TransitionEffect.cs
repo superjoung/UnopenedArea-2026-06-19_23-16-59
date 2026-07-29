@@ -26,8 +26,11 @@ public class TransitionEffect : MonoBehaviour
 
     [Header("Blackout To Main Room")]
     [SerializeField] private Image blackoutPanelImage;
+    [SerializeField] private Image blackoutFlashPanelImage;
+    [SerializeField, Range(0f, 1f)] private float blackoutFlashPeakAlpha = 0.95f;
+    [SerializeField, Min(0.01f)] private float blackoutFlashInDuration = 0.025f;
     [SerializeField, Range(0f, 1f)] private float blackoutOpaqueAlpha = 1f;
-    [SerializeField, Range(1, 4)] private int blackoutFlickerCount = 2;
+    [SerializeField, Range(0, 4)] private int blackoutFlickerCount = 2;
     [SerializeField, Min(0.02f)] private float blackoutFlickerFadeDuration = 0.07f;
     [SerializeField, Min(0f)] private float blackoutGapBeforeFinalFadeDuration = 0.18f;
     [SerializeField, Min(0.02f)] private float finalBlackoutFadeDuration = 0.1f;
@@ -53,10 +56,10 @@ public class TransitionEffect : MonoBehaviour
     [SerializeField, Min(0.05f)] private float anomalySlowCloseDuration = 0.4f;
     [SerializeField, Min(0.02f)] private float anomalyClosedHoldAfterChange = 0.25f;
     [SerializeField, Min(0.02f)] private float anomalySnapOpenDuration = 0.06f;
-    [Tooltip("처음 접힌 Bottom/Top 값에서 닫혔을 때 남길 비율입니다. 0.5면 1080 -> 540입니다.")]
-    [SerializeField, Range(0.1f, 0.9f)] private float anomalyClosedInsetRatio = 0.5f;
+    [Tooltip("처음 접힌 Bottom/Top 값에서 닫혔을 때 남길 비율입니다. 0이면 패널이 화면 전체를 덮습니다.")]
+    [SerializeField, Range(0f, 0.9f)] private float anomalyClosedInsetRatio = 0f;
     [Tooltip("중앙의 미세한 틈을 없애기 위해 닫힐 때 각 패널을 추가로 겹칠 픽셀 수입니다.")]
-    [SerializeField, Min(0f)] private float anomalyCenterOverlapPixels = 12f;
+    [SerializeField, Min(0f)] private float anomalyCenterOverlapPixels = 240f;
     [SerializeField] private Ease anomalyQuickBlinkEase = Ease.OutQuad;
     [SerializeField] private Ease anomalySlowCloseEase = Ease.InQuad;
     [SerializeField] private Ease anomalySnapOpenEase = Ease.OutQuad;
@@ -72,6 +75,8 @@ public class TransitionEffect : MonoBehaviour
     private bool anomalyBlinkOffsetsCached;
 
     public bool IsPlaying => isPlaying;
+    public bool IsAnomalyBlinkPlaying => anomalyBlinkSequence != null && anomalyBlinkSequence.IsActive();
+    public float AnomalyBlinkTotalDuration => GetAnomalyBlinkCloseDuration() + anomalyClosedHoldAfterChange + anomalySnapOpenDuration;
 
     private void Awake()
     {
@@ -79,6 +84,7 @@ public class TransitionEffect : MonoBehaviour
         CacheCameraDefaults();
         SetImageAlpha(cctvEnterPanelImage, 0f);
         SetImageAlpha(blackoutPanelImage, 0f);
+        SetImageAlpha(blackoutFlashPanelImage, 0f);
         CacheAnomalyBlinkOpenOffsets();
         SetAnomalyBlinkOpenImmediate();
     }
@@ -90,6 +96,7 @@ public class TransitionEffect : MonoBehaviour
         isPlaying = false;
         SetImageAlpha(cctvEnterPanelImage, 0f);
         SetImageAlpha(blackoutPanelImage, 0f);
+        SetImageAlpha(blackoutFlashPanelImage, 0f);
         anomalyBlinkSequence?.Kill();
         anomalyBlinkSequence = null;
         SetAnomalyBlinkOpenImmediate();
@@ -140,7 +147,10 @@ public class TransitionEffect : MonoBehaviour
         isPlaying = true;
         activeSequence?.Kill();
         blackoutPanelImage.gameObject.SetActive(true);
+        if (blackoutFlashPanelImage != null)
+            blackoutFlashPanelImage.gameObject.SetActive(true);
         SetImageAlpha(blackoutPanelImage, 0f);
+        SetImageAlpha(blackoutFlashPanelImage, 0f);
         activeSequence = DOTween.Sequence();
 
         for (int i = 0; i < blackoutFlickerCount; i++)
@@ -150,7 +160,17 @@ public class TransitionEffect : MonoBehaviour
         }
 
         activeSequence.AppendInterval(blackoutGapBeforeFinalFadeDuration);
-        activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, finalBlackoutFadeDuration));
+
+        if (blackoutFlashPanelImage != null)
+        {
+            activeSequence.Append(blackoutFlashPanelImage.DOFade(blackoutFlashPeakAlpha, blackoutFlashInDuration));
+            activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, finalBlackoutFadeDuration));
+            activeSequence.Join(blackoutFlashPanelImage.DOFade(0f, finalBlackoutFadeDuration));
+        }
+        else
+        {
+            activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, finalBlackoutFadeDuration));
+        }
         activeSequence.AppendInterval(blackoutHoldDuration);
         activeSequence.AppendCallback(() => onOpaque?.Invoke());
         activeSequence.Append(mainRoomCamera.transform.DOMove(defaultCameraPosition, mainRoomRevealDuration).SetEase(mainRoomRevealEase));
@@ -210,9 +230,7 @@ public class TransitionEffect : MonoBehaviour
         anomalyBlinkSequence.AppendInterval(anomalyPauseBeforeSlowClose);
         AppendAnomalyBlinkPanelInsets(true, anomalySlowCloseDuration, anomalySlowCloseEase);
 
-        float applyAfter = anomalyQuickBlinkCount * (anomalyQuickCloseDuration + anomalyQuickOpenDuration)
-            + (anomalyQuickBlinkCount - 1) * anomalyQuickBlinkInterval
-            + anomalyPauseBeforeSlowClose + anomalySlowCloseDuration;
+        float applyAfter = GetAnomalyBlinkCloseDuration();
 
         anomalyBlinkSequence.AppendInterval(anomalyClosedHoldAfterChange);
         AppendAnomalyBlinkPanelInsets(false, anomalySnapOpenDuration, anomalySnapOpenEase);
@@ -223,6 +241,13 @@ public class TransitionEffect : MonoBehaviour
         });
 
         return applyAfter;
+    }
+
+    private float GetAnomalyBlinkCloseDuration()
+    {
+        return anomalyQuickBlinkCount * (anomalyQuickCloseDuration + anomalyQuickOpenDuration)
+            + (anomalyQuickBlinkCount - 1) * anomalyQuickBlinkInterval
+            + anomalyPauseBeforeSlowClose + anomalySlowCloseDuration;
     }
 
     private void CompleteSequence()
@@ -257,18 +282,12 @@ public class TransitionEffect : MonoBehaviour
         Vector2 eye2Target = anomalyEye2OpenOffsetMax;
         if (closed)
         {
-            // Eye1은 Bottom(offsetMin.y), Eye2는 Top(-offsetMax.y)을 절반으로 줄인다.
             eye1Target.y *= anomalyClosedInsetRatio;
             eye2Target.y *= anomalyClosedInsetRatio;
-
-            // Eye2의 Top은 offsetMax에서 음수로 보관되므로, 두 패널 모두 중앙 쪽으로 더 이동한다.
             eye1Target.y -= anomalyCenterOverlapPixels;
             eye2Target.y += anomalyCenterOverlapPixels;
         }
 
-        // DOTween은 RectTransform의 offsetMin/offsetMax 전용 확장을 제공하지 않으므로 값을 직접 tween한다.
-        // 한 단계의 첫 Tween은 Append로 새 구간을 만들고, 반대쪽 패널만 Join한다.
-        // Join만 연속 사용하면 모든 단계가 같은 시간대에 겹쳐 한 번만 깜빡이는 것처럼 보인다.
         anomalyBlinkSequence.Append(DOTween.To(
             () => anomalyEye1Panel.offsetMin,
             value => anomalyEye1Panel.offsetMin = value,
