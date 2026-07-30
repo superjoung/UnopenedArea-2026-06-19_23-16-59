@@ -23,6 +23,8 @@ public class DayRuntimeController : MonoBehaviour
     public float RemainingSec => Mathf.Max(0f, DurationSec - ElapsedSec);
     public int SuccessReportCount { get; private set; }
     public int WrongOrMissedCount { get; private set; }
+    /// <summary>오보고와 분리된, 실제 미보고 이상현상 누적 횟수입니다.</summary>
+    public int MissedAnomalyCount { get; private set; }
     public DayDefinition CurrentDayDefinition => dayDefinition;
     public float DurationSec => dayDefinition != null ? Mathf.Max(0.01f, dayDefinition.DurationSec) : 600f;
 
@@ -68,6 +70,7 @@ public class DayRuntimeController : MonoBehaviour
         ElapsedSec = 0f;
         SuccessReportCount = 0;
         WrongOrMissedCount = 0;
+        MissedAnomalyCount = 0;
         State = DayRuntimeState.Running;
 
         if (anomalyService != null)
@@ -160,6 +163,7 @@ public class DayRuntimeController : MonoBehaviour
             return;
 
         WrongOrMissedCount++;
+        MissedAnomalyCount++;
         NotifyFailureCountChanged();
         MissedAnomalyRegistered?.Invoke(runtime);
         if (GameManager.Instance != null)

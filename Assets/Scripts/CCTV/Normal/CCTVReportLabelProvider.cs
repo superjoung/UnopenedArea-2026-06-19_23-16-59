@@ -12,6 +12,12 @@ public static class CCTVReportLabelProvider
                 return "처치실";
             case AreaId.UtilityRoom:
                 return "관리실";
+            case AreaId.ServerRoom:
+                return "서버실";
+            case AreaId.ControlRoomExterior:
+                return "제어실 외부";
+            case AreaId.CCTVRoom:
+                return "제어실 내부";
             case AreaId.None:
                 return "선택";
             default:
@@ -33,8 +39,26 @@ public static class CCTVReportLabelProvider
                 return "조명";
             case ReportTargetId.Portrait:
                 return "초상화";
+            case ReportTargetId.Curtain:
+                return "커튼";
+            case ReportTargetId.ToolBox:
+                return "공구함";
+            case ReportTargetId.PatientBed:
+                return "환자 침대";
+            case ReportTargetId.ExitSign:
+                return "비상구 표지";
+            case ReportTargetId.Clock:
+                return "벽시계";
+            case ReportTargetId.Phone:
+                return "전화기";
             case ReportTargetId.Person:
                 return "사람";
+            case ReportTargetId.Monitor:
+                return "모니터";
+            case ReportTargetId.ServerRack:
+                return "서버 랙";
+            case ReportTargetId.Vent:
+                return "환기구";
             case ReportTargetId.Sound:
                 return "소리";
             case ReportTargetId.CCTVVideo:

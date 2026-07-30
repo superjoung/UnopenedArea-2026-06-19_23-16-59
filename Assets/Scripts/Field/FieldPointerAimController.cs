@@ -24,6 +24,8 @@ public class FieldPointerAimController : MonoBehaviour
     [Header("Options")]
     [SerializeField] private bool flipBodyToPointer = true;
     [SerializeField] private bool clampHeadRotation = true;
+    [Tooltip("8방향 상반신 스프라이트를 사용할 때는 회전된 스프라이트가 다시 기울지 않도록 끕니다.")]
+    [SerializeField] private bool rotateHeadPivot = true;
 
     private InputAction resolvedPointerAction;
 
@@ -104,7 +106,7 @@ public class FieldPointerAimController : MonoBehaviour
         float smooth = profile != null ? profile.HeadRotationSmooth : 18f;
         float t = 1f - Mathf.Exp(-smooth * Time.deltaTime);
 
-        if (headPivot != null)
+        if (rotateHeadPivot && headPivot != null)
         {
             Quaternion headRotation = Quaternion.Euler(0f, 0f, HeadAngle);
             headPivot.rotation = Quaternion.Slerp(headPivot.rotation, headRotation, t);

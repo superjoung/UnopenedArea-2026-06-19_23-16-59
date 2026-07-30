@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d0084bf59e64434485dcb3bafe3fae5, type: 3}
+  m_Name: D2_A05
+  m_EditorClassIdentifier: 
+  anomalyId: D2_A05
+  areaId: 100
+  reportTargetId: 200
+  reportType: 103
+  warningDurationSec: 0
+  activeDurationSec: 20
+  canEscalate: 0
+  nextStage: {fileID: 0}
+  isEmergency: 0
+  actions: []

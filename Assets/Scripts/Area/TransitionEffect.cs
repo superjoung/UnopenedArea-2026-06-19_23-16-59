@@ -3,6 +3,12 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum CctvTransitionStyle
+{
+    ZoomAndFade,
+    QuickFade
+}
+
 /// <summary>
 /// 메인룸→CCTV, 정전→메인룸 화면 전환을 한곳에서 처리합니다.
 /// </summary>
@@ -14,7 +20,9 @@ public class TransitionEffect : MonoBehaviour
     [SerializeField] private Transform cctvFocusTarget;
 
     [Header("Enter CCTV")]
+    [SerializeField] private CctvTransitionStyle cctvTransitionStyle = CctvTransitionStyle.ZoomAndFade;
     [SerializeField] private Image cctvEnterPanelImage;
+    [SerializeField] private Image toCctvPanel2;
     [SerializeField, Min(0.1f)] private float zoomOrthographicSize = 1.75f;
     [SerializeField, Min(0.05f)] private float zoomDuration = 0.6f;
     [SerializeField] private Ease zoomEase = Ease.InOutQuad;
@@ -23,6 +31,12 @@ public class TransitionEffect : MonoBehaviour
     [SerializeField, Min(0.05f)] private float enterFadeInDuration = 0.22f;
     [SerializeField, Min(0f)] private float enterHoldOpaqueDuration = 0.08f;
     [SerializeField, Min(0.05f)] private float enterFadeOutDuration = 0.35f;
+
+    [Header("Quick CCTV Fade")]
+    [SerializeField, Range(0f, 1f)] private float quickFadeOpaqueAlpha = 1f;
+    [SerializeField, Min(0.02f)] private float quickFadeInDuration = 0.12f;
+    [SerializeField, Min(0f)] private float quickFadeHoldDuration = 0.04f;
+    [SerializeField, Min(0.02f)] private float quickFadeOutDuration = 0.18f;
 
     [Header("Blackout To Main Room")]
     [SerializeField] private Image blackoutPanelImage;
@@ -42,6 +56,11 @@ public class TransitionEffect : MonoBehaviour
     [SerializeField, Min(0.05f)] private float doorFadeInDuration = 0.2f;
     [SerializeField, Min(0f)] private float doorBlackoutHoldDuration = 0.05f;
     [SerializeField, Min(0.05f)] private float doorFadeOutDuration = 0.35f;
+
+    [Header("Exit CCTV To Main Room")]
+    [SerializeField, Min(0.05f)] private float cctvExitFadeInDuration = 0.2f;
+    [SerializeField, Min(0f)] private float cctvExitBlackoutHoldDuration = 0.08f;
+    [SerializeField, Min(0.05f)] private float cctvExitFadeOutDuration = 0.3f;
 
     [Header("Anomaly Appearance Blink")]
     [Tooltip("Eye1Panel. RectTransform의 Bottom 값을 1080 -> 540처럼 줄여 아래로 펼칩니다.")]
@@ -83,6 +102,7 @@ public class TransitionEffect : MonoBehaviour
         ResolveReferences();
         CacheCameraDefaults();
         SetImageAlpha(cctvEnterPanelImage, 0f);
+        SetImageAlpha(toCctvPanel2, 0f);
         SetImageAlpha(blackoutPanelImage, 0f);
         SetImageAlpha(blackoutFlashPanelImage, 0f);
         CacheAnomalyBlinkOpenOffsets();
@@ -95,6 +115,7 @@ public class TransitionEffect : MonoBehaviour
         activeSequence = null;
         isPlaying = false;
         SetImageAlpha(cctvEnterPanelImage, 0f);
+        SetImageAlpha(toCctvPanel2, 0f);
         SetImageAlpha(blackoutPanelImage, 0f);
         SetImageAlpha(blackoutFlashPanelImage, 0f);
         anomalyBlinkSequence?.Kill();
@@ -109,8 +130,13 @@ public class TransitionEffect : MonoBehaviour
             return false;
 
         Day1FlowState state = day1FlowController.State;
-        if (state != Day1FlowState.BaselineReview && state != Day1FlowState.EmergencyRecovery)
+        if (state != Day1FlowState.BaselineReview &&
+            state != Day1FlowState.EmergencyRecovery &&
+            state != Day1FlowState.Monitoring)
             return false;
+
+        if (cctvTransitionStyle == CctvTransitionStyle.QuickFade && toCctvPanel2 != null)
+            return TryPlayQuickCctvEntry();
 
         if (mainRoomCamera == null || cctvFocusTarget == null || cctvEnterPanelImage == null)
         {
@@ -200,6 +226,84 @@ public class TransitionEffect : MonoBehaviour
         activeSequence.AppendCallback(() => onOpaque?.Invoke());
         activeSequence.Append(blackoutPanelImage.DOFade(0f, doorFadeOutDuration));
         activeSequence.OnComplete(() => { CompleteSequence(); onCompleted?.Invoke(); });
+        return true;
+    }
+
+    /// <summary>
+    /// 일반 감시 중 제어실을 확인하기 위해 CCTV를 나갈 때 사용합니다.
+    /// 정전과 달리 깜빡임 없이 검은 패널로 전환만 가립니다.
+    /// </summary>
+    public bool TryPlayCctvExit(Action onOpaque)
+    {
+        ResolveReferences();
+        if (isPlaying)
+            return false;
+
+        if (cctvTransitionStyle == CctvTransitionStyle.QuickFade && toCctvPanel2 != null)
+            return TryPlayQuickCctvExit(onOpaque);
+
+        if (blackoutPanelImage == null)
+            return false;
+
+        CacheCameraDefaults();
+        isPlaying = true;
+        activeSequence?.Kill();
+        blackoutPanelImage.gameObject.SetActive(true);
+        SetImageAlpha(blackoutPanelImage, 0f);
+
+        activeSequence = DOTween.Sequence();
+        activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, cctvExitFadeInDuration));
+        activeSequence.AppendInterval(cctvExitBlackoutHoldDuration);
+        activeSequence.AppendCallback(() => onOpaque?.Invoke());
+        if (mainRoomCamera != null)
+        {
+            activeSequence.Append(mainRoomCamera.transform
+                .DOMove(defaultCameraPosition, cctvExitFadeOutDuration)
+                .SetEase(mainRoomRevealEase));
+            activeSequence.Join(mainRoomCamera
+                .DOOrthoSize(defaultOrthographicSize, cctvExitFadeOutDuration)
+                .SetEase(mainRoomRevealEase));
+            activeSequence.Join(blackoutPanelImage
+                .DOFade(0f, cctvExitFadeOutDuration)
+                .SetEase(mainRoomRevealEase));
+        }
+        else
+        {
+            activeSequence.Append(blackoutPanelImage.DOFade(0f, cctvExitFadeOutDuration));
+        }
+        activeSequence.OnComplete(CompleteSequence);
+        return true;
+    }
+
+    private bool TryPlayQuickCctvEntry()
+    {
+        isPlaying = true;
+        activeSequence?.Kill();
+        toCctvPanel2.gameObject.SetActive(true);
+        SetImageAlpha(toCctvPanel2, 0f);
+
+        activeSequence = DOTween.Sequence();
+        activeSequence.Append(toCctvPanel2.DOFade(quickFadeOpaqueAlpha, quickFadeInDuration));
+        activeSequence.AppendInterval(quickFadeHoldDuration);
+        activeSequence.AppendCallback(() => day1FlowController.EnterCCTVFromMainRoom());
+        activeSequence.Append(toCctvPanel2.DOFade(0f, quickFadeOutDuration));
+        activeSequence.OnComplete(CompleteSequence);
+        return true;
+    }
+
+    private bool TryPlayQuickCctvExit(Action onOpaque)
+    {
+        isPlaying = true;
+        activeSequence?.Kill();
+        toCctvPanel2.gameObject.SetActive(true);
+        SetImageAlpha(toCctvPanel2, 0f);
+
+        activeSequence = DOTween.Sequence();
+        activeSequence.Append(toCctvPanel2.DOFade(quickFadeOpaqueAlpha, quickFadeInDuration));
+        activeSequence.AppendInterval(quickFadeHoldDuration);
+        activeSequence.AppendCallback(() => onOpaque?.Invoke());
+        activeSequence.Append(toCctvPanel2.DOFade(0f, quickFadeOutDuration));
+        activeSequence.OnComplete(CompleteSequence);
         return true;
     }
 

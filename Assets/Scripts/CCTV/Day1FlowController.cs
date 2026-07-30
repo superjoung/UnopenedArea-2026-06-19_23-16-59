@@ -37,6 +37,7 @@ public class Day1FlowController : MonoBehaviour
     [SerializeField] private KeyCode emergencyRecoveryKey = KeyCode.E;
     [SerializeField] private bool enableDebugEmergencyShortcut = true;
     [SerializeField] private KeyCode debugEmergencyKey = KeyCode.F7;
+    [SerializeField] private KeyCode cctvExitKey = KeyCode.Z;
 
     private DayDefinition dayDefinition;
     private int channelSwitchCount;
@@ -99,6 +100,9 @@ public class Day1FlowController : MonoBehaviour
 
     private void Update()
     {
+        if (Input.GetKeyDown(cctvExitKey))
+            ExitCCTVToMainRoom();
+
         if (useKeyboardAdvance && Input.GetKeyDown(KeyCode.Return))
         {
             if (State == Day1FlowState.Briefing)
@@ -151,7 +155,9 @@ public class Day1FlowController : MonoBehaviour
     /// </summary>
     public void EnterCCTVFromMainRoom()
     {
-        if (State != Day1FlowState.BaselineReview && State != Day1FlowState.EmergencyRecovery)
+        if (State != Day1FlowState.BaselineReview &&
+            State != Day1FlowState.EmergencyRecovery &&
+            State != Day1FlowState.Monitoring)
             return;
 
         if (areaTransitionController != null && !areaTransitionController.EnterCCTV())
@@ -163,8 +169,37 @@ public class Day1FlowController : MonoBehaviour
             return;
         }
 
+        if (State == Day1FlowState.Monitoring)
+            return;
+
         ResumeAfterEmergencyDispatch();
         ChangeState(Day1FlowState.Monitoring, "CCTV 감시를 재개합니다.");
+    }
+
+    /// <summary>
+    /// CCTV UI의 '제어실 확인' 버튼이 호출합니다.
+    /// 감시 중에는 메인룸을 잠깐 확인할 수 있고, 근무/이상현상 타이머는 계속 진행됩니다.
+    /// </summary>
+    public void ExitCCTVToMainRoom()
+    {
+        if (State != Day1FlowState.Monitoring ||
+            areaTransitionController == null ||
+            areaTransitionController.CurrentMode != Day1AreaMode.CCTV)
+            return;
+
+        if (transitionEffect == null)
+            transitionEffect = FindFirstObjectByType<TransitionEffect>();
+
+        if (transitionEffect != null)
+        {
+            if (transitionEffect.TryPlayCctvExit(areaTransitionController.EnterMainRoom))
+                return;
+
+            if (transitionEffect.IsPlaying)
+                return;
+        }
+
+        areaTransitionController.EnterMainRoom();
     }
 
     /// <summary>메인룸 문 상호작용에서 호출합니다.</summary>

@@ -165,6 +165,16 @@ public class CCTVSceneUI : BaseUI
         }
     }
 
+    /// <summary>
+    /// CCTV 화면의 보조 버튼 OnClick에 연결합니다.
+    /// 메인룸으로 나가도 감시 시간과 이상현상 타이머는 멈추지 않습니다.
+    /// </summary>
+    public void ExitToMainRoom()
+    {
+        ResolveReferences();
+        day1FlowController?.ExitCCTVToMainRoom();
+    }
+
     #region Report Select Button Event
     private void OnClickAreaSelectButton(PointerEventData eventData)
     {

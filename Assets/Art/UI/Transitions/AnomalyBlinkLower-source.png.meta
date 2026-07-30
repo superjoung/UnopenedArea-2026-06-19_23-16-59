@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      AnomalyBlinkLower-source_0: 8536653730380883817
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -4,6 +4,9 @@
     LabCorridor = 100,
     TreatmentRoom = 200,
     UtilityRoom = 300,
+    ServerRoom = 400,
+    ControlRoomExterior = 500,
+    CCTVRoom = 600,
 }
 
 public enum ReportTargetId
@@ -14,10 +17,16 @@ public enum ReportTargetId
     Door = 102,
     Light = 103,
     Portrait = 104,
-    StandBlind = 105,
+    Curtain = 105,
     ToolBox = 106,
     PatientBed = 107,
+    ExitSign = 108,
+    Clock = 109,
+    Phone = 110,
     Person = 200,
+    Monitor = 202,
+    ServerRack = 203,
+    Vent = 204,
     Sound = 300,
     CCTVVideo = 400,
 }

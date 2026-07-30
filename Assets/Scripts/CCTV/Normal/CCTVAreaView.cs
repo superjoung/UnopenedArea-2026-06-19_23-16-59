@@ -66,6 +66,31 @@ public class CCTVAreaView : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 근무 도중 새 CCTV 채널이 해금될 때 해당 구역 인스턴스를 추가합니다.
+    /// 이미 준비된 구역이면 중복 생성하지 않습니다.
+    /// </summary>
+    public bool TryPrepareAdditionalArea(CCTVAreaDefinition area)
+    {
+        EnsureAreaRoot();
+        EnsureBackgroundRenderer();
+
+        if (area == null || area.AreaId == AreaId.None)
+            return false;
+
+        if (instancesByAreaId.ContainsKey(area.AreaId))
+            return true;
+
+        Vector3 origin = transform.position + new Vector3(areaSpacing * instancesByAreaId.Count, 0f, 0f);
+        CCTVAreaInstance instance = CreateAreaInstance(area, origin);
+        if (instance == null)
+            return false;
+
+        instancesByAreaId.Add(area.AreaId, instance);
+        originsByAreaId.Add(area.AreaId, origin);
+        return true;
+    }
+
     public void ShowArea(CCTVAreaDefinition area)
     {
         CurrentArea = area;

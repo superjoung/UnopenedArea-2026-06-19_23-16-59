@@ -42,7 +42,7 @@ public class FieldModeController : MonoBehaviour
 
         if (fieldModeRoot == null || fieldCamera == null || fieldPlayer == null)
         {
-            Debug.LogWarning("[FieldModeController] Field mode references are incomplete. CharacterMove field import is required.");
+            Debug.LogWarning("[FieldModeController] Field mode references are incomplete. Assign FieldModeRoot, FieldCamera, and FieldPlayer in Day1.");
             return false;
         }
 
@@ -207,22 +207,4 @@ public class FieldModeController : MonoBehaviour
         cctvGlobalLightStates.Clear();
     }
 
-#if UNITY_EDITOR
-    /// <summary>
-    /// CharacterMoveTest 이식 도구가 Day1 씬에 참조를 저장할 때 사용한다.
-    /// </summary>
-    public void ConfigureForDay1(
-        GameObject newFieldModeRoot,
-        Camera newFieldCamera,
-        FieldPlayerMovementController newFieldPlayer,
-        GameObject newCctvSystemRoot,
-        GameObject newCctvUiRoot)
-    {
-        fieldModeRoot = newFieldModeRoot;
-        fieldCamera = newFieldCamera;
-        fieldPlayer = newFieldPlayer;
-        cctvSystemRoot = newCctvSystemRoot;
-        cctvUiRoot = newCctvUiRoot;
-    }
-#endif
 }

@@ -39,7 +39,9 @@ public class MainRoomInteractionController : MonoBehaviour
     {
         Day1FlowState state = day1FlowController != null ? day1FlowController.State : Day1FlowState.None;
         if (phoneTarget != null) phoneTarget.SetAvailable(state == Day1FlowState.Briefing);
-        if (cctvTarget != null) cctvTarget.SetAvailable(state == Day1FlowState.BaselineReview || state == Day1FlowState.EmergencyRecovery);
+        if (cctvTarget != null) cctvTarget.SetAvailable(state == Day1FlowState.BaselineReview ||
+                                                        state == Day1FlowState.EmergencyRecovery ||
+                                                        state == Day1FlowState.Monitoring);
         if (doorTarget != null) doorTarget.SetAvailable(state == Day1FlowState.EmergencyDispatch);
     }
 
