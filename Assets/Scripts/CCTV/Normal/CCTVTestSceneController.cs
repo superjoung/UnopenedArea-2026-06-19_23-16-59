@@ -90,7 +90,7 @@ public class CCTVTestSceneController : MonoBehaviour
 
         SelectChannelImmediate(0);
 
-        if (dayRuntimeController != null &&
+        if (UsesMissedEscalationChannels && dayRuntimeController != null &&
             dayRuntimeController.MissedAnomalyCount >= cctvRoomTakeoverMissedCount)
         {
             TryTakeOverWithCCTVRoom();
@@ -332,7 +332,7 @@ public class CCTVTestSceneController : MonoBehaviour
 
                 // 제어실 외부는 DayDefinition에 등록되어 있어도 미보고 2회 전까지는
                 // 일반 감시 채널로 만들지 않는다.
-                if (IsControlRoomExteriorArea(area) || IsCCTVRoomArea(area))
+                if (UsesMissedEscalationChannels && (IsControlRoomExteriorArea(area) || IsCCTVRoomArea(area)))
                     continue;
 
                 channels.Add(new CCTVChannelRuntime(channels.Count + 1, area));
@@ -345,7 +345,7 @@ public class CCTVTestSceneController : MonoBehaviour
 
     private void HandleMissedAnomalyRegistered(AnomalyRuntime runtime)
     {
-        if (dayRuntimeController == null)
+        if (!UsesMissedEscalationChannels || dayRuntimeController == null)
             return;
 
         if (dayRuntimeController.MissedAnomalyCount >= cctvRoomTakeoverMissedCount)
@@ -365,6 +365,9 @@ public class CCTVTestSceneController : MonoBehaviour
         return area != null &&
                (area == controlRoomExteriorArea || area.AreaId == AreaId.ControlRoomExterior);
     }
+
+    private bool UsesMissedEscalationChannels =>
+        dayDefinition != null && dayDefinition.EnableMissedEscalationChannels;
 
     private bool IsCCTVRoomArea(CCTVAreaDefinition area)
     {

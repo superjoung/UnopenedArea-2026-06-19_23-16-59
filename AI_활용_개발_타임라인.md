@@ -505,3 +505,13 @@
 
 - CSV의 `day` 열을 읽어 선택한 AnomalyDefinitions 상위 폴더 아래 `D1`, `D2`, `D3`으로 자동 분류해 생성·갱신하도록 임포터를 개선했다.
 - 같은 일차 폴더 안의 같은 `anomaly_id`만 갱신하며, Actions 배열과 nextStage 참조는 기존 Inspector 작업을 보존한다.
+## 2026-07-31 Day 공통 흐름 기반화
+
+- AI가 Day 1 흐름의 튜토리얼, 일반 감시, 정전 출동, 미보고 채널 탈취 의존성을 분리해 검토하고, 기존 `Day1FlowController` 참조를 깨지 않는 `DayFlowController` 공통 진입점을 추가했다.
+- 튜토리얼 이상현상이 비어 있는 DayDefinition은 전화 후 즉시 일반 감시 및 랜덤 풀을 시작하도록 바꿔 Day 2 이상에서도 Day 1 씬 구조를 재사용할 수 있게 했다.
+- Day 1 전용인 제어실 외부/CCTVRoom 미보고 채널 해금은 DayDefinition의 `Enable Missed Escalation Channels` 설정으로 분리했다. 기존 Day 1은 호환을 위해 자동 활성화되고, 이후 일차는 필요한 경우에만 켠다.
+
+## 2026-07-31 손전등 원점 보정
+
+- 기존 시야 회전을 유지한 채, 8개 손전등 위치 기준점 사이를 마우스 각도에 따라 보간하는 Socket 보정 로직을 추가했다.
+- 회전은 VisionPivot, 원점 이동은 FlashlightSocket으로 분리해 연속 회전과 스프라이트별 손전등 위치 보정을 함께 유지한다.

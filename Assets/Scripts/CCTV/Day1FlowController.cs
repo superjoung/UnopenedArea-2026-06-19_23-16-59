@@ -69,36 +69,33 @@ public class Day1FlowController : MonoBehaviour
     public System.Action<Day1FlowState> StateChanged;
     public System.Action<string> FlowMessageChanged;
 
-    private void Awake()
+    protected virtual void Awake()
     {
         ResolveReferences();
     }
 
-    private void Start()
+    protected virtual void Start()
     {
         ResolveReferences();
 
         if (dayRuntimeController == null || dayRuntimeController.CurrentDayDefinition == null)
         {
-            Debug.LogWarning("[Day1FlowController] DayDefinition is missing. Day 1 flow is disabled.");
+            Debug.LogWarning("[DayFlowController] DayDefinition is missing. Day flow is disabled.");
             enabled = false;
             return;
         }
 
         dayDefinition = dayRuntimeController.CurrentDayDefinition;
-        if (dayDefinition.Day != 1)
-        {
-            enabled = false;
-            return;
-        }
 
         SubscribeEvents();
-        PauseNormalAnomalies();
+        if (RequiresTutorial)
+            PauseNormalAnomalies();
+
         areaTransitionController?.EnterMainRoom();
-        ChangeState(Day1FlowState.Briefing, "제4관측동 폐쇄 전 상태 기록을 시작합니다. 메인룸의 전화기를 확인하십시오.");
+        ChangeState(Day1FlowState.Briefing, $"DAY {dayDefinition.Day} 감시 기록을 시작합니다. 메인룸의 전화기를 확인하십시오.");
     }
 
-    private void Update()
+    protected virtual void Update()
     {
         if (Input.GetKeyDown(cctvExitKey))
             ExitCCTVToMainRoom();
@@ -113,9 +110,9 @@ public class Day1FlowController : MonoBehaviour
 
         if (State == Day1FlowState.Monitoring)
         {
-            if (!tutorialActivationRequested)
+            if (RequiresTutorial && !tutorialActivationRequested)
                 TryStartTutorialAnomaly();
-            else if (tutorialFinished)
+            else if (!RequiresTutorial || tutorialFinished)
                 TryStartEmergencyDispatch();
         }
 
@@ -126,7 +123,7 @@ public class Day1FlowController : MonoBehaviour
 
     }
 
-    private void OnDestroy()
+    protected virtual void OnDestroy()
     {
         if (tutorialChannelActivationRoutine != null)
             StopCoroutine(tutorialChannelActivationRoutine);
@@ -260,7 +257,7 @@ public class Day1FlowController : MonoBehaviour
 
         channelSwitchCount = 0;
         tutorialActivationRequested = false;
-        tutorialFinished = false;
+        tutorialFinished = !RequiresTutorial;
         emergencyDispatchStarted = false;
         emergencyFieldModeStarted = false;
 
@@ -269,14 +266,14 @@ public class Day1FlowController : MonoBehaviour
 
         // 첫 튜토리얼 이상현상이 끝날 때까지 랜덤 이벤트는 시작하지 않는다.
         if (anomalyScheduler != null)
-            anomalyScheduler.SetGenerationPaused(true);
+            anomalyScheduler.SetGenerationPaused(RequiresTutorial);
 
         ChangeState(Day1FlowState.Monitoring, "감시를 시작합니다. CCTV 채널을 전환해 정상 배치를 확인하십시오.");
     }
 
     private void TryStartTutorialAnomaly()
     {
-        if (dayDefinition == null || dayDefinition.TutorialAnomaly == null || anomalyService == null)
+        if (!RequiresTutorial || anomalyService == null)
             return;
 
         bool reachedTimeCondition = dayRuntimeController != null &&
@@ -291,7 +288,7 @@ public class Day1FlowController : MonoBehaviour
 
     private void HandleChannelSelected(CCTVChannelRuntime channel)
     {
-        if (State != Day1FlowState.Monitoring || tutorialActivationRequested)
+        if (!RequiresTutorial || State != Day1FlowState.Monitoring || tutorialActivationRequested)
             return;
 
         channelSwitchCount++;
@@ -392,7 +389,7 @@ public class Day1FlowController : MonoBehaviour
     /// </summary>
     public void ForceEmergencyDispatchForDebug()
     {
-        if (State != Day1FlowState.Monitoring || !tutorialFinished || emergencyDispatchStarted)
+        if (State != Day1FlowState.Monitoring || (RequiresTutorial && !tutorialFinished) || emergencyDispatchStarted)
         {
             Debug.LogWarning("[Day1FlowController] Debug emergency requires Monitoring state after the tutorial is finished.");
             return;
@@ -655,4 +652,10 @@ public class Day1FlowController : MonoBehaviour
         if (screenEffectController == null)
             screenEffectController = FindFirstObjectByType<CCTVScreenEffectController>();
     }
+
+    /// <summary>
+    /// 튜토리얼 이상현상을 지정한 일차에만 첫 이상현상 전 스케줄러를 멈춥니다.
+    /// Day 2 이후처럼 TutorialAnomaly가 비어 있으면 일반 랜덤 풀을 즉시 시작합니다.
+    /// </summary>
+    protected virtual bool RequiresTutorial => dayDefinition != null && dayDefinition.TutorialAnomaly != null;
 }

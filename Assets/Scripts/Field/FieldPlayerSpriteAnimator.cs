@@ -30,6 +30,9 @@ public class FieldPlayerSpriteAnimator : MonoBehaviour
     private float walkElapsed;
     private int facingSign = 1;
 
+    /// <summary>이동 방향에 따라 현재 스프라이트가 향하는 좌우 방향입니다. 오른쪽은 1, 왼쪽은 -1입니다.</summary>
+    public int FacingSign => facingSign;
+
     private void Awake()
     {
         ResolveReferences();

@@ -46,6 +46,10 @@ public class DayDefinition : ScriptableObject
     [SerializeField, Min(0)] private int emergencyRequiredCorrectReports = 3;
     [SerializeField, Range(0f, 1f)] private float emergencyTriggerProgress = 0.7f;
 
+    [Header("Missed Escalation Channels")]
+    [Tooltip("미보고 누적 시 제어실 외부 해금 및 CCTVRoom 탈취를 사용합니다. Day 1 기존 설정은 호환을 위해 항상 켜집니다.")]
+    [SerializeField] private bool enableMissedEscalationChannels;
+
     [Header("Fixed Anomaly Schedule")]
     [SerializeField] private FixedAnomalyScheduleEntry[] fixedSchedule;
 
@@ -65,6 +69,7 @@ public class DayDefinition : ScriptableObject
     public bool EnableEmergencyDispatch => enableEmergencyDispatch;
     public int EmergencyRequiredCorrectReports => Mathf.Max(0, emergencyRequiredCorrectReports);
     public float EmergencyTriggerProgress => Mathf.Clamp01(emergencyTriggerProgress);
+    public bool EnableMissedEscalationChannels => day == 1 || enableMissedEscalationChannels;
     public IReadOnlyList<FixedAnomalyScheduleEntry> FixedSchedule => fixedSchedule;
     public IReadOnlyList<RandomAnomalyPoolEntry> RandomPool => randomPool;
     public bool EnableRandomSchedule => enableRandomSchedule;

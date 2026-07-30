@@ -41,9 +41,6 @@ MonoBehaviour:
   - anomaly: {fileID: 11400000, guid: fd240f65b0a9fed4aa548a6e5626b358, type: 2}
     weight: 1
     allowRepeat: 1
-  - anomaly: {fileID: 11400000, guid: fd240f65b0a9fed4aa548a6e5626b358, type: 2}
-    weight: 1
-    allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: f90ec369eb033c641b77afda9cc566c8, type: 2}
     weight: 1
     allowRepeat: 1
@@ -56,9 +53,18 @@ MonoBehaviour:
   - anomaly: {fileID: 11400000, guid: bd19066717dfac54cb7b073a3284ff2a, type: 2}
     weight: 1
     allowRepeat: 1
-  - anomaly: {fileID: 11400000, guid: bd19066717dfac54cb7b073a3284ff2a, type: 2}
+  - anomaly: {fileID: 11400000, guid: cafe0e04e5342bb4abfda38f2429e670, type: 2}
     weight: 1
     allowRepeat: 1
-  - anomaly: {fileID: 11400000, guid: bd19066717dfac54cb7b073a3284ff2a, type: 2}
+  - anomaly: {fileID: 11400000, guid: c6160a2618bac0445ab3e550bd9f8c84, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 1c207aca3a894f8499bc0e9bfd3e8036, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 19093798bf2a36746a0aa62419f59f81, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 19767e4122f3d5f46b4c7f16da5653a8, type: 2}
     weight: 1
     allowRepeat: 1
