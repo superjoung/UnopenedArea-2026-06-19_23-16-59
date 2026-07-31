@@ -18,12 +18,16 @@ public class DayRuntimeController : MonoBehaviour
     [Header("Options")]
     [SerializeField] private bool autoStartOnStart = true;
 
+    [Header("Failure Limits")]
+    [Tooltip("오보고만으로 실패하는 횟수입니다. 미보고 한계와 별도로 판정합니다.")]
+    [SerializeField, Min(1)] private int maxWrongReports = 3;
+
     public DayRuntimeState State { get; private set; } = DayRuntimeState.NotStarted;
     public float ElapsedSec { get; private set; }
     public float RemainingSec => Mathf.Max(0f, DurationSec - ElapsedSec);
     public int SuccessReportCount { get; private set; }
-    public int WrongOrMissedCount { get; private set; }
-    /// <summary>오보고와 분리된, 실제 미보고 이상현상 누적 횟수입니다.</summary>
+    public int WrongReportCount { get; private set; }
+    /// <summary>실제 미보고 이상현상 누적 횟수입니다. 접근 단계와 미보고 실패에만 사용합니다.</summary>
     public int MissedAnomalyCount { get; private set; }
     public DayDefinition CurrentDayDefinition => dayDefinition;
     public float DurationSec => dayDefinition != null ? Mathf.Max(0.01f, dayDefinition.DurationSec) : 600f;
@@ -34,6 +38,7 @@ public class DayRuntimeController : MonoBehaviour
     public System.Action<AnomalyRuntime> MissedAnomalyRegistered;
 
     private int MaxMissed => dayDefinition != null ? Mathf.Max(0, dayDefinition.MaxMissed) : 3;
+    public int MaxWrongReports => Mathf.Max(1, maxWrongReports);
 
     private void Awake()
     {
@@ -69,7 +74,7 @@ public class DayRuntimeController : MonoBehaviour
     {
         ElapsedSec = 0f;
         SuccessReportCount = 0;
-        WrongOrMissedCount = 0;
+        WrongReportCount = 0;
         MissedAnomalyCount = 0;
         State = DayRuntimeState.Running;
 
@@ -77,7 +82,7 @@ public class DayRuntimeController : MonoBehaviour
             anomalyService.SetTimersPaused(false);
 
         NotifyTimeChanged();
-        NotifyFailureCountChanged();
+        NotifyWrongReportCountChanged();
         DayStarted?.Invoke();
         Debug.Log($"[DayRuntimeController] Day started. day={GetDayNumber()}, duration={DurationSec}");
     }
@@ -120,7 +125,7 @@ public class DayRuntimeController : MonoBehaviour
 
         NotifyTimeChanged();
         DayCleared?.Invoke();
-        Debug.Log($"[DayRuntimeController] Day cleared. successReports={SuccessReportCount}, wrongOrMissed={WrongOrMissedCount}");
+        Debug.Log($"[DayRuntimeController] Day cleared. successReports={SuccessReportCount}, wrongReports={WrongReportCount}, missed={MissedAnomalyCount}");
     }
 
     public void FailDay()
@@ -134,7 +139,7 @@ public class DayRuntimeController : MonoBehaviour
             anomalyService.SetTimersPaused(true);
 
         DayFailed?.Invoke();
-        Debug.Log($"[DayRuntimeController] Day failed. wrongOrMissed={WrongOrMissedCount}, maxMissed={MaxMissed}");
+        Debug.Log($"[DayRuntimeController] Day failed. wrongReports={WrongReportCount}/{MaxWrongReports}, missed={MissedAnomalyCount}/{MaxMissed}");
     }
 
     public void RegisterCorrectReport()
@@ -151,10 +156,10 @@ public class DayRuntimeController : MonoBehaviour
         if (State != DayRuntimeState.Running)
             return;
 
-        WrongOrMissedCount++;
-        NotifyFailureCountChanged();
-        Debug.Log($"[DayRuntimeController] Wrong report. wrongOrMissed={WrongOrMissedCount}, maxMissed={MaxMissed}");
-        CheckFailByWrongOrMissedCount();
+        WrongReportCount++;
+        NotifyWrongReportCountChanged();
+        Debug.Log($"[DayRuntimeController] Wrong report. wrongReports={WrongReportCount}, maxWrongReports={MaxWrongReports}");
+        CheckFailByWrongReports();
     }
 
     public void RegisterMissedAnomaly(AnomalyRuntime runtime)
@@ -162,21 +167,25 @@ public class DayRuntimeController : MonoBehaviour
         if (State != DayRuntimeState.Running)
             return;
 
-        WrongOrMissedCount++;
         MissedAnomalyCount++;
-        NotifyFailureCountChanged();
         MissedAnomalyRegistered?.Invoke(runtime);
         if (GameManager.Instance != null)
             GameManager.Instance.NotifyDayMissedAnomaly(runtime);
 
         string anomalyId = runtime != null && runtime.Definition != null ? runtime.Definition.AnomalyId : "Unknown";
-        Debug.Log($"[DayRuntimeController] Missed anomaly counted. anomaly={anomalyId}, wrongOrMissed={WrongOrMissedCount}, maxMissed={MaxMissed}");
-        CheckFailByWrongOrMissedCount();
+        Debug.Log($"[DayRuntimeController] Missed anomaly counted. anomaly={anomalyId}, missed={MissedAnomalyCount}, maxMissed={MaxMissed}");
+        CheckFailByMissedAnomalies();
     }
 
-    private void CheckFailByWrongOrMissedCount()
+    private void CheckFailByWrongReports()
     {
-        if (MaxMissed > 0 && WrongOrMissedCount >= MaxMissed)
+        if (WrongReportCount >= MaxWrongReports)
+            FailDay();
+    }
+
+    private void CheckFailByMissedAnomalies()
+    {
+        if (MaxMissed > 0 && MissedAnomalyCount >= MaxMissed)
             FailDay();
     }
 
@@ -186,10 +195,10 @@ public class DayRuntimeController : MonoBehaviour
             GameManager.Instance.NotifyDayTimeChanged(ElapsedSec, DurationSec);
     }
 
-    private void NotifyFailureCountChanged()
+    private void NotifyWrongReportCountChanged()
     {
         if (GameManager.Instance != null)
-            GameManager.Instance.NotifyDayFailureCountChanged(WrongOrMissedCount, MaxMissed);
+            GameManager.Instance.NotifyDayWrongReportCountChanged(WrongReportCount, MaxWrongReports);
     }
 
     private void SubscribeEvents()

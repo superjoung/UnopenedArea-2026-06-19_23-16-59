@@ -5,15 +5,15 @@ public class GameManager : Singleton<GameManager>
     public System.Action OpenReport;
     public System.Action<string, string> CCTVAreaChanged;
     public System.Action<float, float> DayTimeChanged;
-    public System.Action<int, int> DayFailureCountChanged;
+    public System.Action<int, int> DayWrongReportCountChanged;
     public System.Action<AnomalyRuntime> DayMissedAnomaly;
     public System.Action<AnomalyRuntime> DayCorrectReport;
     public System.Action DayWrongReport;
 
     public string CurrentCCTVLabel { get; private set; }
     public string CurrentAreaName { get; private set; }
-    public int CurrentDayFailureCount { get; private set; }
-    public int CurrentDayMaxFailureCount { get; private set; }
+    public int CurrentDayWrongReportCount { get; private set; }
+    public int CurrentDayMaxWrongReportCount { get; private set; }
 
     private bool reportInputEnabled = true;
 
@@ -50,11 +50,11 @@ public class GameManager : Singleton<GameManager>
         DayTimeChanged?.Invoke(elapsedSec, durationSec);
     }
 
-    public void NotifyDayFailureCountChanged(int currentCount, int maxCount)
+    public void NotifyDayWrongReportCountChanged(int currentCount, int maxCount)
     {
-        CurrentDayFailureCount = currentCount;
-        CurrentDayMaxFailureCount = maxCount;
-        DayFailureCountChanged?.Invoke(currentCount, maxCount);
+        CurrentDayWrongReportCount = currentCount;
+        CurrentDayMaxWrongReportCount = maxCount;
+        DayWrongReportCountChanged?.Invoke(currentCount, maxCount);
     }
 
     public void NotifyDayMissedAnomaly(AnomalyRuntime runtime)

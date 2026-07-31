@@ -447,13 +447,13 @@ public class CCTVSceneUI : BaseUI
             GameManager.Instance.CCTVAreaChanged -= SetCCTVAreaInfo;
             GameManager.Instance.CCTVAreaChanged += SetCCTVAreaInfo;
             GameManager.Instance.DayTimeChanged -= SetDayTimeInfo;
-            GameManager.Instance.DayFailureCountChanged -= SetFailureCountInfo;
+            GameManager.Instance.DayWrongReportCountChanged -= SetFailureCountInfo;
             GameManager.Instance.DayMissedAnomaly -= OnMissedAnomaly;
             GameManager.Instance.DayTimeChanged += SetDayTimeInfo;
-            GameManager.Instance.DayFailureCountChanged += SetFailureCountInfo;
+            GameManager.Instance.DayWrongReportCountChanged += SetFailureCountInfo;
             GameManager.Instance.DayMissedAnomaly += OnMissedAnomaly;
             SyncCurrentCCTVAreaInfo();
-            SyncCurrentDayFailureCount();
+            SyncCurrentDayWrongReportCount();
         }
     }
 
@@ -796,12 +796,12 @@ public class CCTVSceneUI : BaseUI
         SetCCTVAreaInfo(GameManager.Instance.CurrentCCTVLabel, GameManager.Instance.CurrentAreaName);
     }
 
-    private void SyncCurrentDayFailureCount()
+    private void SyncCurrentDayWrongReportCount()
     {
         if (GameManager.Instance == null)
             return;
 
-        SetFailureCountInfo(GameManager.Instance.CurrentDayFailureCount, GameManager.Instance.CurrentDayMaxFailureCount);
+        SetFailureCountInfo(GameManager.Instance.CurrentDayWrongReportCount, GameManager.Instance.CurrentDayMaxWrongReportCount);
     }
 
     // 선택된 구역/오브젝트/이상현상 타입을 UI에 표시한다. 선택 전에는 기본 텍스트를 보여준다.
@@ -965,7 +965,7 @@ public class CCTVSceneUI : BaseUI
             GameManager.Instance.OpenReport -= ReportPanelTrigger;
             GameManager.Instance.CCTVAreaChanged -= SetCCTVAreaInfo;
             GameManager.Instance.DayTimeChanged -= SetDayTimeInfo;
-            GameManager.Instance.DayFailureCountChanged -= SetFailureCountInfo;
+            GameManager.Instance.DayWrongReportCountChanged -= SetFailureCountInfo;
             GameManager.Instance.DayMissedAnomaly -= OnMissedAnomaly;
         }
     }
