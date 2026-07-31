@@ -28,6 +28,7 @@ public class Day1FlowController : MonoBehaviour
     [SerializeField] private Day1AreaTransitionController areaTransitionController;
     [SerializeField] private TransitionEffect transitionEffect;
     [SerializeField] private CCTVScreenEffectController screenEffectController;
+    [SerializeField] private CCTVSceneUI cctvSceneUI;
 
     [Header("Tutorial Presentation")]
     [SerializeField, Min(0f)] private float tutorialChannelActivationDelay = 0.5f;
@@ -65,6 +66,8 @@ public class Day1FlowController : MonoBehaviour
     public bool TutorialFinished => tutorialFinished;
     public bool IsPresentationLocked => presentationLockMode != PresentationLockMode.None;
     public bool IsEmergencyPresentationLocked => presentationLockMode == PresentationLockMode.Emergency;
+    public bool IsAwaitingTitleStart { get; private set; }
+    public int DayNumber => dayDefinition != null ? dayDefinition.Day : 0;
 
     public System.Action<Day1FlowState> StateChanged;
     public System.Action<string> FlowMessageChanged;
@@ -88,15 +91,19 @@ public class Day1FlowController : MonoBehaviour
         dayDefinition = dayRuntimeController.CurrentDayDefinition;
 
         SubscribeEvents();
-        if (RequiresTutorial)
-            PauseNormalAnomalies();
-
         areaTransitionController?.EnterMainRoom();
-        ChangeState(Day1FlowState.Briefing, $"DAY {dayDefinition.Day} 감시 기록을 시작합니다. 메인룸의 전화기를 확인하십시오.");
+
+        DayTitleController titleController = FindFirstObjectByType<DayTitleController>();
+        IsAwaitingTitleStart = titleController != null && titleController.WaitForPlayerStart;
+        if (!IsAwaitingTitleStart)
+            BeginDayBriefing();
     }
 
     protected virtual void Update()
     {
+        if (PausePanelController.IsPaused)
+            return;
+
         if (Input.GetKeyDown(cctvExitKey))
             ExitCCTVToMainRoom();
 
@@ -133,6 +140,23 @@ public class Day1FlowController : MonoBehaviour
         UnsubscribeEvents();
     }
 
+    /// <summary>
+    /// 타이틀 오버레이를 닫은 뒤 호출하는 해당 일차의 첫 브리핑 시작점입니다.
+    /// 타이틀 컨트롤러가 없는 기존 테스트 씬에서는 Start에서 자동 호출됩니다.
+    /// </summary>
+    public void BeginDayBriefing()
+    {
+        if (State != Day1FlowState.None || dayDefinition == null)
+            return;
+
+        IsAwaitingTitleStart = false;
+        if (RequiresTutorial)
+            PauseNormalAnomalies();
+
+        ChangeState(Day1FlowState.Briefing,
+            $"DAY {dayDefinition.Day} 감시 기록을 시작합니다. 메인룸의 전화기를 확인하십시오.");
+    }
+
     public void BeginBaselineReview()
     {
         if (State != Day1FlowState.Briefing)
@@ -163,6 +187,7 @@ public class Day1FlowController : MonoBehaviour
         if (State == Day1FlowState.BaselineReview)
         {
             BeginMonitoring();
+            cctvSceneUI?.PlayInitialMonitoringIntro();
             return;
         }
 
@@ -651,6 +676,9 @@ public class Day1FlowController : MonoBehaviour
 
         if (screenEffectController == null)
             screenEffectController = FindFirstObjectByType<CCTVScreenEffectController>();
+
+        if (cctvSceneUI == null)
+            cctvSceneUI = FindFirstObjectByType<CCTVSceneUI>(FindObjectsInactive.Include);
     }
 
     /// <summary>

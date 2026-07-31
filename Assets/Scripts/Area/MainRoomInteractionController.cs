@@ -10,6 +10,9 @@ public class MainRoomInteractionController : MonoBehaviour
     [SerializeField] private MainRoomInteractionTarget doorTarget;
     [SerializeField] private TransitionEffect transitionEffect;
     private Day1FlowController subscribedFlowController;
+    private bool inputLocked;
+
+    public bool InputLocked => inputLocked;
 
     private void Awake() => ResolveReferences();
     private void OnEnable() { ResolveReferences(); Subscribe(); RefreshAvailability(); }
@@ -18,7 +21,7 @@ public class MainRoomInteractionController : MonoBehaviour
 
     public void TryInteract(MainRoomInteractionType interactionType)
     {
-        if (day1FlowController == null) return;
+        if (inputLocked || day1FlowController == null) return;
         switch (interactionType)
         {
             case MainRoomInteractionType.Phone: day1FlowController.AcceptPhoneMission(); break;
@@ -30,6 +33,18 @@ public class MainRoomInteractionController : MonoBehaviour
                     day1FlowController.EnterCCTVFromMainRoom();
                 break;
             case MainRoomInteractionType.Door: day1FlowController.EnterFieldFromMainRoom(); break;
+        }
+    }
+
+    /// <summary>결과 연출처럼 메인룸 오브젝트의 클릭 반응 자체를 막아야 할 때 사용합니다.</summary>
+    public void SetInputLocked(bool locked)
+    {
+        inputLocked = locked;
+        if (locked)
+        {
+            if (phoneTarget != null) phoneTarget.ForceHideOutline();
+            if (cctvTarget != null) cctvTarget.ForceHideOutline();
+            if (doorTarget != null) doorTarget.ForceHideOutline();
         }
     }
 

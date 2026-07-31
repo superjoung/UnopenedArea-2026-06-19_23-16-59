@@ -96,6 +96,7 @@ public class TransitionEffect : MonoBehaviour
     public bool IsPlaying => isPlaying;
     public bool IsAnomalyBlinkPlaying => anomalyBlinkSequence != null && anomalyBlinkSequence.IsActive();
     public float AnomalyBlinkTotalDuration => GetAnomalyBlinkCloseDuration() + anomalyClosedHoldAfterChange + anomalySnapOpenDuration;
+    public event Action<bool> PlaybackChanged;
 
     private void Awake()
     {
@@ -113,7 +114,7 @@ public class TransitionEffect : MonoBehaviour
     {
         activeSequence?.Kill();
         activeSequence = null;
-        isPlaying = false;
+        SetPlaying(false);
         SetImageAlpha(cctvEnterPanelImage, 0f);
         SetImageAlpha(toCctvPanel2, 0f);
         SetImageAlpha(blackoutPanelImage, 0f);
@@ -145,7 +146,7 @@ public class TransitionEffect : MonoBehaviour
         }
 
         CacheCameraDefaults();
-        isPlaying = true;
+        SetPlaying(true);
         activeSequence?.Kill();
         cctvEnterPanelImage.gameObject.SetActive(true);
         SetImageAlpha(cctvEnterPanelImage, 0f);
@@ -170,7 +171,7 @@ public class TransitionEffect : MonoBehaviour
             return false;
 
         CacheCameraDefaults();
-        isPlaying = true;
+        SetPlaying(true);
         activeSequence?.Kill();
         blackoutPanelImage.gameObject.SetActive(true);
         if (blackoutFlashPanelImage != null)
@@ -215,7 +216,7 @@ public class TransitionEffect : MonoBehaviour
         if (isPlaying || blackoutPanelImage == null)
             return false;
 
-        isPlaying = true;
+        SetPlaying(true);
         activeSequence?.Kill();
         blackoutPanelImage.gameObject.SetActive(true);
         SetImageAlpha(blackoutPanelImage, 0f);
@@ -246,7 +247,7 @@ public class TransitionEffect : MonoBehaviour
             return false;
 
         CacheCameraDefaults();
-        isPlaying = true;
+        SetPlaying(true);
         activeSequence?.Kill();
         blackoutPanelImage.gameObject.SetActive(true);
         SetImageAlpha(blackoutPanelImage, 0f);
@@ -277,7 +278,7 @@ public class TransitionEffect : MonoBehaviour
 
     private bool TryPlayQuickCctvEntry()
     {
-        isPlaying = true;
+        SetPlaying(true);
         activeSequence?.Kill();
         toCctvPanel2.gameObject.SetActive(true);
         SetImageAlpha(toCctvPanel2, 0f);
@@ -293,7 +294,7 @@ public class TransitionEffect : MonoBehaviour
 
     private bool TryPlayQuickCctvExit(Action onOpaque)
     {
-        isPlaying = true;
+        SetPlaying(true);
         activeSequence?.Kill();
         toCctvPanel2.gameObject.SetActive(true);
         SetImageAlpha(toCctvPanel2, 0f);
@@ -357,7 +358,16 @@ public class TransitionEffect : MonoBehaviour
     private void CompleteSequence()
     {
         activeSequence = null;
-        isPlaying = false;
+        SetPlaying(false);
+    }
+
+    private void SetPlaying(bool playing)
+    {
+        if (isPlaying == playing)
+            return;
+
+        isPlaying = playing;
+        PlaybackChanged?.Invoke(playing);
     }
 
     private static void SetImageAlpha(Image image, float alpha)

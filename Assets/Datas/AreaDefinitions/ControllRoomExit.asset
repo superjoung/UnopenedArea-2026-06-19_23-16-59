@@ -21,7 +21,7 @@ MonoBehaviour:
   areaCenter: {x: 0, y: 0}
   orthographicSize: 2.5
   startNormalizedX: 0.5
-  useCustomViewBounds: 1
+  useCustomViewBounds: 0
   viewMinX: 0
   viewMaxX: 0
   baselineProfileId: 

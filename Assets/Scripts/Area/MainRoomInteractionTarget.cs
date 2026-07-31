@@ -42,7 +42,7 @@ public class MainRoomInteractionTarget : MonoBehaviour
 
     private void OnMouseUpAsButton()
     {
-        if (clickRoutine != null)
+        if (PausePanelController.IsPaused || clickRoutine != null || interactionController == null || interactionController.InputLocked)
             return;
 
         clickRoutine = StartCoroutine(PlayClickFeedbackThenInteract());
@@ -50,7 +50,7 @@ public class MainRoomInteractionTarget : MonoBehaviour
 
     private void OnMouseEnter()
     {
-        if (CanShowOutline())
+        if (!PausePanelController.IsPaused && CanShowOutline())
             SetOutlineVisible(true);
     }
 
@@ -74,6 +74,11 @@ public class MainRoomInteractionTarget : MonoBehaviour
         if (availableVisual != null) availableVisual.SetActive(available);
         if (!available)
             SetOutlineVisible(false);
+    }
+
+    public void ForceHideOutline()
+    {
+        SetOutlineVisible(false);
     }
 
     private IEnumerator PlayClickFeedbackThenInteract()
@@ -128,7 +133,9 @@ public class MainRoomInteractionTarget : MonoBehaviour
 
     private bool CanShowOutline()
     {
-        return IsAvailable && clickRoutine == null && (transitionEffect == null || !transitionEffect.IsPlaying);
+        return IsAvailable && clickRoutine == null &&
+               (interactionController == null || !interactionController.InputLocked) &&
+               (transitionEffect == null || !transitionEffect.IsPlaying);
     }
 
     private void HandleUnavailableInteraction()

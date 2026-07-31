@@ -183,6 +183,27 @@ public class CCTVScreenEffectController : MonoBehaviour
     }
 
     /// <summary>
+    /// 최대 강도의 노이즈를 일정 시간 유지한 뒤 짧게 사라지게 합니다.
+    /// 마지막 실패처럼 신호 유실을 확실히 보여줘야 하는 연출에 사용합니다.
+    /// </summary>
+    public Coroutine PlaySustainedTransitionNoise(float holdDuration, float fadeOutDuration = 0.2f)
+    {
+        if (!isActiveAndEnabled || !Application.isPlaying)
+        {
+            StopNoise();
+            ApplyProfile(Time.unscaledTime);
+            return null;
+        }
+
+        if (noiseCoroutine != null)
+            StopCoroutine(noiseCoroutine);
+
+        activeNoiseProfile = null;
+        noiseCoroutine = StartCoroutine(PlaySustainedTransitionNoiseRoutine(holdDuration, fadeOutDuration));
+        return noiseCoroutine;
+    }
+
+    /// <summary>
     /// 현재 렌더 텍스처를 잠시 그대로 유지해 CCTV 피드가 멈춘 것처럼 보이게 합니다.
     /// </summary>
     public IEnumerator FreezeFeedRoutine(float duration)
@@ -202,6 +223,19 @@ public class CCTVScreenEffectController : MonoBehaviour
     public IEnumerator PlayTransitionNoiseRoutine(float duration)
     {
         yield return PlayFallbackNoiseRoutine(duration);
+    }
+
+    private IEnumerator PlaySustainedTransitionNoiseRoutine(float holdDuration, float fadeOutDuration)
+    {
+        SetNoiseAmount(1f);
+        yield return HoldNoiseAmount(1f, Mathf.Max(0.01f, holdDuration));
+        yield return AnimateNoiseAmount(1f, 0f, Mathf.Max(0.01f, fadeOutDuration));
+
+        noiseAmount = 0f;
+        activeNoiseProfile = null;
+        fallbackNoiseDurationOverride = 0f;
+        ApplyProfile(Time.unscaledTime);
+        noiseCoroutine = null;
     }
 
     private IEnumerator PlayProfileNoiseRoutine(CCTVNoiseProfile noiseProfile)

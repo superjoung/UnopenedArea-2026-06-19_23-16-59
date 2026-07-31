@@ -27,6 +27,10 @@ public class MainRoomStateEffectController : MonoBehaviour
     [SerializeField, Min(0f)] private float phoneVibrationAmplitude = 0.012f;
     [Tooltip("초당 흔들림 위치 변경 횟수입니다.")]
     [SerializeField, Min(0.1f)] private float phoneVibrationFrequency = 45f;
+    [Tooltip("한 번의 전화 진동이 유지되는 시간입니다.")]
+    [SerializeField, Min(0.01f)] private float phoneVibrationOnDuration = 1f;
+    [Tooltip("다음 진동 전, 전화기가 멈춰 있는 시간입니다.")]
+    [SerializeField, Min(0f)] private float phoneVibrationOffDuration = 0.5f;
 
     [Header("Phone Glow Pulse")]
     [SerializeField, Range(0f, 1f)] private float phoneGlowMinAlpha = 0.25f;
@@ -41,6 +45,8 @@ public class MainRoomStateEffectController : MonoBehaviour
     private int missedAnomalyCount;
     private Vector2 phoneVibrationOffset;
     private float nextPhoneVibrationTime;
+    private float phoneVibrationPhaseEndTime;
+    private bool isPhoneVibrationActive;
     private readonly List<SpriteRenderer> phoneGlowRenderers = new List<SpriteRenderer>();
     private readonly List<Color> phoneGlowBaseColors = new List<Color>();
 
@@ -63,13 +69,15 @@ public class MainRoomStateEffectController : MonoBehaviour
 
     private void Update()
     {
-        if (isPhoneRinging && phoneCallTransform != null && Time.unscaledTime >= nextPhoneVibrationTime)
+        UpdatePhoneVibrationPhase();
+
+        if (isPhoneRinging && isPhoneVibrationActive && phoneCallTransform != null && Time.unscaledTime >= nextPhoneVibrationTime)
         {
             phoneVibrationOffset = Random.insideUnitCircle * phoneVibrationAmplitude;
             nextPhoneVibrationTime = Time.unscaledTime + 1f / phoneVibrationFrequency;
         }
 
-        if (isPhoneRinging && phoneCallTransform != null)
+        if (isPhoneRinging && isPhoneVibrationActive && phoneCallTransform != null)
             phoneCallTransform.localPosition = phoneCallDefaultLocalPosition + (Vector3)phoneVibrationOffset;
 
         if (isPhoneGlowPulsing)
@@ -107,6 +115,10 @@ public class MainRoomStateEffectController : MonoBehaviour
     {
         isPhoneRinging = ringing;
         nextPhoneVibrationTime = 0f;
+        isPhoneVibrationActive = ringing;
+        phoneVibrationPhaseEndTime = ringing
+            ? Time.unscaledTime + phoneVibrationOnDuration
+            : 0f;
 
         if (!ringing && phoneCallTransform != null)
         {
@@ -115,6 +127,22 @@ public class MainRoomStateEffectController : MonoBehaviour
         }
 
         RefreshPhoneGlow();
+    }
+
+    private void UpdatePhoneVibrationPhase()
+    {
+        if (!isPhoneRinging || Time.unscaledTime < phoneVibrationPhaseEndTime)
+            return;
+
+        isPhoneVibrationActive = !isPhoneVibrationActive;
+        phoneVibrationPhaseEndTime = Time.unscaledTime +
+            (isPhoneVibrationActive ? phoneVibrationOnDuration : phoneVibrationOffDuration);
+
+        if (!isPhoneVibrationActive && phoneCallTransform != null)
+        {
+            phoneVibrationOffset = Vector2.zero;
+            phoneCallTransform.localPosition = phoneCallDefaultLocalPosition;
+        }
     }
 
     private void HandleMissedAnomalyRegistered(AnomalyRuntime runtime)

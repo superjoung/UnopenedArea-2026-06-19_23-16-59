@@ -104,6 +104,9 @@ public class CCTVTestSceneController : MonoBehaviour
 
     private void Update()
     {
+        if (PausePanelController.IsPaused)
+            return;
+
         if (!cctvInputEnabled)
             return;
 
@@ -190,7 +193,8 @@ public class CCTVTestSceneController : MonoBehaviour
     }
 
     /// <summary>
-    /// 미보고 3회 침입 단계: 기존 채널을 모두 제거하고 제어실 내부 영상 하나만 남깁니다.
+    /// 미보고 3회 침입 단계: 모든 채널을 제어실 내부 영상 하나로 고정합니다.
+    /// Q/E 입력은 유지하며, 전환 노이즈만 재생한 뒤 같은 화면으로 돌아옵니다.
     /// </summary>
     public bool TryTakeOverWithCCTVRoom()
     {
@@ -210,7 +214,6 @@ public class CCTVTestSceneController : MonoBehaviour
         }
 
         cctvRoomTakenOver = true;
-        cctvInputEnabled = false;
         channels.Clear();
         channels.Add(new CCTVChannelRuntime(1, cctvRoomArea));
         currentChannelIndex = 0;
@@ -247,7 +250,12 @@ public class CCTVTestSceneController : MonoBehaviour
 
         int targetIndex = Mathf.Clamp(index, 0, channels.Count - 1);
         if (targetIndex == currentChannelIndex)
+        {
+            if (cctvRoomTakenOver)
+                yield return StartCoroutine(PlayFixedTakeoverChannelNoiseRoutine());
+
             yield break;
+        }
 
         isSwitchingChannel = true;
 
@@ -276,6 +284,32 @@ public class CCTVTestSceneController : MonoBehaviour
 
         if (panController != null)
             panController.SetInputLocked(false);
+
+        isSwitchingChannel = false;
+    }
+
+    /// <summary>
+    /// CCTV Room 장악 뒤에는 채널 번호만 바뀌는 척하며 같은 영상을 계속 보여준다.
+    /// </summary>
+    private IEnumerator PlayFixedTakeoverChannelNoiseRoutine()
+    {
+        if (isSwitchingChannel)
+            yield break;
+
+        isSwitchingChannel = true;
+
+        CCTVScreenEffectController effectController = GetScreenEffectController();
+        float noiseDuration = GetChannelSwitchNoiseDuration();
+        if (effectController != null)
+        {
+            if (channelSwitchNoiseProfile != null)
+                effectController.PlayNoise(channelSwitchNoiseProfile);
+            else
+                effectController.PlayTransitionNoise(fallbackChannelTransitionNoiseDuration);
+        }
+
+        if (noiseDuration > 0f)
+            yield return new WaitForSecondsRealtime(noiseDuration);
 
         isSwitchingChannel = false;
     }

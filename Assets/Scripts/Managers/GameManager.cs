@@ -21,6 +21,9 @@ public class GameManager : Singleton<GameManager>
 
     private void Update()
     {
+        if (PausePanelController.IsPaused)
+            return;
+
         if (reportInputEnabled && Input.GetKeyDown(KeyCode.W))
         {
             Debug.Log("[INFO] GameManager::Update - OpenReport Event");

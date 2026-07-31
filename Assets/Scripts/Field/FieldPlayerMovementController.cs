@@ -57,6 +57,12 @@ public class FieldPlayerMovementController : MonoBehaviour
 
     private void Update()
     {
+        if (PausePanelController.IsPaused)
+        {
+            MoveInput = Vector2.zero;
+            return;
+        }
+
         MoveInput = inputEnabled && resolvedMoveAction != null
             ? resolvedMoveAction.ReadValue<Vector2>()
             : Vector2.zero;

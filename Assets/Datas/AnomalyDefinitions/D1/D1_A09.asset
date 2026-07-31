@@ -28,6 +28,6 @@ MonoBehaviour:
     activeValue: 0
     targetLocalPosition: {x: 0, y: 0, z: 0}
     localPositionOffset: {x: 0, y: 0, z: 0}
-    targetLocalEulerAngles: {x: 0, y: 0, z: 0}
+    targetLocalEulerAngles: {x: 0, y: 0, z: -30}
     targetSprite: {fileID: 0}
     targetColor: {r: 0, g: 0, b: 0, a: 0}

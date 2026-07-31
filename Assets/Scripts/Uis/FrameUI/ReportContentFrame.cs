@@ -22,6 +22,13 @@ public class ReportContentFrame : BaseUI
     private ReportSelectOption _option;
     private Action<ReportSelectOption> _onSelected;
     private bool _isInitialized;
+    private float defaultDisplayFontSize;
+    private bool displayFontSizeCached;
+
+    [Header("Label Layout")]
+    [Tooltip("이 글자 수를 초과한 선택지는 한 줄 유지를 위해 글자 크기를 줄입니다.")]
+    [SerializeField, Min(1)] private int shrinkAfterCharacterCount = 5;
+    [SerializeField, Range(0.1f, 1f)] private float longLabelFontSizeMultiplier = 0.78f;
 
     void Start()
     {
@@ -53,7 +60,24 @@ public class ReportContentFrame : BaseUI
 
         TMP_Text displayText = GetText((int)Texts.DisplayText);
         if (displayText != null)
-            displayText.text = option.Label;
+            ApplyLabel(displayText, option.Label);
+    }
+
+    private void ApplyLabel(TMP_Text displayText, string label)
+    {
+        if (!displayFontSizeCached)
+        {
+            defaultDisplayFontSize = displayText.fontSize;
+            displayFontSizeCached = true;
+        }
+
+        string safeLabel = label ?? string.Empty;
+        displayText.enableWordWrapping = false;
+        displayText.enableAutoSizing = false;
+        displayText.fontSize = safeLabel.Length > shrinkAfterCharacterCount
+            ? defaultDisplayFontSize * longLabelFontSizeMultiplier
+            : defaultDisplayFontSize;
+        displayText.text = safeLabel;
     }
 
     private void OnClickReportContentFrame(PointerEventData eventData)

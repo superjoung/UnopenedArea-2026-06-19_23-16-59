@@ -39,6 +39,9 @@ public class FieldBreakerPanel : MonoBehaviour
 
     private void Update()
     {
+        if (PausePanelController.IsPaused)
+            return;
+
         if (IsRestored)
             return;
 

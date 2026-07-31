@@ -10,6 +10,14 @@ public class AnomalyScheduler : MonoBehaviour
     [Header("Retry")]
     [SerializeField, Min(0.1f)] private float blockedRetryDelaySec = 1f;
 
+    [Header("Observation Cycle")]
+    [Tooltip("활성/연출 중인 이상현상이 있으면 다른 구역을 포함해 다음 이상현상을 만들지 않습니다.")]
+    [SerializeField] private bool allowOnlyOneActiveAnomaly = true;
+    [Tooltip("정상 보고 뒤 기준 화면을 확인할 수 있도록 주는 안정 시간입니다.")]
+    [SerializeField, Min(0f)] private float correctReportStableDurationSec = 2f;
+    [Tooltip("미보고 신호 유실과 배경 변경 뒤 기준 화면을 확인할 수 있도록 주는 안정 시간입니다.")]
+    [SerializeField, Min(0f)] private float missedReportStableDurationSec = 4f;
+
     [Header("Runtime")]
     [SerializeField] private bool generationPaused;
 
@@ -18,6 +26,8 @@ public class AnomalyScheduler : MonoBehaviour
 
     private DayDefinition currentDayDefinition;
     private float randomRemainingSec;
+    private bool awaitingObservationCycleResult;
+    private float postCycleStableRemainingSec;
 
     public bool GenerationPaused => generationPaused;
 
@@ -56,7 +66,22 @@ public class AnomalyScheduler : MonoBehaviour
         if (currentDayDefinition == null)
             return;
 
+        if (awaitingObservationCycleResult || HasActiveAnomalies())
+            return;
+
+        if (postCycleStableRemainingSec > 0f)
+        {
+            postCycleStableRemainingSec = Mathf.Max(0f, postCycleStableRemainingSec - Time.deltaTime);
+            if (postCycleStableRemainingSec <= 0f)
+                ResetRandomTimer();
+
+            return;
+        }
+
         TickFixedSchedule();
+        if (awaitingObservationCycleResult || HasActiveAnomalies())
+            return;
+
         TickRandomSchedule(Time.deltaTime);
     }
 
@@ -75,6 +100,8 @@ public class AnomalyScheduler : MonoBehaviour
         currentDayDefinition = dayDefinition;
         triggeredFixedScheduleIndexes.Clear();
         usedNonRepeatRandomAnomalies.Clear();
+        awaitingObservationCycleResult = false;
+        postCycleStableRemainingSec = 0f;
         ResetRandomTimer();
     }
 
@@ -97,7 +124,10 @@ public class AnomalyScheduler : MonoBehaviour
                 continue;
 
             if (TryActivateScheduledAnomaly(entry.Anomaly))
+            {
                 triggeredFixedScheduleIndexes.Add(i);
+                return;
+            }
         }
     }
 
@@ -120,7 +150,6 @@ public class AnomalyScheduler : MonoBehaviour
         if (TryActivateScheduledAnomaly(selectedAnomaly))
         {
             MarkRandomAnomalyUsed(selectedAnomaly);
-            ResetRandomTimer();
         }
         else
         {
@@ -139,9 +168,21 @@ public class AnomalyScheduler : MonoBehaviour
         AnomalyRuntime runtime = anomalyService.Activate(anomaly);
         bool activated = runtime != null;
         if (activated)
+        {
+            awaitingObservationCycleResult = true;
             Debug.Log($"[AnomalyScheduler] Activated scheduled anomaly={anomaly.AnomalyId}, area={anomaly.AreaId}");
+        }
 
         return activated;
+    }
+
+    private bool HasActiveAnomalies()
+    {
+        if (!allowOnlyOneActiveAnomaly || anomalyService == null)
+            return false;
+
+        IReadOnlyList<AnomalyRuntime> activeAnomalies = anomalyService.ActiveAnomalies;
+        return activeAnomalies != null && activeAnomalies.Count > 0;
     }
 
     private bool IsAreaOccupied(AreaId areaId)
@@ -253,6 +294,14 @@ public class AnomalyScheduler : MonoBehaviour
         dayRuntimeController.DayStarted += HandleDayStarted;
         dayRuntimeController.DayCleared += HandleDayEnded;
         dayRuntimeController.DayFailed += HandleDayEnded;
+
+        if (anomalyService != null)
+        {
+            anomalyService.AnomalyResolved -= HandleScheduledAnomalyResolved;
+            anomalyService.AnomalyMissed -= HandleScheduledAnomalyMissed;
+            anomalyService.AnomalyResolved += HandleScheduledAnomalyResolved;
+            anomalyService.AnomalyMissed += HandleScheduledAnomalyMissed;
+        }
     }
 
     private void UnsubscribeDayEvents()
@@ -263,6 +312,12 @@ public class AnomalyScheduler : MonoBehaviour
         dayRuntimeController.DayStarted -= HandleDayStarted;
         dayRuntimeController.DayCleared -= HandleDayEnded;
         dayRuntimeController.DayFailed -= HandleDayEnded;
+
+        if (anomalyService != null)
+        {
+            anomalyService.AnomalyResolved -= HandleScheduledAnomalyResolved;
+            anomalyService.AnomalyMissed -= HandleScheduledAnomalyMissed;
+        }
     }
 
     private void HandleDayStarted()
@@ -276,6 +331,34 @@ public class AnomalyScheduler : MonoBehaviour
         triggeredFixedScheduleIndexes.Clear();
         usedNonRepeatRandomAnomalies.Clear();
         randomRemainingSec = 0f;
+        awaitingObservationCycleResult = false;
+        postCycleStableRemainingSec = 0f;
+    }
+
+    private void HandleScheduledAnomalyResolved(AnomalyRuntime runtime)
+    {
+        BeginPostCycleStableTime(correctReportStableDurationSec, "resolved", runtime);
+    }
+
+    private void HandleScheduledAnomalyMissed(AnomalyRuntime runtime)
+    {
+        BeginPostCycleStableTime(missedReportStableDurationSec, "missed", runtime);
+    }
+
+    private void BeginPostCycleStableTime(float durationSec, string result, AnomalyRuntime runtime)
+    {
+        // 튜토리얼처럼 Scheduler가 직접 시작하지 않은 이상현상은 여기서 다음 랜덤 타이머를 건드리지 않는다.
+        if (!awaitingObservationCycleResult)
+            return;
+
+        awaitingObservationCycleResult = false;
+        postCycleStableRemainingSec = Mathf.Max(0f, durationSec);
+
+        string anomalyId = runtime != null && runtime.Definition != null ? runtime.Definition.AnomalyId : "Unknown";
+        Debug.Log($"[AnomalyScheduler] Observation cycle {result}. anomaly={anomalyId}, stable={postCycleStableRemainingSec:F1}s");
+
+        if (postCycleStableRemainingSec <= 0f)
+            ResetRandomTimer();
     }
 
     private void ResolveReferences()

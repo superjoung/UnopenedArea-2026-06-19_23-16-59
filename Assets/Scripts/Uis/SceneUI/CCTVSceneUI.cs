@@ -50,6 +50,17 @@ public class CCTVSceneUI : BaseUI
     [SerializeField] private CCTVPanController panController;
     [SerializeField] private Day1FlowController day1FlowController;
 
+    [Header("Initial Monitoring Intro")]
+    [Tooltip("첫 감시 진입 직후 입력을 막고 HUD를 숨겨 둘 시간입니다.")]
+    [SerializeField, Min(0f)] private float initialMonitoringIntroDelay = 0.5f;
+    [Tooltip("첫 감시 진입 중 숨길 HUD 루트입니다. Q/E 안내, 이동 안내, Day 1 업무 안내가 들어 있는 부모를 넣으십시오.")]
+    [SerializeField] private GameObject[] initialMonitoringHiddenRoots;
+
+    [Header("Report Selected Label Layout")]
+    [Tooltip("보고서 상단 선택 버튼에서 이 글자 수를 초과하면 한 줄 유지를 위해 글자 크기를 줄입니다.")]
+    [SerializeField, Min(1)] private int reportLabelShrinkAfterCharacterCount = 5;
+    [SerializeField, Range(0.1f, 1f)] private float reportLongLabelFontSizeMultiplier = 0.78f;
+
     [Header("Success Report Noise")]
     [SerializeField] private CCTVNoiseProfile successReportNoiseProfile;
     [SerializeField, Min(0.01f)] private float fallbackSuccessReportNoiseDuration = 1.1f;
@@ -63,6 +74,12 @@ public class CCTVSceneUI : BaseUI
     [SerializeField, Min(0f)] private float missedFeedFreezeDuration = 0.1f;
     [SerializeField, Min(0.02f)] private float missedTimeGlitchInterval = 0.05f;
 
+    [Header("Terminal Failure Signal Loss")]
+    [Tooltip("마지막 실패 때만 사용하는 긴 신호 유실 프로필입니다. 일반 미보고 노이즈와 분리됩니다.")]
+    [SerializeField] private CCTVNoiseProfile terminalFailureNoiseProfile;
+    [Tooltip("프로필을 지정하지 않았을 때 사용하는 마지막 실패 노이즈 시간입니다.")]
+    [SerializeField, Min(0.02f)] private float fallbackTerminalFailureNoiseDuration = 2f;
+
     public Sprite[] ReportSprites;  // 오보고에 따른 보고서 이미지 변경 리스트
 
     // 보고 패널은 기본 높이까지만 열리는 상태와 선택 리스트를 보여주는 전체 높이 상태를 나눠 사용한다.
@@ -73,6 +90,8 @@ public class CCTVSceneUI : BaseUI
     private Tween _slideTween;
     private CCTVUIEffectController _uiEffectController;
     private Coroutine missedSignalLossCoroutine;
+    private Coroutine initialMonitoringIntroCoroutine;
+    private bool initialMonitoringIntroPlayed;
 
     // 보고 제출 시 사용할 내부 선택값. UI 표시 문자열이 아니라 enum/id 값을 저장한다.
     private AreaId selectedAreaId = AreaId.None;
@@ -84,6 +103,7 @@ public class CCTVSceneUI : BaseUI
     private readonly List<ReportSelectOption> areaReportOptions = new List<ReportSelectOption>();
     private readonly List<ReportSelectOption> objectReportOptions = new List<ReportSelectOption>();
     private readonly List<ReportSelectOption> typeReportOptions = new List<ReportSelectOption>();
+    private readonly Dictionary<TMP_Text, float> reportLabelDefaultFontSizes = new Dictionary<TMP_Text, float>();
 
     public AreaId SelectedAreaId => selectedAreaId;
     public string SelectedObjectId => selectedObjectId;
@@ -173,6 +193,53 @@ public class CCTVSceneUI : BaseUI
     {
         ResolveReferences();
         day1FlowController?.ExitCCTVToMainRoom();
+    }
+
+    /// <summary>
+    /// 첫 감시 진입에만 적용되는 짧은 준비 연출입니다.
+    /// HUD를 숨기고 Q/E, 화면 이동, 보고 입력을 막았다가 지정 시간 뒤 HUD와 입력을 함께 복구합니다.
+    /// </summary>
+    public void PlayInitialMonitoringIntro()
+    {
+        if (initialMonitoringIntroPlayed)
+            return;
+
+        initialMonitoringIntroPlayed = true;
+        ResolveReferences();
+
+        if (initialMonitoringIntroCoroutine != null)
+            StopCoroutine(initialMonitoringIntroCoroutine);
+
+        SetInitialMonitoringHudVisible(false);
+        sceneController?.SetCCTVInputEnabled(false);
+        panController?.SetInputLocked(true);
+        GameManager.Instance?.SetReportInputEnabled(false);
+
+        initialMonitoringIntroCoroutine = StartCoroutine(InitialMonitoringIntroRoutine());
+    }
+
+    private IEnumerator InitialMonitoringIntroRoutine()
+    {
+        if (initialMonitoringIntroDelay > 0f)
+            yield return new WaitForSecondsRealtime(initialMonitoringIntroDelay);
+
+        SetInitialMonitoringHudVisible(true);
+        sceneController?.SetCCTVInputEnabled(true);
+        panController?.SetInputLocked(false);
+        GameManager.Instance?.SetReportInputEnabled(true);
+        initialMonitoringIntroCoroutine = null;
+    }
+
+    private void SetInitialMonitoringHudVisible(bool visible)
+    {
+        if (initialMonitoringHiddenRoots == null)
+            return;
+
+        foreach (GameObject root in initialMonitoringHiddenRoots)
+        {
+            if (root != null)
+                root.SetActive(visible);
+        }
     }
 
     #region Report Select Button Event
@@ -683,6 +750,22 @@ public class CCTVSceneUI : BaseUI
         yield return StartCoroutine(GlitchTimeTextRoutine(noiseDuration));
     }
 
+    /// <summary>
+    /// 결과 실패 연출에서 호출합니다. 일반 미보고 신호 유실과 별도 프로필을 사용합니다.
+    /// 프로필을 쓸 경우 해당 Profile의 Fade In + Hold + Fade Out 합이 실제 지속 시간입니다.
+    /// </summary>
+    public void PlayTerminalFailureNoise()
+    {
+        ResolveReferences();
+        if (screenEffectController == null)
+            return;
+
+        if (terminalFailureNoiseProfile != null)
+            screenEffectController.PlayNoise(terminalFailureNoiseProfile);
+        else
+            screenEffectController.PlaySustainedTransitionNoise(fallbackTerminalFailureNoiseDuration);
+    }
+
     private IEnumerator GlitchTimeTextRoutine(float duration)
     {
         TMP_Text timeText = GetText((int)Texts.TimeText);
@@ -725,8 +808,35 @@ public class CCTVSceneUI : BaseUI
     private void SetText(Texts textType, string value)
     {
         TMP_Text text = GetText((int)textType);
-        if (text != null)
-            text.text = value;
+        if (text == null)
+            return;
+
+        if (textType == Texts.AreaReportText ||
+            textType == Texts.ObjectReportText ||
+            textType == Texts.TypeReportText)
+        {
+            ApplyReportSelectedLabel(text, value);
+            return;
+        }
+
+        text.text = value;
+    }
+
+    private void ApplyReportSelectedLabel(TMP_Text text, string value)
+    {
+        if (!reportLabelDefaultFontSizes.TryGetValue(text, out float defaultFontSize))
+        {
+            defaultFontSize = text.fontSize;
+            reportLabelDefaultFontSizes.Add(text, defaultFontSize);
+        }
+
+        string safeValue = value ?? string.Empty;
+        text.enableWordWrapping = false;
+        text.enableAutoSizing = false;
+        text.fontSize = safeValue.Length > reportLabelShrinkAfterCharacterCount
+            ? defaultFontSize * reportLongLabelFontSizeMultiplier
+            : defaultFontSize;
+        text.text = safeValue;
     }
 
     private IEnumerable<CCTVAreaDefinition> GetReportAreaDefinitions()
@@ -741,7 +851,7 @@ public class CCTVSceneUI : BaseUI
             foreach (CCTVChannelRuntime channel in sceneController.Channels)
             {
                 CCTVAreaDefinition area = channel?.Area;
-                if (area == null || area.AreaId == AreaId.None || !addedAreaIds.Add(area.AreaId))
+                if (!IsReportSelectableArea(area) || !addedAreaIds.Add(area.AreaId))
                     continue;
 
                 yield return area;
@@ -749,8 +859,19 @@ public class CCTVSceneUI : BaseUI
         }
 
         // 채널 목록을 아직 만들지 못한 초기 타이밍에서는 현재 표시 중인 구역을 fallback으로 제공한다.
-        if (areaView != null && areaView.CurrentArea != null && addedAreaIds.Add(areaView.CurrentArea.AreaId))
+        if (areaView != null && IsReportSelectableArea(areaView.CurrentArea) && addedAreaIds.Add(areaView.CurrentArea.AreaId))
             yield return areaView.CurrentArea;
+    }
+
+    // 미보고 단계에서만 표시되는 제어실 외부/내부 채널은 분위기와 실패 연출용 영상이다.
+    // 실제 이상현상 보고 장소 후보에는 넣지 않는다.
+    private static bool IsReportSelectableArea(CCTVAreaDefinition area)
+    {
+        if (area == null || area.AreaId == AreaId.None)
+            return false;
+
+        return area.AreaId != AreaId.ControlRoomExterior &&
+               area.AreaId != AreaId.CCTVRoom;
     }
 
     private CCTVAreaInstance GetSelectedOrCurrentAreaInstance()
@@ -837,6 +958,8 @@ public class CCTVSceneUI : BaseUI
         if (missedSignalLossCoroutine != null)
             StopCoroutine(missedSignalLossCoroutine);
 
+        CancelInitialMonitoringIntro();
+
         if (GameManager.Instance != null)
         {
             GameManager.Instance.OpenReport -= ReportPanelTrigger;
@@ -845,6 +968,24 @@ public class CCTVSceneUI : BaseUI
             GameManager.Instance.DayFailureCountChanged -= SetFailureCountInfo;
             GameManager.Instance.DayMissedAnomaly -= OnMissedAnomaly;
         }
+    }
+
+    private void OnDisable()
+    {
+        CancelInitialMonitoringIntro();
+    }
+
+    private void CancelInitialMonitoringIntro()
+    {
+        if (initialMonitoringIntroCoroutine == null)
+            return;
+
+        StopCoroutine(initialMonitoringIntroCoroutine);
+        initialMonitoringIntroCoroutine = null;
+        SetInitialMonitoringHudVisible(true);
+        sceneController?.SetCCTVInputEnabled(true);
+        panController?.SetInputLocked(false);
+        GameManager.Instance?.SetReportInputEnabled(true);
     }
 }
 
