@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TestDayDefinition
   m_EditorClassIdentifier: 
   day: 1
-  durationSec: 600
+  durationSec: 120
   maxMissed: 3
   activeAreas:
   - {fileID: 11400000, guid: 9d13d1b21e63abb4594f360b587d5f4e, type: 2}
@@ -27,6 +27,7 @@ MonoBehaviour:
   enableEmergencyDispatch: 1
   emergencyRequiredCorrectReports: 3
   emergencyTriggerProgress: 0.7
+  enableMissedEscalationChannels: 0
   fixedSchedule: []
   enableRandomSchedule: 1
   randomMinIntervalSec: 10
