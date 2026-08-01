@@ -59,7 +59,7 @@ public class CCTVSceneUI : BaseUI
     [Header("Report Selected Label Layout")]
     [Tooltip("보고서 상단 선택 버튼에서 이 글자 수를 초과하면 한 줄 유지를 위해 글자 크기를 줄입니다.")]
     [SerializeField, Min(1)] private int reportLabelShrinkAfterCharacterCount = 5;
-    [SerializeField, Range(0.1f, 1f)] private float reportLongLabelFontSizeMultiplier = 0.78f;
+    [SerializeField, Range(0.8f, 1f)] private float reportLongLabelFontSizeMultiplier = 0.96f;
 
     [Header("Success Report Noise")]
     [SerializeField] private CCTVNoiseProfile successReportNoiseProfile;
@@ -103,7 +103,7 @@ public class CCTVSceneUI : BaseUI
     private readonly List<ReportSelectOption> areaReportOptions = new List<ReportSelectOption>();
     private readonly List<ReportSelectOption> objectReportOptions = new List<ReportSelectOption>();
     private readonly List<ReportSelectOption> typeReportOptions = new List<ReportSelectOption>();
-    private readonly Dictionary<TMP_Text, float> reportLabelDefaultFontSizes = new Dictionary<TMP_Text, float>();
+    private readonly Dictionary<TMP_Text, ReportLabelLayoutDefaults> reportLabelLayoutDefaults = new Dictionary<TMP_Text, ReportLabelLayoutDefaults>();
 
     public AreaId SelectedAreaId => selectedAreaId;
     public string SelectedObjectId => selectedObjectId;
@@ -824,19 +824,34 @@ public class CCTVSceneUI : BaseUI
 
     private void ApplyReportSelectedLabel(TMP_Text text, string value)
     {
-        if (!reportLabelDefaultFontSizes.TryGetValue(text, out float defaultFontSize))
+        if (!reportLabelLayoutDefaults.TryGetValue(text, out ReportLabelLayoutDefaults defaults))
         {
-            defaultFontSize = text.fontSize;
-            reportLabelDefaultFontSizes.Add(text, defaultFontSize);
+            defaults = new ReportLabelLayoutDefaults(text.fontSize, text.enableAutoSizing, text.enableWordWrapping);
+            reportLabelLayoutDefaults.Add(text, defaults);
         }
 
         string safeValue = value ?? string.Empty;
-        text.enableWordWrapping = false;
-        text.enableAutoSizing = false;
-        text.fontSize = safeValue.Length > reportLabelShrinkAfterCharacterCount
-            ? defaultFontSize * reportLongLabelFontSizeMultiplier
-            : defaultFontSize;
+        bool isLongLabel = safeValue.Length > reportLabelShrinkAfterCharacterCount;
+        text.enableWordWrapping = isLongLabel ? false : defaults.WordWrapping;
+        text.enableAutoSizing = isLongLabel ? false : defaults.AutoSizing;
+        text.fontSize = isLongLabel
+            ? defaults.FontSize * reportLongLabelFontSizeMultiplier
+            : defaults.FontSize;
         text.text = safeValue;
+    }
+
+    private readonly struct ReportLabelLayoutDefaults
+    {
+        public readonly float FontSize;
+        public readonly bool AutoSizing;
+        public readonly bool WordWrapping;
+
+        public ReportLabelLayoutDefaults(float fontSize, bool autoSizing, bool wordWrapping)
+        {
+            FontSize = fontSize;
+            AutoSizing = autoSizing;
+            WordWrapping = wordWrapping;
+        }
     }
 
     private IEnumerable<CCTVAreaDefinition> GetReportAreaDefinitions()

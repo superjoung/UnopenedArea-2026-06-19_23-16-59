@@ -21,7 +21,7 @@ public class MainRoomInteractionController : MonoBehaviour
 
     public void TryInteract(MainRoomInteractionType interactionType)
     {
-        if (inputLocked || day1FlowController == null) return;
+        if (inputLocked || DayTitleController.IsBlockingWorldInteractions || day1FlowController == null) return;
         switch (interactionType)
         {
             case MainRoomInteractionType.Phone: day1FlowController.AcceptPhoneMission(); break;

@@ -42,7 +42,8 @@ public class MainRoomInteractionTarget : MonoBehaviour
 
     private void OnMouseUpAsButton()
     {
-        if (PausePanelController.IsPaused || clickRoutine != null || interactionController == null || interactionController.InputLocked)
+        if (PausePanelController.IsPaused || DayTitleController.IsBlockingWorldInteractions ||
+            clickRoutine != null || interactionController == null || interactionController.InputLocked)
             return;
 
         clickRoutine = StartCoroutine(PlayClickFeedbackThenInteract());
@@ -50,7 +51,7 @@ public class MainRoomInteractionTarget : MonoBehaviour
 
     private void OnMouseEnter()
     {
-        if (!PausePanelController.IsPaused && CanShowOutline())
+        if (!PausePanelController.IsPaused && !DayTitleController.IsBlockingWorldInteractions && CanShowOutline())
             SetOutlineVisible(true);
     }
 
@@ -62,8 +63,21 @@ public class MainRoomInteractionTarget : MonoBehaviour
 
     private void Update()
     {
-        if (outlineVisual != null && outlineVisual.activeSelf && !CanShowOutline())
+        if (outlineVisual == null)
+            return;
+
+        // 타이틀/일시정지/전환 중에는 기존 호버 상태도 반드시 숨긴다.
+        if (!CanShowOutline())
+        {
             SetOutlineVisible(false);
+            return;
+        }
+
+        // 카메라가 전환된 직후에는 OnMouseEnter가 새로 호출되지 않을 수 있다.
+        // 이 경우에만 보조적으로 다시 켠다. 좌표 판정의 일시적인 오차로
+        // OnMouseEnter가 켠 아웃라인을 매 프레임 끄지는 않는다.
+        if (!outlineVisual.activeSelf && IsPointerOverTarget())
+            SetOutlineVisible(true);
     }
 
     public void SetAvailable(bool available)
@@ -133,9 +147,33 @@ public class MainRoomInteractionTarget : MonoBehaviour
 
     private bool CanShowOutline()
     {
-        return IsAvailable && clickRoutine == null &&
+        return !PausePanelController.IsPaused &&
+               !DayTitleController.IsBlockingWorldInteractions &&
+               IsAvailable &&
+               clickRoutine == null &&
                (interactionController == null || !interactionController.InputLocked) &&
                (transitionEffect == null || !transitionEffect.IsPlaying);
+    }
+
+    private bool IsPointerOverTarget()
+    {
+        if (targetCollider == null || !targetCollider.enabled)
+            return false;
+
+        // 메인룸/현장/CCTV 카메라가 전환되는 구조라 Camera.main이 현재 출력 카메라가 아닐 수 있다.
+        // 활성 카메라 기준으로 모두 확인해, 전환 완료 시 이미 올려 둔 마우스도 즉시 감지한다.
+        Camera[] activeCameras = FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        foreach (Camera inputCamera in activeCameras)
+        {
+            if (inputCamera == null || !inputCamera.enabled)
+                continue;
+
+            Vector3 worldPosition = inputCamera.ScreenToWorldPoint(Input.mousePosition);
+            if (targetCollider.OverlapPoint(worldPosition))
+                return true;
+        }
+
+        return false;
     }
 
     private void HandleUnavailableInteraction()

@@ -30,6 +30,8 @@ public class DayTitleController : MonoBehaviour
 
     public bool WaitForPlayerStart => waitForPlayerStart && !hasStarted;
     public bool HasStarted => hasStarted;
+    /// <summary>타이틀 클릭이 메인룸 Collider까지 전달되지 않도록 하는 전역 입력 차단 상태입니다.</summary>
+    public static bool IsBlockingWorldInteractions { get; private set; }
 
     private bool hasStarted;
     private Coroutine beginDayRoutine;
@@ -44,6 +46,7 @@ public class DayTitleController : MonoBehaviour
         if (DayProgressSave.ConsumeSkipTitleOnNextSceneLoad())
             waitForPlayerStart = false;
 
+        IsBlockingWorldInteractions = waitForPlayerStart;
         ApplyTitleVisibility(waitForPlayerStart);
     }
 
@@ -65,6 +68,7 @@ public class DayTitleController : MonoBehaviour
             return;
 
         hasStarted = true;
+        IsBlockingWorldInteractions = true;
         beginDayRoutine = StartCoroutine(BeginDayRoutine());
     }
 
@@ -85,6 +89,7 @@ public class DayTitleController : MonoBehaviour
             : dayFlowController != null ? dayFlowController.DayNumber : 1;
         DayProgressSave.SetCurrentDay(day);
         dayFlowController?.BeginDayBriefing();
+        IsBlockingWorldInteractions = false;
         beginDayRoutine = null;
     }
 
@@ -168,5 +173,6 @@ public class DayTitleController : MonoBehaviour
         if (beginDayRoutine != null)
             StopCoroutine(beginDayRoutine);
         beginDayRoutine = null;
+        IsBlockingWorldInteractions = false;
     }
 }
