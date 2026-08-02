@@ -30,8 +30,8 @@ MonoBehaviour:
   enableMissedEscalationChannels: 0
   fixedSchedule: []
   enableRandomSchedule: 1
-  randomMinIntervalSec: 10
-  randomMaxIntervalSec: 20
+  randomMinIntervalSec: 7
+  randomMaxIntervalSec: 15
   randomPool:
   - anomaly: {fileID: 11400000, guid: 2929c5f3ddd306c46b9a707aff5a91fa, type: 2}
     weight: 1

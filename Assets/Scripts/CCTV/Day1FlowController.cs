@@ -33,6 +33,10 @@ public class Day1FlowController : MonoBehaviour
     [Header("Tutorial Presentation")]
     [SerializeField, Min(0f)] private float tutorialChannelActivationDelay = 0.5f;
 
+    [Header("Emergency Dispatch Timing")]
+    [Tooltip("정답 보고 직후에는 조건을 충족해도 이 시간만큼 정전 시작을 보류합니다.")]
+    [SerializeField, Min(0f)] private float minimumEmergencyDelayAfterCorrectReport = 3f;
+
     [Header("Temporary Debug Input")]
     [SerializeField] private bool useKeyboardAdvance = false;
     [SerializeField] private KeyCode emergencyRecoveryKey = KeyCode.E;
@@ -54,6 +58,8 @@ public class Day1FlowController : MonoBehaviour
     private bool presentationAnomalyTimersWerePaused;
     private bool presentationCctvInputWasEnabled;
     private bool presentationReportInputWasEnabled;
+    private int observedSuccessReportCount;
+    private float lastCorrectReportTime = float.NegativeInfinity;
 
     private enum PresentationLockMode
     {
@@ -89,6 +95,7 @@ public class Day1FlowController : MonoBehaviour
         }
 
         dayDefinition = dayRuntimeController.CurrentDayDefinition;
+        observedSuccessReportCount = dayRuntimeController.SuccessReportCount;
 
         SubscribeEvents();
         areaTransitionController?.EnterMainRoom();
@@ -103,6 +110,8 @@ public class Day1FlowController : MonoBehaviour
     {
         if (PausePanelController.IsPaused)
             return;
+
+        TrackCorrectReportTiming();
 
         if (Input.GetKeyDown(cctvExitKey))
             ExitCCTVToMainRoom();
@@ -405,7 +414,22 @@ public class Day1FlowController : MonoBehaviour
         if (!hasRequiredReports || !reachedProgress)
             return;
 
+        if (Time.unscaledTime < lastCorrectReportTime + minimumEmergencyDelayAfterCorrectReport)
+            return;
+
         BeginEmergencyDispatch(false);
+    }
+
+    private void TrackCorrectReportTiming()
+    {
+        if (dayRuntimeController == null)
+            return;
+
+        int successReportCount = dayRuntimeController.SuccessReportCount;
+        if (successReportCount > observedSuccessReportCount)
+            lastCorrectReportTime = Time.unscaledTime;
+
+        observedSuccessReportCount = successReportCount;
     }
 
     /// <summary>

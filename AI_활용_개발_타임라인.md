@@ -586,3 +586,10 @@
 - AI가 타이틀의 첫 클릭부터 전화 브리핑 시작까지 메인룸 월드 상호작용을 명시적으로 차단해, 타이틀 클릭이 CCTV·문 오브젝트까지 전달되지 않도록 했다.
 - 메인룸 상호작용 오브젝트의 아웃라인이 `OnMouseEnter`만 기다리지 않고 현재 Collider 위의 마우스 위치를 확인하도록 바꿨다. 전환이 끝난 뒤 이미 마우스를 올려 둔 오브젝트도 즉시 반응하며, 사용 불가 상태에서도 클릭 실행 없이 호버 반응은 보여 준다.
 - 카메라 전환 구조에서 `Camera.main`만 참조해 호버가 즉시 꺼질 수 있던 문제를 확인해, 활성화된 모든 카메라 기준으로 Collider 위 여부를 판정하도록 보정했다.
+- 메인룸 전원 상태를 `MainRoomStateEffectController`에 연결해 정전 시 일반/어두운 배경을 교체하고, 제어실 글자 색을 원본 비율로 어둡게 만들었다. 날짜별 달력 스프라이트도 Day 1~3 슬롯 중 현재 날짜 하나만 표시하도록 확장했다.
+- 메인룸 계열 2종에만 전원·달력 연출을 적용하도록 범위를 제한했다. 일반 메인룸은 `MainRoomStateEffectController`, 마지막 CCTV 메인룸형 구역은 `CCTVAreaInstance`의 `Use Main Room Power And Calendar Visuals` 옵션으로 처리하며, 일반 관찰 구역에는 적용되지 않는다.
+- 여러 배경 조각으로 구성된 CCTV 구역의 크기를 일관되게 맞출 수 있도록 `CCTVAreaInstance`에 AreaDefinition 권장 `Image Size Pixels`를 출력하는 배경 범위 측정 메뉴를 추가했다.
+- CCTV 채널을 나갔다 다시 보거나 Q/E로 왕복해도 마지막으로 보던 가로 위치를 채널별로 유지하도록 `CCTVPanController`에 위치 기억 기능을 추가했다. 최초 방문만 AreaDefinition의 시작 위치를 사용한다.
+- 정전 상태에는 메인룸의 CCTV·전화·문·보고서 오브젝트도 원본 색을 보존한 채 약 64% 밝기(`#FFFFFF → #A4A4A4`)로 함께 어둡게 처리하도록 확장했다.
+- 정답 처리와 정전 조건이 같은 프레임에 겹쳐 즉시 정전되던 흐름을 보완했다. 마지막 정답 뒤 최소 3초가 지날 때까지 정전 시작을 보류하며, Inspector에서 대기 시간을 조절할 수 있다.
+- 빌드에서 런타임 `Shader.Find()`로 생성하는 CCTV CRT/UI 셰이더가 스트리핑될 수 있음을 확인해, Graphics Settings의 Always Included Shaders에 두 셰이더를 고정 포함했다.

@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: "\uC5F0\uAD6C\uC2E4\uBCF5\uB3C4"
   areaPrefab: {fileID: 1636892523527193590, guid: 4fcc482fd04e305428eeedefcc86e74d, type: 3}
   backgroundSprite: {fileID: -2444801725204505117, guid: fe390328327b15f4fb942c4bfa754aa3, type: 3}
-  imageSizePixels: {x: 3100, y: 500}
+  imageSizePixels: {x: 5257, y: 500}
   pixelsPerUnit: 100
   areaCenter: {x: 0, y: 0}
   orthographicSize: 2.5

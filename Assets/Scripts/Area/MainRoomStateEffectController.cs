@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Day 1 진행 상태에 따라 메인룸 오브젝트의 상태 연출을 제어합니다.
@@ -15,6 +16,22 @@ public class MainRoomStateEffectController : MonoBehaviour
     [SerializeField] private Transform phoneCallTransform;
     [SerializeField] private GameObject cctvGlitch;
     [SerializeField] private GameObject cctvBlack;
+
+    [Header("Blackout Main Room")]
+    [SerializeField] private GameObject normalBackground;
+    [SerializeField] private GameObject darkBackground;
+    [SerializeField] private GameObject controlSign;
+    [SerializeField, Range(0f, 1f)] private float controlSignBlackoutBrightness = 0.45f;
+
+    [Header("Blackout Interactable Dimming")]
+    [Tooltip("정전 시 함께 어두워질 메인룸 상호작용 오브젝트입니다. 비워두면 CCTV, Phone, Door, Report를 자동 연결합니다.")]
+    [SerializeField] private GameObject[] blackoutDimObjects = new GameObject[4];
+    [Tooltip("#FFFFFF 기준 #A4A4A4는 약 0.64입니다.")]
+    [SerializeField, Range(0f, 1f)] private float blackoutInteractableBrightness = 0.643f;
+
+    [Header("Calendar")]
+    [Tooltip("0=Day 1, 1=Day 2, 2=Day 3. 각 날짜 스프라이트 오브젝트를 넣습니다.")]
+    [SerializeField] private GameObject[] calendarDaySprites = new GameObject[3];
 
     [Header("Missed Approach - First Pass")]
     [Tooltip("Report/WordCanvas 아래의 Wrong TMP 텍스트입니다. 미보고가 없을 때는 숨깁니다.")]
@@ -49,12 +66,23 @@ public class MainRoomStateEffectController : MonoBehaviour
     private bool isPhoneVibrationActive;
     private readonly List<SpriteRenderer> phoneGlowRenderers = new List<SpriteRenderer>();
     private readonly List<Color> phoneGlowBaseColors = new List<Color>();
+    private readonly List<SpriteRenderer> controlSignSpriteRenderers = new List<SpriteRenderer>();
+    private readonly List<Color> controlSignSpriteBaseColors = new List<Color>();
+    private readonly List<TMP_Text> controlSignTexts = new List<TMP_Text>();
+    private readonly List<Color> controlSignTextBaseColors = new List<Color>();
+    private readonly List<Graphic> controlSignGraphics = new List<Graphic>();
+    private readonly List<Color> controlSignGraphicBaseColors = new List<Color>();
+    private readonly List<SpriteRenderer> blackoutDimRenderers = new List<SpriteRenderer>();
+    private readonly List<Color> blackoutDimBaseColors = new List<Color>();
 
     private void Awake()
     {
         ResolveReferences();
         CachePhoneDefaultPosition();
         CachePhoneGlowRenderers();
+        CacheControlSignColors();
+        CacheBlackoutDimColors();
+        RefreshCalendar();
         ApplyState(day1FlowController != null ? day1FlowController.State : Day1FlowState.None);
     }
 
@@ -63,6 +91,9 @@ public class MainRoomStateEffectController : MonoBehaviour
         ResolveReferences();
         CachePhoneDefaultPosition();
         CachePhoneGlowRenderers();
+        CacheControlSignColors();
+        CacheBlackoutDimColors();
+        RefreshCalendar();
         Subscribe();
         ApplyState(day1FlowController != null ? day1FlowController.State : Day1FlowState.None);
     }
@@ -91,6 +122,10 @@ public class MainRoomStateEffectController : MonoBehaviour
         isPhoneGlowPulsing = false;
         SetActive(cctvGlitch, true);
         SetActive(cctvBlack, false);
+        SetActive(normalBackground, true);
+        SetActive(darkBackground, false);
+        ApplyControlSignBrightness(1f);
+        ApplyBlackoutDimBrightness(1f);
     }
 
     private void HandleStateChanged(Day1FlowState state)
@@ -109,6 +144,10 @@ public class MainRoomStateEffectController : MonoBehaviour
                            day1FlowController != null && day1FlowController.IsEmergencyPresentationLocked);
         SetActive(cctvGlitch, !isBlackout);
         SetActive(cctvBlack, isBlackout);
+        SetActive(normalBackground, !isBlackout);
+        SetActive(darkBackground, isBlackout);
+        ApplyControlSignBrightness(isBlackout ? controlSignBlackoutBrightness : 1f);
+        ApplyBlackoutDimBrightness(isBlackout ? blackoutInteractableBrightness : 1f);
     }
 
     private void SetPhoneRinging(bool ringing)
@@ -157,6 +196,7 @@ public class MainRoomStateEffectController : MonoBehaviour
     {
         missedAnomalyCount = 0;
         RefreshMissedApproachVisuals();
+        RefreshCalendar();
     }
 
     private void RefreshMissedApproachVisuals()
@@ -218,6 +258,100 @@ public class MainRoomStateEffectController : MonoBehaviour
             phoneGlowRenderers.Add(renderer);
             phoneGlowBaseColors.Add(renderer.color);
         }
+    }
+
+    private void CacheControlSignColors()
+    {
+        if (controlSign == null || controlSignSpriteRenderers.Count > 0 ||
+            controlSignTexts.Count > 0 || controlSignGraphics.Count > 0)
+            return;
+
+        foreach (SpriteRenderer renderer in controlSign.GetComponentsInChildren<SpriteRenderer>(true))
+        {
+            controlSignSpriteRenderers.Add(renderer);
+            controlSignSpriteBaseColors.Add(renderer.color);
+        }
+
+        foreach (TMP_Text text in controlSign.GetComponentsInChildren<TMP_Text>(true))
+        {
+            controlSignTexts.Add(text);
+            controlSignTextBaseColors.Add(text.color);
+        }
+
+        foreach (Graphic graphic in controlSign.GetComponentsInChildren<Graphic>(true))
+        {
+            controlSignGraphics.Add(graphic);
+            controlSignGraphicBaseColors.Add(graphic.color);
+        }
+    }
+
+    private void ApplyControlSignBrightness(float brightness)
+    {
+        brightness = Mathf.Clamp01(brightness);
+        CacheControlSignColors();
+
+        for (int i = 0; i < controlSignSpriteRenderers.Count; i++)
+            if (controlSignSpriteRenderers[i] != null)
+                controlSignSpriteRenderers[i].color = MultiplyRgb(controlSignSpriteBaseColors[i], brightness);
+
+        for (int i = 0; i < controlSignTexts.Count; i++)
+            if (controlSignTexts[i] != null)
+                controlSignTexts[i].color = MultiplyRgb(controlSignTextBaseColors[i], brightness);
+
+        for (int i = 0; i < controlSignGraphics.Count; i++)
+            if (controlSignGraphics[i] != null)
+                controlSignGraphics[i].color = MultiplyRgb(controlSignGraphicBaseColors[i], brightness);
+    }
+
+    private void CacheBlackoutDimColors()
+    {
+        if (blackoutDimRenderers.Count > 0)
+            return;
+
+        foreach (GameObject target in blackoutDimObjects)
+        {
+            if (target == null)
+                continue;
+
+            foreach (SpriteRenderer renderer in target.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (renderer == null || blackoutDimRenderers.Contains(renderer))
+                    continue;
+
+                blackoutDimRenderers.Add(renderer);
+                blackoutDimBaseColors.Add(renderer.color);
+            }
+        }
+    }
+
+    private void ApplyBlackoutDimBrightness(float brightness)
+    {
+        CacheBlackoutDimColors();
+        brightness = Mathf.Clamp01(brightness);
+
+        for (int i = 0; i < blackoutDimRenderers.Count; i++)
+        {
+            if (blackoutDimRenderers[i] != null)
+                blackoutDimRenderers[i].color = MultiplyRgb(blackoutDimBaseColors[i], brightness);
+        }
+    }
+
+    private static Color MultiplyRgb(Color baseColor, float brightness)
+    {
+        baseColor.r *= brightness;
+        baseColor.g *= brightness;
+        baseColor.b *= brightness;
+        return baseColor;
+    }
+
+    private void RefreshCalendar()
+    {
+        int day = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
+            ? dayRuntimeController.CurrentDayDefinition.Day
+            : day1FlowController != null ? day1FlowController.DayNumber : 1;
+
+        for (int i = 0; i < calendarDaySprites.Length; i++)
+            SetActive(calendarDaySprites[i], i == day - 1);
     }
 
     private void ApplyPhoneGlowPulse()
@@ -303,6 +437,45 @@ public class MainRoomStateEffectController : MonoBehaviour
             if (shadowTransform != null)
                 doorShadow = shadowTransform.gameObject;
         }
+
+        if (normalBackground == null)
+            normalBackground = FindChildObject("BackGround");
+        if (darkBackground == null)
+            darkBackground = FindChildObject("DarkBackGround");
+        if (controlSign == null)
+            controlSign = FindChildObject("Controll");
+
+        string[] defaultDimObjectNames = { "CCTV", "Phone", "Door", "Report" };
+        for (int i = 0; i < blackoutDimObjects.Length && i < defaultDimObjectNames.Length; i++)
+        {
+            if (blackoutDimObjects[i] == null)
+                blackoutDimObjects[i] = FindChildObject(defaultDimObjectNames[i]);
+        }
+
+        Transform calendar = transform.Find("Callender");
+        if (calendar != null)
+        {
+            for (int i = 0; i < calendarDaySprites.Length; i++)
+            {
+                if (calendarDaySprites[i] == null && i < calendar.childCount)
+                    calendarDaySprites[i] = calendar.GetChild(i).gameObject;
+            }
+        }
+        else
+        {
+            // CCTVRoom처럼 달력 3장이 루트에 직접 배치된 프리팹도 지원한다.
+            for (int i = 0; i < calendarDaySprites.Length; i++)
+            {
+                if (calendarDaySprites[i] == null)
+                    calendarDaySprites[i] = FindChildObject($"Callender{i + 1}");
+            }
+        }
+    }
+
+    private GameObject FindChildObject(string childName)
+    {
+        Transform child = transform.Find(childName);
+        return child != null ? child.gameObject : null;
     }
 
     private static void SetActive(GameObject target, bool active)

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
+using System.Collections.Generic;
 
 public class CCTVPanController : MonoBehaviour
 {
@@ -21,6 +22,7 @@ public class CCTVPanController : MonoBehaviour
     private bool inputLocked;
     private float targetX;
     private float velocityX;
+    private readonly Dictionary<AreaId, float> savedTargetXByAreaId = new Dictionary<AreaId, float>();
 
     public CCTVAreaDefinition CurrentArea => currentArea;
     public bool InputLocked => inputLocked;
@@ -58,6 +60,7 @@ public class CCTVPanController : MonoBehaviour
 
     public void SetArea(CCTVAreaDefinition area)
     {
+        SaveCurrentAreaPosition();
         currentArea = area;
         currentInstance = null;
 
@@ -72,9 +75,7 @@ public class CCTVPanController : MonoBehaviour
 
         float minX = GetMinCameraX();
         float maxX = GetMaxCameraX();
-        targetX = minX > maxX
-            ? currentArea.AreaCenter.x
-            : Mathf.Lerp(minX, maxX, currentArea.StartNormalizedX);
+        targetX = GetInitialOrSavedTargetX(minX, maxX, currentArea.AreaCenter.x);
 
         Vector3 position = targetCamera.transform.position;
         position.x = targetX;
@@ -85,6 +86,7 @@ public class CCTVPanController : MonoBehaviour
 
     public void SetAreaInstance(CCTVAreaInstance instance)
     {
+        SaveCurrentAreaPosition();
         currentInstance = instance;
         currentArea = instance != null ? instance.Definition : null;
 
@@ -99,9 +101,10 @@ public class CCTVPanController : MonoBehaviour
 
         float minX = GetMinCameraX();
         float maxX = GetMaxCameraX();
-        targetX = minX > maxX
-            ? currentInstance.WorldOrigin.x + currentArea.AreaCenter.x
-            : Mathf.Lerp(minX, maxX, currentArea.StartNormalizedX);
+        targetX = GetInitialOrSavedTargetX(
+            minX,
+            maxX,
+            currentInstance.WorldOrigin.x + currentArea.AreaCenter.x);
 
         Vector3 position = targetCamera.transform.position;
         position.x = targetX;
@@ -131,6 +134,32 @@ public class CCTVPanController : MonoBehaviour
         targetX = minX > maxX
             ? currentInstance != null ? currentInstance.WorldOrigin.x + currentArea.AreaCenter.x : currentArea.AreaCenter.x
             : Mathf.Lerp(minX, maxX, Mathf.Clamp01(normalizedX));
+    }
+
+    /// <summary>새 근무를 시작하거나 디버그 초기화를 할 때 채널별 카메라 기억값을 비웁니다.</summary>
+    public void ClearSavedAreaPositions()
+    {
+        savedTargetXByAreaId.Clear();
+    }
+
+    private void SaveCurrentAreaPosition()
+    {
+        if (currentArea == null)
+            return;
+
+        // 보간 중이어도 플레이어가 마지막으로 바라보던 목표 위치를 유지한다.
+        savedTargetXByAreaId[currentArea.AreaId] = targetX;
+    }
+
+    private float GetInitialOrSavedTargetX(float minX, float maxX, float fallbackCenterX)
+    {
+        if (minX > maxX)
+            return fallbackCenterX;
+
+        if (currentArea != null && savedTargetXByAreaId.TryGetValue(currentArea.AreaId, out float savedX))
+            return Mathf.Clamp(savedX, minX, maxX);
+
+        return Mathf.Lerp(minX, maxX, currentArea.StartNormalizedX);
     }
 
     private float GetHorizontalInput()
