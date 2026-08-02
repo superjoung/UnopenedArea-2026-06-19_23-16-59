@@ -1,10 +1,13 @@
 fileFormatVersion: 2
-guid: d90faae4a62ba41478f1af003acf54b2
+guid: acdc9ef90d0d9c04ead9b1ee932716d5
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5841257597044338609
-    second: Report_White_0
+      213: 3113110168656545276
+    second: day2_0
+  - first:
+      213: 2039597065747306786
+    second: day2_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +40,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -75,7 +78,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -100,13 +103,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Report_White_0
+      name: day2_0
       rect:
         serializedVersion: 2
-        x: 1
-        y: 3
-        width: 81
-        height: 53
+        x: 229
+        y: 127
+        width: 20
+        height: 28
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +118,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f40de9ee92fafeea0800000000000000
-      internalID: -5841257597044338609
+      spriteID: cf50e65543df33b20800000000000000
+      internalID: 3113110168656545276
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: day2_1
+      rect:
+        serializedVersion: 2
+        x: 236
+        y: 155
+        width: 16
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2291ccc99ba1e4c10800000000000000
+      internalID: 2039597065747306786
       vertices: []
       indices: 
       edges: []
@@ -135,7 +160,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Report_White_0: -5841257597044338609
+      day2_0: 3113110168656545276
+      day2_1: 2039597065747306786
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
