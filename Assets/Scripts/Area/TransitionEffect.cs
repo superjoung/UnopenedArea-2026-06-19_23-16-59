@@ -182,6 +182,7 @@ public class TransitionEffect : MonoBehaviour
 
         for (int i = 0; i < blackoutFlickerCount; i++)
         {
+            activeSequence.AppendCallback(() => SoundManager.Instance?.PlayBlackoutFlickerSfx());
             activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, blackoutFlickerFadeDuration));
             activeSequence.Append(blackoutPanelImage.DOFade(0f, blackoutFlickerFadeDuration));
         }
@@ -190,12 +191,14 @@ public class TransitionEffect : MonoBehaviour
 
         if (blackoutFlashPanelImage != null)
         {
+            activeSequence.AppendCallback(() => SoundManager.Instance?.PlayBlackoutImpactSfx());
             activeSequence.Append(blackoutFlashPanelImage.DOFade(blackoutFlashPeakAlpha, blackoutFlashInDuration));
             activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, finalBlackoutFadeDuration));
             activeSequence.Join(blackoutFlashPanelImage.DOFade(0f, finalBlackoutFadeDuration));
         }
         else
         {
+            activeSequence.AppendCallback(() => SoundManager.Instance?.PlayBlackoutImpactSfx());
             activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, finalBlackoutFadeDuration));
         }
         activeSequence.AppendInterval(blackoutHoldDuration);

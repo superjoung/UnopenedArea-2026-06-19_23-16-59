@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TestDayDefinition
   m_EditorClassIdentifier: 
   day: 1
-  durationSec: 120
+  durationSec: 180
   maxMissed: 3
   activeAreas:
   - {fileID: 11400000, guid: 9d13d1b21e63abb4594f360b587d5f4e, type: 2}
@@ -67,5 +67,35 @@ MonoBehaviour:
     weight: 1
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 19767e4122f3d5f46b4c7f16da5653a8, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: a37a7ba21fb4cf24cbb881429eef34e0, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 2d7e5e163b5617845a9b0dca50fd42bc, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 257cac0dea4726843b63dd657595de1b, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 44be91a1b2604db6965768cc9c6c93c1, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 65639afc7a424a4083eb3aa17a3b02cf, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: c79ba548f7d741c5a7d88f7e639fa943, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: e680e97e7c2c4ac7a58a9c2a04315ef4, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 898be70612c14c83ae8551a519148e02, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 9b5a59e564b949f2b85ccf99f3495e7d, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 2e09500cf8864c97b221f9871ec4f0b6, type: 2}
     weight: 1
     allowRepeat: 1

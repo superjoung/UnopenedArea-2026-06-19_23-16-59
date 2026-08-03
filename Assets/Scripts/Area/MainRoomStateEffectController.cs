@@ -165,6 +165,9 @@ public class MainRoomStateEffectController : MonoBehaviour
             phoneCallTransform.localPosition = phoneCallDefaultLocalPosition;
         }
 
+        if (ringing)
+            SoundManager.Instance?.PlayPhoneRingSfx();
+
         RefreshPhoneGlow();
     }
 
@@ -176,6 +179,9 @@ public class MainRoomStateEffectController : MonoBehaviour
         isPhoneVibrationActive = !isPhoneVibrationActive;
         phoneVibrationPhaseEndTime = Time.unscaledTime +
             (isPhoneVibrationActive ? phoneVibrationOnDuration : phoneVibrationOffDuration);
+
+        if (isPhoneVibrationActive)
+            SoundManager.Instance?.PlayPhoneRingSfx();
 
         if (!isPhoneVibrationActive && phoneCallTransform != null)
         {

@@ -32,7 +32,10 @@ public class MainRoomInteractionController : MonoBehaviour
                 if (transitionEffect == null || !transitionEffect.TryPlayCctvEntry())
                     day1FlowController.EnterCCTVFromMainRoom();
                 break;
-            case MainRoomInteractionType.Door: day1FlowController.EnterFieldFromMainRoom(); break;
+            case MainRoomInteractionType.Door:
+                SoundManager.Instance?.PlayDoorOpenSfx();
+                day1FlowController.EnterFieldFromMainRoom();
+                break;
         }
     }
 

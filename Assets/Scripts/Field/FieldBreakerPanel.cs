@@ -96,6 +96,7 @@ public class FieldBreakerPanel : MonoBehaviour
             return;
 
         IsRestored = true;
+        SoundManager.Instance?.PlayBreakerPowerOnSfx();
         heldSeconds = requiredHoldSeconds;
         HoldProgressChanged?.Invoke(1f);
         Restored?.Invoke();

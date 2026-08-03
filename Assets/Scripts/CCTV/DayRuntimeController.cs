@@ -22,6 +22,9 @@ public class DayRuntimeController : MonoBehaviour
     [Tooltip("오보고만으로 실패하는 횟수입니다. 미보고 한계와 별도로 판정합니다.")]
     [SerializeField, Min(1)] private int maxWrongReports = 3;
 
+    [Header("Sound Events")]
+    [SerializeField] private UnityEngine.Events.UnityEvent onDayFailed;
+
     public DayRuntimeState State { get; private set; } = DayRuntimeState.NotStarted;
     public float ElapsedSec { get; private set; }
     public float RemainingSec => Mathf.Max(0f, DurationSec - ElapsedSec);
@@ -138,6 +141,8 @@ public class DayRuntimeController : MonoBehaviour
         if (anomalyService != null)
             anomalyService.SetTimersPaused(true);
 
+        SoundManager.Instance?.PlayFailBgm();
+        onDayFailed?.Invoke();
         DayFailed?.Invoke();
         Debug.Log($"[DayRuntimeController] Day failed. wrongReports={WrongReportCount}/{MaxWrongReports}, missed={MissedAnomalyCount}/{MaxMissed}");
     }

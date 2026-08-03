@@ -177,7 +177,10 @@ public class Day1FlowController : MonoBehaviour
     public void AcceptPhoneMission()
     {
         if (State == Day1FlowState.Briefing)
+        {
+            SoundManager.Instance?.StopPhoneRingAndPlayHangupSfx();
             BeginBaselineReview();
+        }
     }
 
     /// <summary>

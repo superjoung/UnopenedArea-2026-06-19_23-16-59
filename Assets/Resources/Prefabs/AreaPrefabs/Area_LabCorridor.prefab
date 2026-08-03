@@ -10,13 +10,15 @@ GameObject:
   m_Component:
   - component: {fileID: 2332643162577910588}
   - component: {fileID: 6830208162946405204}
+  - component: {fileID: 9011001001001001105}
+  - component: {fileID: 6583382212743773860}
   m_Layer: 0
-  m_Name: Door4
+  m_Name: Chair2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2332643162577910588
 Transform:
   m_ObjectHideFlags: 0
@@ -87,6 +89,178 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &6583382212743773860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 55558918188155660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  objectId: OBJ_LAB_DOOR_02
+  targetId: 102
+  displayName: "\uBB38"
+  canBeAnomalyTarget: 1
+  includeInBaseline: 1
+--- !u!1 &9011001001001001002
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9011001001001001001}
+  - component: {fileID: 9011001001001001003}
+  - component: {fileID: 9011001001001001004}
+  m_Layer: 0
+  m_Name: Plant Added
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &9011001001001001001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9011001001001001002}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 11.6, y: -1.35, z: 0}
+  m_LocalScale: {x: 3, y: 3, z: 3}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 63410161941787099}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &9011001001001001003
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9011001001001001002}
+  m_Enabled: 1
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 8591533231565066105, guid: 67ef67979a3e32d4bb692280d3c18082, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!114 &9011001001001001004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9011001001001001002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  objectId: OBJ_LAB_PLANT_ADDED_01
+  targetId: 112
+  displayName: "\uD654\uBD84"
+  canBeAnomalyTarget: 1
+  includeInBaseline: 1
+--- !u!114 &9011001001001001101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2398827410492145264}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  objectId: OBJ_LAB_POSTER_ANGLE_01
+  targetId: 111
+  displayName: "\uD3EC\uC2A4\uD130"
+  canBeAnomalyTarget: 1
+  includeInBaseline: 1
+--- !u!114 &9011001001001001102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1940139220660703871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  objectId: OBJ_LAB_PLANT_01
+  targetId: 112
+  displayName: "\uD654\uBD84"
+  canBeAnomalyTarget: 1
+  includeInBaseline: 1
+--- !u!114 &9011001001001001103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4588776010794051219}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  objectId: OBJ_LAB_POSTER_ADDED_01
+  targetId: 111
+  displayName: "\uD3EC\uC2A4\uD130"
+  canBeAnomalyTarget: 1
+  includeInBaseline: 1
+--- !u!114 &9011001001001001104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5194847739332275932}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  objectId: OBJ_LAB_POSTER_01
+  targetId: 111
+  displayName: "\uD3EC\uC2A4\uD130"
+  canBeAnomalyTarget: 1
+  includeInBaseline: 1
+--- !u!114 &9011001001001001105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 55558918188155660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  objectId: OBJ_LAB_CHAIR_02
+  targetId: 101
+  displayName: "\uC758\uC790"
+  canBeAnomalyTarget: 1
+  includeInBaseline: 1
 --- !u!1 &68211830065938082
 GameObject:
   m_ObjectHideFlags: 0
@@ -184,6 +358,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5667077933162630124}
   - component: {fileID: 4467923495605631150}
+  - component: {fileID: 7460609013466170012}
   m_Layer: 0
   m_Name: Light (2)
   m_TagString: Untagged
@@ -261,6 +436,23 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &7460609013466170012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 229045740221816503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  objectId: OBJ_LAB_CeilLight_01
+  targetId: 103
+  displayName: "\uC804\uB4F1"
+  canBeAnomalyTarget: 1
+  includeInBaseline: 1
 --- !u!1 &280508290053717542
 GameObject:
   m_ObjectHideFlags: 0
@@ -1158,6 +1350,7 @@ MonoBehaviour:
   controlSignRenderer: {fileID: 0}
   controlSignBlackoutBrightness: 0.45
   calendarDaySprites: []
+  editorMeasurementPixelsPerUnit: 100
 --- !u!114 &5429590998789562932
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1272,9 +1465,9 @@ GameObject:
   m_Component:
   - component: {fileID: 7100777772100260220}
   - component: {fileID: 7170881458890861460}
-  - component: {fileID: 1842065960328407556}
+  - component: {fileID: 9011001001001001102}
   m_Layer: 0
-  m_Name: PicFrame
+  m_Name: Plant
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1350,23 +1543,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &1842065960328407556
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1940139220660703871}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectId: OBJ_LAB_DOOR_01
-  targetId: 102
-  displayName: "\uBB38"
-  canBeAnomalyTarget: 1
-  includeInBaseline: 1
 --- !u!1 &2026682108829577566
 GameObject:
   m_ObjectHideFlags: 0
@@ -1638,7 +1814,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8979169961146765097}
   - component: {fileID: 8898411548431522313}
-  - component: {fileID: 5629837927451514542}
+  - component: {fileID: 9011001001001001101}
   m_Layer: 0
   m_Name: Poster1 (1)
   m_TagString: Untagged
@@ -1716,23 +1892,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &5629837927451514542
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2398827410492145264}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectId: OBJ_LAB_DOOR_01
-  targetId: 102
-  displayName: "\uBB38"
-  canBeAnomalyTarget: 1
-  includeInBaseline: 1
 --- !u!1 &2667181028622731625
 GameObject:
   m_ObjectHideFlags: 0
@@ -3254,14 +3413,14 @@ GameObject:
   m_Component:
   - component: {fileID: 1221797851570184237}
   - component: {fileID: 8760354820009307092}
-  - component: {fileID: 6115207196170709621}
+  - component: {fileID: 9011001001001001103}
   m_Layer: 0
   m_Name: Poster1 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1221797851570184237
 Transform:
   m_ObjectHideFlags: 0
@@ -3332,23 +3491,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &6115207196170709621
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4588776010794051219}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectId: OBJ_LAB_DOOR_01
-  targetId: 102
-  displayName: "\uBB38"
-  canBeAnomalyTarget: 1
-  includeInBaseline: 1
 --- !u!1 &4665800538013717692
 GameObject:
   m_ObjectHideFlags: 0
@@ -3812,7 +3954,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6007876023493572611}
   - component: {fileID: 8969467445355962499}
-  - component: {fileID: 6446060617295561079}
+  - component: {fileID: 9011001001001001104}
   m_Layer: 0
   m_Name: Poster1
   m_TagString: Untagged
@@ -3890,23 +4032,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &6446060617295561079
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5194847739332275932}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  objectId: OBJ_LAB_DOOR_01
-  targetId: 102
-  displayName: "\uBB38"
-  canBeAnomalyTarget: 1
-  includeInBaseline: 1
 --- !u!1 &6120590938326933554
 GameObject:
   m_ObjectHideFlags: 0
@@ -4333,6 +4458,7 @@ Transform:
   - {fileID: 8855921417668561665}
   - {fileID: 5451461553851840159}
   - {fileID: 5354535784164161531}
+  - {fileID: 9011001001001001001}
   m_Father: {fileID: 5125744028752580180}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6879594898202328789

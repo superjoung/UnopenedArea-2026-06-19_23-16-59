@@ -105,6 +105,144 @@ MonoBehaviour:
   displayName: "\uD658\uC790\uCE68\uB300"
   canBeAnomalyTarget: 1
   includeInBaseline: 1
+--- !u!114 &9022002002002002101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1235501736988514601}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  objectId: OBJ_TREAT_STAND_03
+  targetId: 113
+  displayName: "\uC2A4\uD0E0\uB4DC"
+  canBeAnomalyTarget: 1
+  includeInBaseline: 1
+--- !u!114 &9022002002002002102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6436903039939837137}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  objectId: OBJ_TREAT_STAND_01
+  targetId: 113
+  displayName: "\uC2A4\uD0E0\uB4DC"
+  canBeAnomalyTarget: 1
+  includeInBaseline: 1
+--- !u!114 &9022002002002002103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7709183277440581566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  objectId: OBJ_TREAT_STAND_02
+  targetId: 113
+  displayName: "\uC2A4\uD0E0\uB4DC"
+  canBeAnomalyTarget: 1
+  includeInBaseline: 1
+--- !u!1 &9022002002002002002
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9022002002002002001}
+  - component: {fileID: 9022002002002002003}
+  - component: {fileID: 9022002002002002004}
+  m_Layer: 0
+  m_Name: IVStand Added
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &9022002002002002001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9022002002002002002}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 11.25, y: -0.64, z: 0}
+  m_LocalScale: {x: 4, y: 4, z: 4}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 63410161941787099}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &9022002002002002003
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9022002002002002002}
+  m_Enabled: 1
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 8105918661383769078, guid: d85f8b0274ebc3746b8e27b6d5aa4c07, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!114 &9022002002002002004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9022002002002002002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  objectId: OBJ_TREAT_STAND_ADDED_01
+  targetId: 113
+  displayName: "\uC2A4\uD0E0\uB4DC"
+  canBeAnomalyTarget: 1
+  includeInBaseline: 1
+--- !u!114 &9022002002002002104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 571925311751643283}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e2ced7671135c48a41739ed01f0bf9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  objectId: OBJ_TREAT_DOOR_01
+  targetId: 102
+  displayName: "\uBB38"
+  canBeAnomalyTarget: 1
+  includeInBaseline: 1
 --- !u!1 &571925311751643283
 GameObject:
   m_ObjectHideFlags: 0
@@ -115,6 +253,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2845649064521546011}
   - component: {fileID: 3906296970004765768}
+  - component: {fileID: 9022002002002002104}
   m_Layer: 0
   m_Name: Door
   m_TagString: Untagged
@@ -376,6 +515,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7961557164622334635}
   - component: {fileID: 1930597049076532456}
+  - component: {fileID: 9022002002002002101}
   m_Layer: 0
   m_Name: IVStand3
   m_TagString: Untagged
@@ -600,6 +740,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  editorMeasurementPixelsPerUnit: 100
 --- !u!1 &3050348072949049344
 GameObject:
   m_ObjectHideFlags: 0
@@ -2299,6 +2440,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3103193701099636335}
   - component: {fileID: 3864461642870024562}
+  - component: {fileID: 9022002002002002102}
   m_Layer: 0
   m_Name: IVStand
   m_TagString: Untagged
@@ -2826,6 +2968,7 @@ Transform:
   - {fileID: 3268532313397761038}
   - {fileID: 4905541940034450671}
   - {fileID: 7535789610979166580}
+  - {fileID: 9022002002002002001}
   m_Father: {fileID: 5125744028752580180}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6870005964306258021
@@ -3130,6 +3273,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5496633225217814753}
   - component: {fileID: 5759888187576105542}
+  - component: {fileID: 9022002002002002103}
   m_Layer: 0
   m_Name: IVStand2
   m_TagString: Untagged
@@ -3556,7 +3700,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 6
   m_Sprite: {fileID: 8512494918293299592, guid: 705d49efb38abdd4b9edf84f1064b4fe, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0

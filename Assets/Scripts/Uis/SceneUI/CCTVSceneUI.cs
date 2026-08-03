@@ -8,6 +8,9 @@ using UnityEngine.EventSystems;
 
 public class CCTVSceneUI : BaseUI
 {
+    [Header("Sound Events")]
+    [SerializeField] private UnityEngine.Events.UnityEvent onReportPanelToggled;
+
     // BaseUI.Bind에서 enum 이름과 같은 자식 UI를 찾아 캐싱한다.
     enum Texts
     {
@@ -165,6 +168,8 @@ public class CCTVSceneUI : BaseUI
             if (dayRuntimeController != null)
                 dayRuntimeController.RegisterCorrectReport();
 
+            SoundManager.Instance?.PlayCorrectReportSfx();
+
             if (GameManager.Instance != null)
                 GameManager.Instance.NotifyDayCorrectReport(matchedRuntime);
 
@@ -181,6 +186,8 @@ public class CCTVSceneUI : BaseUI
             if (GameManager.Instance != null)
                 GameManager.Instance.NotifyDayWrongReport();
 
+            CloseReportPanel(false);
+            SoundManager.Instance?.PlayWrongOrMissedReportSfx();
             PlayFalseReportNoise();
         }
     }
@@ -314,7 +321,8 @@ public class CCTVSceneUI : BaseUI
         if (_reportDefaultHeight == 0.0f || panel == null) return;
 
         _slideTween?.Kill();
-
+        SoundManager.Instance?.PlayReportPaperSfx();
+        onReportPanelToggled?.Invoke();
         // W키 보고 패널 토글: 열 때는 기본 보고 높이, 닫을 때는 전체 높이 기준 아래로 내린다.
         if (!_isReport)
         {
@@ -353,7 +361,7 @@ public class CCTVSceneUI : BaseUI
             yield break;
 
         _isNormalizingReport = true;
-        CloseReportPanel();
+        CloseReportPanel(false);
         SetReportSendInteractable(false);
 
         if (panController != null)
@@ -393,13 +401,16 @@ public class CCTVSceneUI : BaseUI
             : fallbackSuccessReportNoiseDuration;
     }
 
-    private void CloseReportPanel()
+    private void CloseReportPanel(bool playPaperSfx = true)
     {
         RectTransform panel = GetObject((int)Objects.ReportBackGround)?.GetComponent<RectTransform>();
         if (panel == null)
             return;
 
         _slideTween?.Kill();
+        if (playPaperSfx)
+            SoundManager.Instance?.PlayReportPaperSfx();
+        onReportPanelToggled?.Invoke();
         _slideTween = panel
             .DOAnchorPosY(-_reportFullHeight, 0.2f)
             .SetEase(Ease.OutQuint);
@@ -533,15 +544,20 @@ public class CCTVSceneUI : BaseUI
         if (instance == null)
             return;
 
+        // 실제 오브젝트 수와 관계없이 보고 대상은 TargetId 하나당 하나만 보여준다.
+        // 예: 왼쪽/오른쪽 초상화와 여러 포스터는 각각 "초상화", "포스터" 버튼 하나로 합친다.
+        var addedTargetIds = new HashSet<ReportTargetId>();
+
         // 오보고 가능성을 위해 활성 이상현상만이 아니라 해당 구역의 모든 보고 가능 오브젝트를 후보로 보여준다.
         foreach (CCTVSceneObject sceneObject in instance.GetAllObjects())
         {
             if (sceneObject == null || !sceneObject.CanBeAnomalyTarget || sceneObject.TargetId == ReportTargetId.None)
                 continue;
 
-            string label = string.IsNullOrWhiteSpace(sceneObject.DisplayName)
-                ? CCTVReportLabelProvider.GetTargetLabel(sceneObject.TargetId)
-                : sceneObject.DisplayName;
+            if (!addedTargetIds.Add(sceneObject.TargetId))
+                continue;
+
+            string label = CCTVReportLabelProvider.GetTargetLabel(sceneObject.TargetId);
 
             var option = new ReportSelectOption
             {

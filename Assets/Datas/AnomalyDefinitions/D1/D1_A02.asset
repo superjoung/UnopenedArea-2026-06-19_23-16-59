@@ -23,7 +23,7 @@ MonoBehaviour:
   isEmergency: 0
   actions:
   - actionType: 1
-    targetObjectId: OBJ_LAB_CHAIR_01
+    targetObjectId: OBJ_LAB_CHAIR_02
     delaySec: 0
     activeValue: 1
     targetLocalPosition: {x: 0, y: 0, z: 0}

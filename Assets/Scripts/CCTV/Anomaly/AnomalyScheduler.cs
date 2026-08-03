@@ -10,6 +10,10 @@ public class AnomalyScheduler : MonoBehaviour
     [Header("Retry")]
     [SerializeField, Min(0.1f)] private float blockedRetryDelaySec = 1f;
 
+    [Header("Random Variety")]
+    [Tooltip("랜덤 풀에서 직전에 나온 이상현상은 다음 추첨에서 제외합니다. 다른 후보가 없을 때만 예외로 허용합니다.")]
+    [SerializeField] private bool preventConsecutiveRandomAnomaly = true;
+
     [Header("Observation Cycle")]
     [Tooltip("활성/연출 중인 이상현상이 있으면 다른 구역을 포함해 다음 이상현상을 만들지 않습니다.")]
     [SerializeField] private bool allowOnlyOneActiveAnomaly = true;
@@ -28,6 +32,7 @@ public class AnomalyScheduler : MonoBehaviour
     private float randomRemainingSec;
     private bool awaitingObservationCycleResult;
     private float postCycleStableRemainingSec;
+    private AnomalyDefinition lastRandomAnomaly;
 
     public bool GenerationPaused => generationPaused;
 
@@ -100,6 +105,7 @@ public class AnomalyScheduler : MonoBehaviour
         currentDayDefinition = dayDefinition;
         triggeredFixedScheduleIndexes.Clear();
         usedNonRepeatRandomAnomalies.Clear();
+        lastRandomAnomaly = null;
         awaitingObservationCycleResult = false;
         postCycleStableRemainingSec = 0f;
         ResetRandomTimer();
@@ -150,6 +156,7 @@ public class AnomalyScheduler : MonoBehaviour
         if (TryActivateScheduledAnomaly(selectedAnomaly))
         {
             MarkRandomAnomalyUsed(selectedAnomaly);
+            lastRandomAnomaly = selectedAnomaly;
         }
         else
         {
@@ -213,14 +220,14 @@ public class AnomalyScheduler : MonoBehaviour
         if (pool == null)
             return null;
 
-        int totalWeight = 0;
-        for (int i = 0; i < pool.Count; i++)
-        {
-            RandomAnomalyPoolEntry entry = pool[i];
-            if (!IsRandomEntryAvailable(entry))
-                continue;
+        bool excludeLastAnomaly = preventConsecutiveRandomAnomaly && lastRandomAnomaly != null;
+        int totalWeight = GetRandomCandidateWeight(pool, excludeLastAnomaly);
 
-            totalWeight += entry.Weight;
+        // 풀에 다른 후보가 하나도 없으면 스케줄이 멈추지 않도록 직전 항목을 예외로 허용한다.
+        if (totalWeight <= 0 && excludeLastAnomaly)
+        {
+            excludeLastAnomaly = false;
+            totalWeight = GetRandomCandidateWeight(pool, false);
         }
 
         if (totalWeight <= 0)
@@ -230,7 +237,7 @@ public class AnomalyScheduler : MonoBehaviour
         for (int i = 0; i < pool.Count; i++)
         {
             RandomAnomalyPoolEntry entry = pool[i];
-            if (!IsRandomEntryAvailable(entry))
+            if (!IsRandomEntryAvailable(entry) || (excludeLastAnomaly && entry.Anomaly == lastRandomAnomaly))
                 continue;
 
             if (roll < entry.Weight)
@@ -240,6 +247,21 @@ public class AnomalyScheduler : MonoBehaviour
         }
 
         return null;
+    }
+
+    private int GetRandomCandidateWeight(IReadOnlyList<RandomAnomalyPoolEntry> pool, bool excludeLastAnomaly)
+    {
+        int totalWeight = 0;
+        for (int i = 0; i < pool.Count; i++)
+        {
+            RandomAnomalyPoolEntry entry = pool[i];
+            if (!IsRandomEntryAvailable(entry) || (excludeLastAnomaly && entry.Anomaly == lastRandomAnomaly))
+                continue;
+
+            totalWeight += entry.Weight;
+        }
+
+        return totalWeight;
     }
 
     private bool IsRandomEntryAvailable(RandomAnomalyPoolEntry entry)
@@ -330,6 +352,7 @@ public class AnomalyScheduler : MonoBehaviour
         currentDayDefinition = null;
         triggeredFixedScheduleIndexes.Clear();
         usedNonRepeatRandomAnomalies.Clear();
+        lastRandomAnomaly = null;
         randomRemainingSec = 0f;
         awaitingObservationCycleResult = false;
         postCycleStableRemainingSec = 0f;

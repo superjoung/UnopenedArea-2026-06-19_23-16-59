@@ -51,6 +51,12 @@ public static class CCTVReportLabelProvider
                 return "벽시계";
             case ReportTargetId.Phone:
                 return "전화기";
+            case ReportTargetId.Poster:
+                return "포스터";
+            case ReportTargetId.Plant:
+                return "화분";
+            case ReportTargetId.Stand:
+                return "스탠드";
             case ReportTargetId.Person:
                 return "사람";
             case ReportTargetId.Monitor:

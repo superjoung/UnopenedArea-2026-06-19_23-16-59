@@ -18,6 +18,7 @@ public class CCTVTestSceneController : MonoBehaviour
     [SerializeField] private CCTVNoiseProfile channelSwitchNoiseProfile;
     [SerializeField, Min(0.01f)] private float fallbackChannelTransitionNoiseDuration = 0.5f;
     [SerializeField, Min(0f)] private float channelSwitchDelay = 0.15f;
+    [SerializeField] private UnityEngine.Events.UnityEvent onChannelSwitch;
 
     [Header("Missed Approach Channel")]
     [Tooltip("미보고 누적 시 해금할 제어실 외부 고정 CCTV 구역입니다.")]
@@ -258,6 +259,8 @@ public class CCTVTestSceneController : MonoBehaviour
         }
 
         isSwitchingChannel = true;
+        SoundManager.Instance?.PlayCctvChannelSwitchSfx();
+        onChannelSwitch?.Invoke();
 
         if (panController != null)
             panController.SetInputLocked(true);
@@ -297,7 +300,8 @@ public class CCTVTestSceneController : MonoBehaviour
             yield break;
 
         isSwitchingChannel = true;
-
+        SoundManager.Instance?.PlayCctvChannelSwitchSfx();
+        onChannelSwitch?.Invoke();
         CCTVScreenEffectController effectController = GetScreenEffectController();
         float noiseDuration = GetChannelSwitchNoiseDuration();
         if (effectController != null)

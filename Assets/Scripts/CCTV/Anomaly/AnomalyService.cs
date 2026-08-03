@@ -223,6 +223,7 @@ public class AnomalyService : MonoBehaviour
             if (appearanceLeadTime > 0f)
                 yield return new WaitForSecondsRealtime(appearanceLeadTime);
 
+            SoundManager.Instance?.PlayAnomalyAppearedSfx();
             foreach (AnomalyAction action in runtime.Definition.Actions)
             {
                 if (action == null)
@@ -243,6 +244,7 @@ public class AnomalyService : MonoBehaviour
             yield break;
         }
 
+        SoundManager.Instance?.PlayAnomalyAppearedSfx();
         foreach (AnomalyAction action in runtime.Definition.Actions)
         {
             if (action == null)
@@ -325,6 +327,7 @@ public class AnomalyService : MonoBehaviour
 
     private void MarkMissed(AnomalyRuntime runtime)
     {
+        SoundManager.Instance?.PlayWrongOrMissedReportSfx();
         runtime.ChangeState(AnomalyState.Missed);
         RestoreAreaBaseline(runtime.Definition.AreaId);
         activeAnomalies.Remove(runtime);
