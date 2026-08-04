@@ -531,11 +531,12 @@ MonoBehaviour:
   normalBackground: {fileID: 892521316229728745}
   darkBackground: {fileID: 3805728058424382526}
   controlSignRenderer: {fileID: 4738212774563630317}
-  controlSignBlackoutBrightness: 0.45
+  controlSignBlackoutBrightness: 0.055
   calendarDaySprites:
   - {fileID: 7886903084751051940}
   - {fileID: 6529059529873742467}
   - {fileID: 6148685528288888222}
+  editorMeasurementPixelsPerUnit: 100
 --- !u!1 &2717641843280111953
 GameObject:
   m_ObjectHideFlags: 0
@@ -1449,7 +1450,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: ccb3b1b272f6efd44b5082c10231bc61, type: 3}
-  m_Color: {r: 0.5377358, g: 0.5377358, b: 0.5377358, a: 1}
+  m_Color: {r: 0.1509434, g: 0.1509434, b: 0.1509434, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

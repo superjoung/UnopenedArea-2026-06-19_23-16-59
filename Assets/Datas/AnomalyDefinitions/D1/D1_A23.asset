@@ -10,24 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7d0084bf59e64434485dcb3bafe3fae5, type: 3}
-  m_Name: D1_A09
+  m_Name: D1_A23
   m_EditorClassIdentifier: 
-  anomalyId: D1_A09
-  areaId: 100
-  reportTargetId: 108
-  reportType: 103
+  anomalyId: D1_A23
+  areaId: 300
+  reportTargetId: 114
+  reportType: 100
   warningDurationSec: 0
   activeDurationSec: 20
   canEscalate: 0
   nextStage: {fileID: 0}
   isEmergency: 0
   actions:
-  - actionType: 5
-    targetObjectId: OBJ_LAB_EXIT_SIGN_01
+  - actionType: 2
+    targetObjectId: OBJ_UTIL_TOOLCART_01
     delaySec: 0
     activeValue: 0
-    targetLocalPosition: {x: 0, y: 0, z: 0}
+    targetLocalPosition: {x: 7.25, y: 0.0653, z: 0}
     localPositionOffset: {x: 0, y: 0, z: 0}
-    targetLocalEulerAngles: {x: 0, y: 0, z: -30}
+    targetLocalEulerAngles: {x: 0, y: 0, z: 0}
     targetSprite: {fileID: 0}
     targetColor: {r: 0, g: 0, b: 0, a: 0}

@@ -129,6 +129,12 @@ public class CCTVSceneUI : BaseUI
 
         ResolveReferences();
 
+        if (dayRuntimeController != null)
+        {
+            dayRuntimeController.DayFailed -= HandleDayFailed;
+            dayRuntimeController.DayFailed += HandleDayFailed;
+        }
+
         // 보고서 조작 버튼은 각각 다른 선택 리스트를 열지만, 최종 선택 처리는 공통 옵션 콜백으로 모은다.
         GetButton((int)Buttons.ReportSendButton).gameObject.BindEvent(OnClickReportSendButton);
         GetButton((int)Buttons.AreaReportButton).gameObject.BindEvent(OnClickAreaSelectButton);
@@ -459,6 +465,27 @@ public class CCTVSceneUI : BaseUI
             .DOAnchorPosY(-_reportFullHeight, 0.2f)
             .SetEase(Ease.OutQuint);
         _isReport = false;
+    }
+
+    /// <summary>
+    /// 최종 실패처럼 보고 입력을 더 이상 받을 수 없는 상황에서 보고판을 즉시 내립니다.
+    /// 제출/수동 토글과 달리 종이 효과음은 재생하지 않습니다.
+    /// </summary>
+    public void ForceCloseReportPanel()
+    {
+        RectTransform panel = GetObject((int)Objects.ReportBackGround)?.GetComponent<RectTransform>();
+        if (panel == null)
+            return;
+
+        _slideTween?.Kill();
+        panel.anchoredPosition = new Vector2(panel.anchoredPosition.x, -_reportFullHeight);
+        _isReport = false;
+        SetReportSendInteractable(false);
+    }
+
+    private void HandleDayFailed()
+    {
+        ForceCloseReportPanel();
     }
 
     private void SetReportSendInteractable(bool interactable)
@@ -1045,6 +1072,9 @@ public class CCTVSceneUI : BaseUI
             GameManager.Instance.DayWrongReportCountChanged -= SetFailureCountInfo;
             GameManager.Instance.DayMissedAnomaly -= OnMissedAnomaly;
         }
+
+        if (dayRuntimeController != null)
+            dayRuntimeController.DayFailed -= HandleDayFailed;
     }
 
     private void OnDisable()

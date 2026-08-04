@@ -97,5 +97,10 @@ MonoBehaviour:
     weight: 1
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 2e09500cf8864c97b221f9871ec4f0b6, type: 2}
+  - anomaly: {fileID: 11400000, guid: 3e5d014a3d9d1ca40a12070e4f4aa2fc, type: 2}
+  - anomaly: {fileID: 11400000, guid: 286810c2ed6b5ad46932cccc5ba58892, type: 2}
+  - anomaly: {fileID: 11400000, guid: 736ccb74835e60e4abacfbff2e532cd7, type: 2}
+  - anomaly: {fileID: 11400000, guid: f0fd0f9dbd6752a4bb4c1422adb54b54, type: 2}
+  - anomaly: {fileID: 11400000, guid: 3e69f7299ba088b459002da40d0fb6e3, type: 2}
     weight: 1
     allowRepeat: 1

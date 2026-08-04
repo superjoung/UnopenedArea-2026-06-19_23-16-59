@@ -15,7 +15,7 @@ MonoBehaviour:
   anomalyId: D1_A15
   areaId: 200
   reportTargetId: 102
-  reportType: 104
+  reportType: 103
   warningDurationSec: 0
   activeDurationSec: 20
   canEscalate: 0

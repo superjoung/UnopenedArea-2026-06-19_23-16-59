@@ -26,7 +26,7 @@ MonoBehaviour:
     targetObjectId: OBJ_Utill_TOOLBOX_01
     delaySec: 0
     activeValue: 0
-    targetLocalPosition: {x: 7, y: -0.562, z: 0}
+    targetLocalPosition: {x: 6.63, y: -0.24, z: 0}
     localPositionOffset: {x: 0, y: 0, z: 0}
     targetLocalEulerAngles: {x: 0, y: 0, z: 0}
     targetSprite: {fileID: 0}

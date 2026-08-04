@@ -14,6 +14,7 @@ public class FieldBreakerPanel : MonoBehaviour
     [Header("References (optional)")]
     [SerializeField] private Transform player;
     [SerializeField] private Day1FlowController day1FlowController;
+    [SerializeField] private FieldModeController fieldModeController;
 
     public bool IsPlayerInRange { get; private set; }
     public bool IsRestored { get; private set; }
@@ -97,6 +98,9 @@ public class FieldBreakerPanel : MonoBehaviour
 
         IsRestored = true;
         SoundManager.Instance?.PlayBreakerPowerOnSfx();
+        if (fieldModeController == null)
+            fieldModeController = FindFirstObjectByType<FieldModeController>();
+        fieldModeController?.PlayPowerRestoreLightEffect();
         heldSeconds = requiredHoldSeconds;
         HoldProgressChanged?.Invoke(1f);
         Restored?.Invoke();
@@ -104,6 +108,9 @@ public class FieldBreakerPanel : MonoBehaviour
 
         if (day1FlowController == null)
             day1FlowController = FindFirstObjectByType<Day1FlowController>();
+
+        if (fieldModeController == null)
+            fieldModeController = FindFirstObjectByType<FieldModeController>();
 
         day1FlowController?.CompleteEmergencyObjective();
     }

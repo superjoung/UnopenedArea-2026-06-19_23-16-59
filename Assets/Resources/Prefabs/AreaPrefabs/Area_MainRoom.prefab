@@ -251,7 +251,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: ccb3b1b272f6efd44b5082c10231bc61, type: 3}
-  m_Color: {r: 0.5377358, g: 0.5377358, b: 0.5377358, a: 1}
+  m_Color: {r: 0.2924528, g: 0.2924528, b: 0.2924528, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -520,7 +520,7 @@ MonoBehaviour:
   normalBackground: {fileID: 7861303172061844556}
   darkBackground: {fileID: 1118478905339718323}
   controlSign: {fileID: 985127818619263468}
-  controlSignBlackoutBrightness: 0.45
+  controlSignBlackoutBrightness: 0.06
   blackoutDimObjects:
   - {fileID: 0}
   - {fileID: 0}

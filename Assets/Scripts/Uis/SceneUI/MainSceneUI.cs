@@ -167,7 +167,7 @@ public class MainSceneUI : MonoBehaviour
             case Day1FlowState.EmergencyDispatch:
                 situation = "정전이 발생했다.";
                 objective = areaMode == Day1AreaMode.Field
-                    ? "배전반을 찾아 전력을 복구하십시오."
+                    ? "배전반을 찾아 E를 꾹 눌러 고치세요."
                     : "메인룸의 문으로 제어실 외부로 나가십시오.";
                 return;
 
