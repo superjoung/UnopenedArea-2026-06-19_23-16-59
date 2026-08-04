@@ -43,6 +43,7 @@ public class CCTVTestSceneController : MonoBehaviour
     public IReadOnlyList<CCTVChannelRuntime> Channels => channels;
     public DayDefinition CurrentDayDefinition => dayDefinition;
     public bool CCTVInputEnabled => cctvInputEnabled;
+    public bool IsCCTVRoomTakenOver => cctvRoomTakenOver;
     public CCTVChannelRuntime CurrentChannel =>
         channels.Count == 0 ? null : channels[currentChannelIndex];
 
@@ -153,7 +154,7 @@ public class CCTVTestSceneController : MonoBehaviour
 
     /// <summary>
     /// 미보고 접근 2단계에서 제어실 외부를 새 채널로 추가합니다.
-    /// 성공하면 현재 채널 다음 번호(CCTV_04)로 생성되며, 옵션에 따라 즉시 전환합니다.
+    /// 성공하면 CCTV_04 / ???? 채널로 생성되며, 옵션에 따라 즉시 전환합니다.
     /// </summary>
     public bool TryUnlockControlRoomExterior()
     {
@@ -182,7 +183,7 @@ public class CCTVTestSceneController : MonoBehaviour
             return false;
         }
 
-        channels.Add(new CCTVChannelRuntime(channels.Count + 1, controlRoomExteriorArea));
+        channels.Add(new CCTVChannelRuntime(4, controlRoomExteriorArea));
         controlRoomExteriorUnlocked = true;
         int unlockedIndex = channels.Count - 1;
         Debug.Log($"[CCTV] Control Room Exterior unlocked. channel={channels[unlockedIndex].ChannelLabel}");
@@ -195,9 +196,9 @@ public class CCTVTestSceneController : MonoBehaviour
 
     /// <summary>
     /// 미보고 3회 침입 단계: 모든 채널을 제어실 내부 영상 하나로 고정합니다.
-    /// Q/E 입력은 유지하며, 전환 노이즈만 재생한 뒤 같은 화면으로 돌아옵니다.
+    /// 채널 전환 노이즈로 기존 영상을 가린 뒤 제어실 내부 영상으로 전환합니다.
     /// </summary>
-    public bool TryTakeOverWithCCTVRoom()
+    public bool TryTakeOverWithCCTVRoom(bool playTransitionNoise = true)
     {
         if (cctvRoomTakenOver)
             return true;
@@ -216,14 +217,59 @@ public class CCTVTestSceneController : MonoBehaviour
 
         cctvRoomTakenOver = true;
         channels.Clear();
-        channels.Add(new CCTVChannelRuntime(1, cctvRoomArea));
+        channels.Add(new CCTVChannelRuntime(0, cctvRoomArea));
         currentChannelIndex = 0;
-        SelectChannelImmediate(0);
-        if (panController != null)
-            panController.SetInputLocked(true);
+        if (playTransitionNoise)
+        {
+            StartCoroutine(PlayCCTVRoomTakeoverRoutine());
+        }
+        else
+        {
+            SelectChannelImmediate(0);
+            if (panController != null)
+                panController.SetInputLocked(true);
+        }
 
         Debug.Log("[CCTV] All channels taken over by CCTV Room.");
         return true;
+    }
+
+    private IEnumerator PlayCCTVRoomTakeoverRoutine()
+    {
+        while (isSwitchingChannel)
+            yield return null;
+
+        isSwitchingChannel = true;
+        SoundManager.Instance?.PlayCctvChannelSwitchSfx();
+        onChannelSwitch?.Invoke();
+
+        if (panController != null)
+            panController.SetInputLocked(true);
+
+        CCTVScreenEffectController effectController = GetScreenEffectController();
+        float noiseDuration = GetChannelSwitchNoiseDuration();
+        if (effectController != null)
+        {
+            if (channelSwitchNoiseProfile != null)
+                effectController.PlayNoise(channelSwitchNoiseProfile);
+            else
+                effectController.PlayTransitionNoise(fallbackChannelTransitionNoiseDuration);
+        }
+
+        float switchDelay = Mathf.Min(channelSwitchDelay, noiseDuration);
+        if (switchDelay > 0f)
+            yield return new WaitForSecondsRealtime(switchDelay);
+
+        SelectChannelImmediate(0);
+
+        float remainingDuration = Mathf.Max(0f, noiseDuration - switchDelay);
+        if (remainingDuration > 0f)
+            yield return new WaitForSecondsRealtime(remainingDuration);
+
+        if (panController != null)
+            panController.SetInputLocked(true);
+
+        isSwitchingChannel = false;
     }
 
     public void SelectNextChannel()
@@ -286,7 +332,7 @@ public class CCTVTestSceneController : MonoBehaviour
             yield return new WaitForSecondsRealtime(remainingDelay);
 
         if (panController != null)
-            panController.SetInputLocked(false);
+            panController.SetInputLocked(cctvRoomTakenOver);
 
         isSwitchingChannel = false;
     }
@@ -347,9 +393,17 @@ public class CCTVTestSceneController : MonoBehaviour
         if (GameManager.Instance == null || area == null)
             return;
 
-        string areaName = string.IsNullOrWhiteSpace(area.DisplayName)
-            ? CCTVReportLabelProvider.GetAreaLabel(area.AreaId)
-            : area.DisplayName;
+        string areaName;
+        if (IsControlRoomExteriorArea(area) || IsCCTVRoomArea(area))
+        {
+            areaName = "????";
+        }
+        else
+        {
+            areaName = string.IsNullOrWhiteSpace(area.DisplayName)
+                ? CCTVReportLabelProvider.GetAreaLabel(area.AreaId)
+                : area.DisplayName;
+        }
 
         GameManager.Instance.NotifyCCTVAreaChanged(
             channels[currentChannelIndex].ChannelLabel,

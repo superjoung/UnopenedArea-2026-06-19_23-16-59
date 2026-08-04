@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Day 1 종료 결과를 메인룸에서 표시합니다.
-/// 실제 미보고 3회 실패만 CCTVRoom을 잠시 보여준 후 결과를 표시합니다.
+/// 실패 시 마지막 CCTV 화면을 잠시 보여준 후 메인룸에서 결과를 표시합니다.
 /// </summary>
 public class Day1ResultPanelController : MonoBehaviour
 {
@@ -14,6 +14,7 @@ public class Day1ResultPanelController : MonoBehaviour
     [SerializeField] private Day1FlowController day1FlowController;
     [SerializeField] private DayRuntimeController dayRuntimeController;
     [SerializeField] private Day1AreaTransitionController areaTransitionController;
+    [SerializeField] private CCTVTestSceneController sceneController;
     [SerializeField] private MainRoomInteractionController mainRoomInteractionController;
     [SerializeField] private TransitionEffect transitionEffect;
     [SerializeField] private GameObject resultPanel;
@@ -29,6 +30,8 @@ public class Day1ResultPanelController : MonoBehaviour
     [SerializeField, Min(0f)] private float failureCctvObservationDuration = 5f;
     [Tooltip("CCTV에서 메인룸으로 돌아온 뒤 결과 UI를 띄우기 전의 정적 구간입니다.")]
     [SerializeField, Min(0f)] private float resultUiDelayAfterMainRoomReturn = 1f;
+    [Tooltip("성공/실패 결과로 CCTV를 자동 탈출할 때 사용하는 전체 전환 시간입니다.")]
+    [SerializeField, Min(0.1f)] private float automaticCctvExitEffectDuration = 2f;
     [Tooltip("CCTV 탈출 후, 실패 UI를 띄우기 직전에 실행됩니다. 메인룸 전용 실패 사건은 나중에 여기에 연결합니다.")]
     [SerializeField] private UnityEvent onFailureEnteredMainRoom;
 
@@ -85,8 +88,8 @@ public class Day1ResultPanelController : MonoBehaviour
         }
         else
         {
-            // 실패 종류와 무관하게 마지막 CCTV 상태를 보여준다.
-            if (cctvSceneUI != null)
+            bool playTerminalFailureNoise = sceneController == null || !sceneController.IsCCTVRoomTakenOver;
+            if (playTerminalFailureNoise && cctvSceneUI != null)
                 cctvSceneUI.PlayTerminalFailureNoise();
 
             if (failureCctvObservationDuration > 0f)
@@ -98,7 +101,9 @@ public class Day1ResultPanelController : MonoBehaviour
         if (areaTransitionController != null && areaTransitionController.CurrentMode == Day1AreaMode.CCTV)
         {
             bool transitionStarted = transitionEffect != null &&
-                                     transitionEffect.TryPlayCctvExit(areaTransitionController.EnterMainRoom);
+                                     transitionEffect.TryPlayCctvExit(
+                                         areaTransitionController.EnterMainRoom,
+                                         automaticCctvExitEffectDuration);
             if (transitionStarted)
             {
                 while (transitionEffect != null && transitionEffect.IsPlaying)
@@ -186,6 +191,8 @@ public class Day1ResultPanelController : MonoBehaviour
             dayRuntimeController = FindFirstObjectByType<DayRuntimeController>();
         if (areaTransitionController == null)
             areaTransitionController = FindFirstObjectByType<Day1AreaTransitionController>();
+        if (sceneController == null)
+            sceneController = FindFirstObjectByType<CCTVTestSceneController>();
         if (mainRoomInteractionController == null)
             mainRoomInteractionController = FindFirstObjectByType<MainRoomInteractionController>();
         if (transitionEffect == null)

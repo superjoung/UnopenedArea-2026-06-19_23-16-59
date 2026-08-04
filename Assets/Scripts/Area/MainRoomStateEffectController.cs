@@ -17,6 +17,10 @@ public class MainRoomStateEffectController : MonoBehaviour
     [SerializeField] private GameObject cctvGlitch;
     [SerializeField] private GameObject cctvBlack;
 
+    [Header("Terminal Failure")]
+    [Tooltip("오보고 또는 미보고 최종 실패 후 메인룸 배경 위에 표시할 이펙트입니다.")]
+    [SerializeField] private GameObject terminalFailureEffect;
+
     [Header("Blackout Main Room")]
     [SerializeField] private GameObject normalBackground;
     [SerializeField] private GameObject darkBackground;
@@ -83,6 +87,7 @@ public class MainRoomStateEffectController : MonoBehaviour
         CacheControlSignColors();
         CacheBlackoutDimColors();
         RefreshCalendar();
+        SetActive(terminalFailureEffect, false);
         ApplyState(day1FlowController != null ? day1FlowController.State : Day1FlowState.None);
     }
 
@@ -117,7 +122,6 @@ public class MainRoomStateEffectController : MonoBehaviour
 
     private void OnDisable()
     {
-        Unsubscribe();
         SetPhoneRinging(false);
         isPhoneGlowPulsing = false;
         SetActive(cctvGlitch, true);
@@ -126,6 +130,11 @@ public class MainRoomStateEffectController : MonoBehaviour
         SetActive(darkBackground, false);
         ApplyControlSignBrightness(1f);
         ApplyBlackoutDimBrightness(1f);
+    }
+
+    private void OnDestroy()
+    {
+        Unsubscribe();
     }
 
     private void HandleStateChanged(Day1FlowState state)
@@ -201,8 +210,14 @@ public class MainRoomStateEffectController : MonoBehaviour
     private void HandleDayStarted()
     {
         missedAnomalyCount = 0;
+        SetActive(terminalFailureEffect, false);
         RefreshMissedApproachVisuals();
         RefreshCalendar();
+    }
+
+    private void HandleTerminalFailureStarted(DayFailureReason reason)
+    {
+        SetActive(terminalFailureEffect, true);
     }
 
     private void RefreshMissedApproachVisuals()
@@ -400,6 +415,8 @@ public class MainRoomStateEffectController : MonoBehaviour
             dayRuntimeController.MissedAnomalyRegistered += HandleMissedAnomalyRegistered;
             dayRuntimeController.DayStarted -= HandleDayStarted;
             dayRuntimeController.DayStarted += HandleDayStarted;
+            dayRuntimeController.TerminalFailureStarted -= HandleTerminalFailureStarted;
+            dayRuntimeController.TerminalFailureStarted += HandleTerminalFailureStarted;
         }
     }
 
@@ -411,6 +428,7 @@ public class MainRoomStateEffectController : MonoBehaviour
         {
             dayRuntimeController.MissedAnomalyRegistered -= HandleMissedAnomalyRegistered;
             dayRuntimeController.DayStarted -= HandleDayStarted;
+            dayRuntimeController.TerminalFailureStarted -= HandleTerminalFailureStarted;
         }
     }
 

@@ -89,7 +89,7 @@ public static class CCTVReportLabelProvider
             case AnomalyReportType.StateChange:
                 return "상태 변경";
             case AnomalyReportType.ShapeChange:
-                return "형태 변경";
+                return "형태 손상";
             case AnomalyReportType.AbnormalBehavior:
                 return "이상 행동";
             case AnomalyReportType.None:

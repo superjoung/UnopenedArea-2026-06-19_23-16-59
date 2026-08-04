@@ -16,6 +16,7 @@ public class AnomalyService : MonoBehaviour
     [Header("Appearance Presentation")]
     [Tooltip("이상현상 실제 적용 직전에 눈꺼풀 연출로 화면을 가립니다. 미지정 시 자동 탐색합니다.")]
     [SerializeField] private TransitionEffect transitionEffect;
+    [SerializeField] private Day1FlowController day1FlowController;
 
     private readonly List<AnomalyRuntime> activeAnomalies = new List<AnomalyRuntime>();
     private readonly HashSet<AnomalyRuntime> urgencyNotifiedAnomalies = new HashSet<AnomalyRuntime>();
@@ -30,6 +31,9 @@ public class AnomalyService : MonoBehaviour
     {
         if (areaView == null)
             areaView = FindObjectOfType<CCTVAreaView>();
+
+        if (day1FlowController == null)
+            day1FlowController = FindFirstObjectByType<Day1FlowController>();
 
     }
 
@@ -211,8 +215,14 @@ public class AnomalyService : MonoBehaviour
 
     private IEnumerator ActivateRoutine(AnomalyRuntime runtime, CCTVAreaInstance instance)
     {
+        if (day1FlowController != null && day1FlowController.IsTerminalFailurePresentationActive)
+            yield break;
+
         if (runtime.Definition.WarningDurationSec > 0f)
             yield return WaitForAnomalySeconds(runtime.Definition.WarningDurationSec);
+
+        if (day1FlowController != null && day1FlowController.IsTerminalFailurePresentationActive)
+            yield break;
 
         if (transitionEffect == null)
             transitionEffect = FindFirstObjectByType<TransitionEffect>();
@@ -223,6 +233,9 @@ public class AnomalyService : MonoBehaviour
             if (appearanceLeadTime > 0f)
                 yield return new WaitForSecondsRealtime(appearanceLeadTime);
 
+            if (day1FlowController != null && day1FlowController.IsTerminalFailurePresentationActive)
+                yield break;
+
             SoundManager.Instance?.PlayAnomalyAppearedSfx();
             foreach (AnomalyAction action in runtime.Definition.Actions)
             {
@@ -232,6 +245,9 @@ public class AnomalyService : MonoBehaviour
                 if (action.DelaySec > 0f)
                 yield return new WaitForSecondsRealtime(action.DelaySec);
 
+                if (day1FlowController != null && day1FlowController.IsTerminalFailurePresentationActive)
+                    yield break;
+
                 ApplyAction(runtime.Definition, instance, action);
             }
 
@@ -239,6 +255,10 @@ public class AnomalyService : MonoBehaviour
             if (presentationTailDuration > 0f)
                 yield return new WaitForSecondsRealtime(presentationTailDuration);
 
+            if (day1FlowController != null && day1FlowController.IsTerminalFailurePresentationActive)
+                yield break;
+
+            day1FlowController?.ShowAnomalyAppearedMessage(runtime);
             runtime.ActivateTimer();
             Debug.Log($"[AnomalyService] Activated anomaly={runtime.Definition.AnomalyId}, area={runtime.Definition.AreaId}, duration={runtime.RemainingActiveTimeSec}");
             yield break;

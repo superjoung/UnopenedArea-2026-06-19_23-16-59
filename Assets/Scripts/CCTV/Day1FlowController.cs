@@ -51,6 +51,7 @@ public class Day1FlowController : MonoBehaviour
     private bool emergencyDispatchStarted;
     private bool emergencyFieldModeStarted;
     private Coroutine tutorialChannelActivationRoutine;
+    private Coroutine objectiveMessageRoutine;
     private Coroutine emergencyDispatchRoutine;
     private PresentationLockMode presentationLockMode;
     private bool presentationPausedDay;
@@ -72,6 +73,7 @@ public class Day1FlowController : MonoBehaviour
     public bool TutorialFinished => tutorialFinished;
     public bool IsPresentationLocked => presentationLockMode != PresentationLockMode.None;
     public bool IsEmergencyPresentationLocked => presentationLockMode == PresentationLockMode.Emergency;
+    public bool IsTerminalFailurePresentationActive { get; private set; }
     public bool IsAwaitingTitleStart { get; private set; }
     public int DayNumber => dayDefinition != null ? dayDefinition.Day : 0;
 
@@ -143,6 +145,8 @@ public class Day1FlowController : MonoBehaviour
     {
         if (tutorialChannelActivationRoutine != null)
             StopCoroutine(tutorialChannelActivationRoutine);
+        if (objectiveMessageRoutine != null)
+            StopCoroutine(objectiveMessageRoutine);
         if (emergencyDispatchRoutine != null)
             StopCoroutine(emergencyDispatchRoutine);
 
@@ -360,7 +364,7 @@ public class Day1FlowController : MonoBehaviour
             return;
         }
 
-        FlowMessageChanged?.Invoke("기준 화면과 일치하지 않는 항목을 보고하십시오.");
+        FlowMessageChanged?.Invoke(string.Empty);
         Debug.Log($"[Day1FlowController] Tutorial anomaly started. id={dayDefinition.TutorialAnomaly.AnomalyId}, channelSwitches={channelSwitchCount}, elapsed={dayRuntimeController.ElapsedSec:F1}");
     }
 
@@ -395,9 +399,45 @@ public class Day1FlowController : MonoBehaviour
         if (anomalyScheduler != null)
             anomalyScheduler.SetGenerationPaused(false);
 
-        string result = resolved ? "첫 기록이 정상적으로 처리되었습니다." : "첫 기록이 누락되었습니다. 감시를 계속하십시오.";
-        FlowMessageChanged?.Invoke(result);
+        if (resolved)
+        {
+            ShowTimedObjectiveMessage("첫 기록이 정상적으로 처리되었습니다.");
+        }
+        else
+        {
+            FlowMessageChanged?.Invoke("첫 기록이 누락되었습니다. 감시를 계속하십시오.");
+        }
+
         Debug.Log($"[Day1FlowController] Tutorial finished. resolved={resolved}");
+    }
+
+    public void ShowAnomalyAppearedMessage()
+    {
+        ShowAnomalyAppearedMessage(null);
+    }
+
+    public void ShowAnomalyAppearedMessage(AnomalyRuntime runtime)
+    {
+        string objective = IsTutorialRuntime(runtime)
+            ? "기준 화면과 일치하지 않는 항목을 보고하십시오."
+            : "오전 6시까지 이상현상을 보고하시오.";
+        ShowTimedObjectiveMessage("이상현상이 발생했습니다.", objective);
+    }
+
+    private void ShowTimedObjectiveMessage(string message, string objective = "오전 6시까지 이상현상을 보고하시오.")
+    {
+        if (objectiveMessageRoutine != null)
+            StopCoroutine(objectiveMessageRoutine);
+
+        objectiveMessageRoutine = StartCoroutine(ShowObjectiveMessageRoutine(message, objective));
+    }
+
+    private IEnumerator ShowObjectiveMessageRoutine(string message, string objective)
+    {
+        FlowMessageChanged?.Invoke(message);
+        yield return new WaitForSecondsRealtime(2f);
+        FlowMessageChanged?.Invoke(objective);
+        objectiveMessageRoutine = null;
     }
 
     private void TryStartEmergencyDispatch()
@@ -554,6 +594,24 @@ public class Day1FlowController : MonoBehaviour
         ChangeState(Day1FlowState.Failed, "인지 편차가 허용치를 초과했습니다.");
     }
 
+    private void HandleTerminalFailureStarted(DayFailureReason reason)
+    {
+        IsTerminalFailurePresentationActive = true;
+        PauseNormalAnomalies();
+
+        if (objectiveMessageRoutine != null)
+        {
+            StopCoroutine(objectiveMessageRoutine);
+            objectiveMessageRoutine = null;
+        }
+
+        FlowMessageChanged?.Invoke(string.Empty);
+        if (transitionEffect == null)
+            transitionEffect = FindFirstObjectByType<TransitionEffect>();
+        transitionEffect?.CancelAnomalyAppearanceBlink();
+        GameManager.Instance?.SetReportInputEnabled(false);
+    }
+
     private void PauseNormalAnomalies()
     {
         if (anomalyScheduler != null)
@@ -657,6 +715,7 @@ public class Day1FlowController : MonoBehaviour
         {
             dayRuntimeController.DayCleared += HandleDayCleared;
             dayRuntimeController.DayFailed += HandleDayFailed;
+            dayRuntimeController.TerminalFailureStarted += HandleTerminalFailureStarted;
         }
     }
 
@@ -675,6 +734,7 @@ public class Day1FlowController : MonoBehaviour
         {
             dayRuntimeController.DayCleared -= HandleDayCleared;
             dayRuntimeController.DayFailed -= HandleDayFailed;
+            dayRuntimeController.TerminalFailureStarted -= HandleTerminalFailureStarted;
         }
     }
 

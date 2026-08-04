@@ -93,6 +93,7 @@ public class CCTVSceneUI : BaseUI
     private Tween _slideTween;
     private CCTVUIEffectController _uiEffectController;
     private Coroutine missedSignalLossCoroutine;
+    private Coroutine terminalWrongReportRoutine;
     private Coroutine initialMonitoringIntroCoroutine;
     private bool initialMonitoringIntroPlayed;
 
@@ -180,8 +181,8 @@ public class CCTVSceneUI : BaseUI
         {
             Debug.Log("[INFO] CCTVSceneUI::OnClickReportSendButton - 오보고");
 
-            if (dayRuntimeController != null)
-                dayRuntimeController.RegisterWrongReport();
+            bool reachedWrongReportLimit = dayRuntimeController != null &&
+                                           dayRuntimeController.RegisterWrongReport();
 
             if (GameManager.Instance != null)
                 GameManager.Instance.NotifyDayWrongReport();
@@ -189,6 +190,9 @@ public class CCTVSceneUI : BaseUI
             CloseReportPanel(false);
             SoundManager.Instance?.PlayWrongOrMissedReportSfx();
             PlayFalseReportNoise();
+
+            if (reachedWrongReportLimit)
+                terminalWrongReportRoutine = StartCoroutine(CompleteTerminalWrongReportRoutine());
         }
     }
 
@@ -355,6 +359,28 @@ public class CCTVSceneUI : BaseUI
             screenEffectController.PlayTransitionNoise(fallbackFalseReportNoiseDuration);
     }
 
+    private IEnumerator CompleteTerminalWrongReportRoutine()
+    {
+        if (panController != null)
+            panController.SetInputLocked(true);
+        if (GameManager.Instance != null)
+            GameManager.Instance.SetReportInputEnabled(false);
+
+        float noiseDuration = GetFalseReportNoiseDuration();
+        float takeoverDelay = GetFalseReportTakeoverDelay(noiseDuration);
+        if (takeoverDelay > 0f)
+            yield return new WaitForSecondsRealtime(takeoverDelay);
+
+        sceneController?.TryTakeOverWithCCTVRoom(false);
+
+        float remainingNoiseDuration = Mathf.Max(0f, noiseDuration - takeoverDelay);
+        if (remainingNoiseDuration > 0f)
+            yield return new WaitForSecondsRealtime(remainingNoiseDuration);
+
+        dayRuntimeController?.FailDay(DayFailureReason.WrongReports);
+        terminalWrongReportRoutine = null;
+    }
+
     private IEnumerator CompleteSuccessfulReportRoutine(AnomalyRuntime runtime)
     {
         if (_isNormalizingReport || runtime == null || anomalyService == null)
@@ -399,6 +425,24 @@ public class CCTVSceneUI : BaseUI
         return successReportNoiseProfile != null
             ? successReportNoiseProfile.TotalTimedDuration
             : fallbackSuccessReportNoiseDuration;
+    }
+
+    private float GetFalseReportNoiseDuration()
+    {
+        return falseReportNoiseProfile != null
+            ? falseReportNoiseProfile.TotalTimedDuration
+            : fallbackFalseReportNoiseDuration;
+    }
+
+    private float GetFalseReportTakeoverDelay(float noiseDuration)
+    {
+        if (noiseDuration <= 0f)
+            return 0f;
+
+        if (falseReportNoiseProfile != null && falseReportNoiseProfile.FadeInTime > 0f)
+            return Mathf.Min(falseReportNoiseProfile.FadeInTime, noiseDuration);
+
+        return Mathf.Min(0.05f, noiseDuration * 0.25f);
     }
 
     private void CloseReportPanel(bool playPaperSfx = true)
@@ -728,6 +772,8 @@ public class CCTVSceneUI : BaseUI
 
         if (missedSignalLossCoroutine != null)
             StopCoroutine(missedSignalLossCoroutine);
+        if (terminalWrongReportRoutine != null)
+            StopCoroutine(terminalWrongReportRoutine);
 
         missedSignalLossCoroutine = StartCoroutine(PlayMissedSignalLossAfterEmergencyRoutine());
     }

@@ -9,6 +9,13 @@ public enum DayRuntimeState
     Failed = 4,
 }
 
+public enum DayFailureReason
+{
+    None = 0,
+    WrongReports = 1,
+    MissedAnomalies = 2,
+}
+
 public class DayRuntimeController : MonoBehaviour
 {
     [Header("References")]
@@ -32,14 +39,17 @@ public class DayRuntimeController : MonoBehaviour
     public int WrongReportCount { get; private set; }
     /// <summary>실제 미보고 이상현상 누적 횟수입니다. 접근 단계와 미보고 실패에만 사용합니다.</summary>
     public int MissedAnomalyCount { get; private set; }
+    public DayFailureReason FailureReason { get; private set; }
     public DayDefinition CurrentDayDefinition => dayDefinition;
     public float DurationSec => dayDefinition != null ? Mathf.Max(0.01f, dayDefinition.DurationSec) : 600f;
 
     public System.Action DayStarted;
     public System.Action DayCleared;
     public System.Action DayFailed;
+    public System.Action<DayFailureReason> TerminalFailureStarted;
     public System.Action<AnomalyRuntime> MissedAnomalyRegistered;
 
+    private bool terminalFailureStarted;
     private int MaxMissed => dayDefinition != null ? Mathf.Max(0, dayDefinition.MaxMissed) : 3;
     public int MaxWrongReports => Mathf.Max(1, maxWrongReports);
 
@@ -79,6 +89,8 @@ public class DayRuntimeController : MonoBehaviour
         SuccessReportCount = 0;
         WrongReportCount = 0;
         MissedAnomalyCount = 0;
+        FailureReason = DayFailureReason.None;
+        terminalFailureStarted = false;
         State = DayRuntimeState.Running;
 
         if (anomalyService != null)
@@ -131,12 +143,14 @@ public class DayRuntimeController : MonoBehaviour
         Debug.Log($"[DayRuntimeController] Day cleared. successReports={SuccessReportCount}, wrongReports={WrongReportCount}, missed={MissedAnomalyCount}");
     }
 
-    public void FailDay()
+    public void FailDay(DayFailureReason reason = DayFailureReason.None)
     {
         if (State == DayRuntimeState.Cleared || State == DayRuntimeState.Failed)
             return;
 
         State = DayRuntimeState.Failed;
+        if (reason != DayFailureReason.None || FailureReason == DayFailureReason.None)
+            FailureReason = reason;
 
         if (anomalyService != null)
             anomalyService.SetTimersPaused(true);
@@ -156,15 +170,19 @@ public class DayRuntimeController : MonoBehaviour
         Debug.Log($"[DayRuntimeController] Correct report. successReports={SuccessReportCount}");
     }
 
-    public void RegisterWrongReport()
+    public bool RegisterWrongReport()
     {
         if (State != DayRuntimeState.Running)
-            return;
+            return false;
 
         WrongReportCount++;
         NotifyWrongReportCountChanged();
         Debug.Log($"[DayRuntimeController] Wrong report. wrongReports={WrongReportCount}, maxWrongReports={MaxWrongReports}");
-        CheckFailByWrongReports();
+        bool reachedLimit = WrongReportCount >= MaxWrongReports;
+        if (reachedLimit)
+            BeginTerminalFailure(DayFailureReason.WrongReports);
+
+        return reachedLimit;
     }
 
     public void RegisterMissedAnomaly(AnomalyRuntime runtime)
@@ -173,25 +191,28 @@ public class DayRuntimeController : MonoBehaviour
             return;
 
         MissedAnomalyCount++;
+        bool reachedLimit = MaxMissed > 0 && MissedAnomalyCount >= MaxMissed;
+        if (reachedLimit)
+            BeginTerminalFailure(DayFailureReason.MissedAnomalies);
+
         MissedAnomalyRegistered?.Invoke(runtime);
         if (GameManager.Instance != null)
             GameManager.Instance.NotifyDayMissedAnomaly(runtime);
 
         string anomalyId = runtime != null && runtime.Definition != null ? runtime.Definition.AnomalyId : "Unknown";
         Debug.Log($"[DayRuntimeController] Missed anomaly counted. anomaly={anomalyId}, missed={MissedAnomalyCount}, maxMissed={MaxMissed}");
-        CheckFailByMissedAnomalies();
+        if (reachedLimit)
+            FailDay(DayFailureReason.MissedAnomalies);
     }
 
-    private void CheckFailByWrongReports()
+    private void BeginTerminalFailure(DayFailureReason reason)
     {
-        if (WrongReportCount >= MaxWrongReports)
-            FailDay();
-    }
+        if (terminalFailureStarted)
+            return;
 
-    private void CheckFailByMissedAnomalies()
-    {
-        if (MaxMissed > 0 && MissedAnomalyCount >= MaxMissed)
-            FailDay();
+        terminalFailureStarted = true;
+        FailureReason = reason;
+        TerminalFailureStarted?.Invoke(reason);
     }
 
     private void NotifyTimeChanged()

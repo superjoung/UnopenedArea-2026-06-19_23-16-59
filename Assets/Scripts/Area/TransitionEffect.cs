@@ -237,7 +237,7 @@ public class TransitionEffect : MonoBehaviour
     /// 일반 감시 중 제어실을 확인하기 위해 CCTV를 나갈 때 사용합니다.
     /// 정전과 달리 깜빡임 없이 검은 패널로 전환만 가립니다.
     /// </summary>
-    public bool TryPlayCctvExit(Action onOpaque)
+    public bool TryPlayCctvExit(Action onOpaque, float totalDuration = -1f)
     {
         ResolveReferences();
         if (isPlaying)
@@ -255,25 +255,34 @@ public class TransitionEffect : MonoBehaviour
         blackoutPanelImage.gameObject.SetActive(true);
         SetImageAlpha(blackoutPanelImage, 0f);
 
+        float durationScale = 1f;
+        float baseDuration = cctvExitFadeInDuration + cctvExitBlackoutHoldDuration + cctvExitFadeOutDuration;
+        if (totalDuration > 0f && baseDuration > 0f)
+            durationScale = totalDuration / baseDuration;
+
+        float fadeInDuration = cctvExitFadeInDuration * durationScale;
+        float blackoutHoldDuration = cctvExitBlackoutHoldDuration * durationScale;
+        float fadeOutDuration = cctvExitFadeOutDuration * durationScale;
+
         activeSequence = DOTween.Sequence();
-        activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, cctvExitFadeInDuration));
-        activeSequence.AppendInterval(cctvExitBlackoutHoldDuration);
+        activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, fadeInDuration));
+        activeSequence.AppendInterval(blackoutHoldDuration);
         activeSequence.AppendCallback(() => onOpaque?.Invoke());
         if (mainRoomCamera != null)
         {
             activeSequence.Append(mainRoomCamera.transform
-                .DOMove(defaultCameraPosition, cctvExitFadeOutDuration)
+                .DOMove(defaultCameraPosition, fadeOutDuration)
                 .SetEase(mainRoomRevealEase));
             activeSequence.Join(mainRoomCamera
-                .DOOrthoSize(defaultOrthographicSize, cctvExitFadeOutDuration)
+                .DOOrthoSize(defaultOrthographicSize, fadeOutDuration)
                 .SetEase(mainRoomRevealEase));
             activeSequence.Join(blackoutPanelImage
-                .DOFade(0f, cctvExitFadeOutDuration)
+                .DOFade(0f, fadeOutDuration)
                 .SetEase(mainRoomRevealEase));
         }
         else
         {
-            activeSequence.Append(blackoutPanelImage.DOFade(0f, cctvExitFadeOutDuration));
+            activeSequence.Append(blackoutPanelImage.DOFade(0f, fadeOutDuration));
         }
         activeSequence.OnComplete(CompleteSequence);
         return true;
@@ -349,6 +358,14 @@ public class TransitionEffect : MonoBehaviour
         });
 
         return applyAfter;
+    }
+
+    public void CancelAnomalyAppearanceBlink()
+    {
+        anomalyBlinkSequence?.Kill();
+        anomalyBlinkSequence = null;
+        CacheAnomalyBlinkOpenOffsets();
+        SetAnomalyBlinkOpenImmediate();
     }
 
     private float GetAnomalyBlinkCloseDuration()
