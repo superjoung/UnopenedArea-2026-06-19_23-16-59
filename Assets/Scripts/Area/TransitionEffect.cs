@@ -83,6 +83,26 @@ public class TransitionEffect : MonoBehaviour
     [SerializeField] private Ease anomalySlowCloseEase = Ease.InQuad;
     [SerializeField] private Ease anomalySnapOpenEase = Ease.OutQuad;
 
+    [Header("Terminal Failure Hand Cover")]
+    [SerializeField] private GameObject failureHandEffectRoot;
+    [SerializeField] private RectTransform failureLeftHand;
+    [SerializeField] private RectTransform failureRightHand;
+    [SerializeField] private Image failureHandBlackoutImage;
+    [SerializeField, Min(0.05f)] private float failureHandCloseDuration = 0.85f;
+    [SerializeField, Range(0f, 1f)] private float failureHandBlackoutStartNormalized = 0.72f;
+    [SerializeField, Min(0f)] private float failureHandClosedHoldDuration = 0.18f;
+    [SerializeField, Min(0.05f)] private float failureBackgroundRevealDuration = 0.55f;
+    [SerializeField, Min(0f)] private float failureBackgroundHoldDuration = 0.5f;
+    [SerializeField, Min(0.1f)] private float failureHandOffscreenDistanceMultiplier = 0.65f;
+    [SerializeField] private Ease failureHandCloseEase = Ease.OutCubic;
+    [SerializeField] private Ease failureBackgroundRevealEase = Ease.OutQuad;
+
+    [Header("Result Restart Fade")]
+    [SerializeField, Min(0.05f)] private float resultRestartFadeOutDuration = 0.5f;
+    [SerializeField, Min(0f)] private float resultRestartBlackHoldDuration = 0.15f;
+    [SerializeField, Min(0.05f)] private float resultRestartFadeInDuration = 0.65f;
+    [SerializeField, Min(0f)] private float resultRestartFadeInDelay = 0.1f;
+
     private Sequence activeSequence;
     private Vector3 defaultCameraPosition;
     private float defaultOrthographicSize;
@@ -92,6 +112,11 @@ public class TransitionEffect : MonoBehaviour
     private Vector2 anomalyEye1OpenOffsetMin;
     private Vector2 anomalyEye2OpenOffsetMax;
     private bool anomalyBlinkOffsetsCached;
+    private Vector2 failureLeftHandCoveredPosition;
+    private Vector2 failureRightHandCoveredPosition;
+    private bool failureHandPositionsCached;
+    private bool playResultRestartFadeIn;
+    private static bool resultRestartFadeInRequested;
 
     public bool IsPlaying => isPlaying;
     public bool IsAnomalyBlinkPlaying => anomalyBlinkSequence != null && anomalyBlinkSequence.IsActive();
@@ -104,10 +129,32 @@ public class TransitionEffect : MonoBehaviour
         CacheCameraDefaults();
         SetImageAlpha(cctvEnterPanelImage, 0f);
         SetImageAlpha(toCctvPanel2, 0f);
-        SetImageAlpha(blackoutPanelImage, 0f);
+        playResultRestartFadeIn = resultRestartFadeInRequested;
+        resultRestartFadeInRequested = false;
+        SetImageAlpha(blackoutPanelImage, playResultRestartFadeIn ? 1f : 0f);
         SetImageAlpha(blackoutFlashPanelImage, 0f);
+        if (playResultRestartFadeIn && blackoutPanelImage != null)
+        {
+            blackoutPanelImage.gameObject.SetActive(true);
+            blackoutPanelImage.transform.SetAsLastSibling();
+        }
         CacheAnomalyBlinkOpenOffsets();
         SetAnomalyBlinkOpenImmediate();
+        CacheFailureHandCoveredPositions();
+        ResetFailureHandCoverImmediate();
+    }
+
+    private void Start()
+    {
+        if (!playResultRestartFadeIn || blackoutPanelImage == null)
+            return;
+
+        SetPlaying(true);
+        activeSequence?.Kill();
+        activeSequence = DOTween.Sequence().SetUpdate(true);
+        activeSequence.AppendInterval(resultRestartFadeInDelay);
+        activeSequence.Append(blackoutPanelImage.DOFade(0f, resultRestartFadeInDuration).SetEase(Ease.OutQuad));
+        activeSequence.OnComplete(CompleteSequence);
     }
 
     private void OnDisable()
@@ -122,6 +169,7 @@ public class TransitionEffect : MonoBehaviour
         anomalyBlinkSequence?.Kill();
         anomalyBlinkSequence = null;
         SetAnomalyBlinkOpenImmediate();
+        ResetFailureHandCoverImmediate();
     }
 
     public bool TryPlayCctvEntry()
@@ -320,6 +368,84 @@ public class TransitionEffect : MonoBehaviour
         return true;
     }
 
+    public bool TryPlayFailureHandCover(Action onCovered, Action onCompleted)
+    {
+        if (isPlaying || failureHandEffectRoot == null || failureLeftHand == null ||
+            failureRightHand == null || failureHandBlackoutImage == null)
+            return false;
+
+        CacheFailureHandCoveredPositions();
+        SetPlaying(true);
+        activeSequence?.Kill();
+
+        failureHandEffectRoot.SetActive(true);
+        failureHandEffectRoot.transform.SetAsLastSibling();
+        failureHandBlackoutImage.gameObject.SetActive(true);
+        failureHandBlackoutImage.transform.SetAsLastSibling();
+        SetImageAlpha(failureHandBlackoutImage, 0f);
+
+        float offscreenDistance = GetFailureHandOffscreenDistance();
+        Vector2 leftOpenPosition = failureLeftHandCoveredPosition + Vector2.left * offscreenDistance;
+        Vector2 rightOpenPosition = failureRightHandCoveredPosition + Vector2.right * offscreenDistance;
+        failureLeftHand.anchoredPosition = leftOpenPosition;
+        failureRightHand.anchoredPosition = rightOpenPosition;
+
+        float blackoutStart = failureHandCloseDuration * failureHandBlackoutStartNormalized;
+        float blackoutDuration = Mathf.Max(0.01f, failureHandCloseDuration - blackoutStart);
+
+        activeSequence = DOTween.Sequence().SetUpdate(true);
+        activeSequence.Append(failureLeftHand
+            .DOAnchorPos(failureLeftHandCoveredPosition, failureHandCloseDuration)
+            .SetEase(failureHandCloseEase));
+        activeSequence.Join(failureRightHand
+            .DOAnchorPos(failureRightHandCoveredPosition, failureHandCloseDuration)
+            .SetEase(failureHandCloseEase));
+        activeSequence.Insert(blackoutStart, failureHandBlackoutImage
+            .DOFade(1f, blackoutDuration)
+            .SetEase(Ease.InQuad));
+        activeSequence.AppendCallback(() => onCovered?.Invoke());
+        activeSequence.AppendInterval(failureHandClosedHoldDuration);
+        activeSequence.AppendCallback(() =>
+        {
+            failureLeftHand.anchoredPosition = leftOpenPosition;
+            failureRightHand.anchoredPosition = rightOpenPosition;
+        });
+        activeSequence.Append(failureHandBlackoutImage
+            .DOFade(0f, failureBackgroundRevealDuration)
+            .SetEase(failureBackgroundRevealEase));
+        activeSequence.AppendInterval(failureBackgroundHoldDuration);
+        activeSequence.OnComplete(() =>
+        {
+            ResetFailureHandCoverImmediate();
+            CompleteSequence();
+            onCompleted?.Invoke();
+        });
+        return true;
+    }
+
+    public bool TryPlayResultRestartFade(Action onOpaque)
+    {
+        if (isPlaying || blackoutPanelImage == null)
+            return false;
+
+        SetPlaying(true);
+        activeSequence?.Kill();
+        blackoutPanelImage.gameObject.SetActive(true);
+        blackoutPanelImage.transform.SetAsLastSibling();
+        SetImageAlpha(blackoutPanelImage, 0f);
+
+        activeSequence = DOTween.Sequence().SetUpdate(true);
+        activeSequence.Append(blackoutPanelImage.DOFade(1f, resultRestartFadeOutDuration).SetEase(Ease.InQuad));
+        activeSequence.AppendInterval(resultRestartBlackHoldDuration);
+        activeSequence.AppendCallback(() =>
+        {
+            resultRestartFadeInRequested = true;
+            onOpaque?.Invoke();
+        });
+        activeSequence.OnComplete(CompleteSequence);
+        return true;
+    }
+
     /// <summary>
     /// 이상현상 적용을 가리기 위한 눈꺼풀 연출을 시작하고,
     /// 패널이 완전히 닫히는 시점까지의 시간을 반환합니다.
@@ -443,6 +569,41 @@ public class TransitionEffect : MonoBehaviour
             anomalyEye1Panel.offsetMin = anomalyEye1OpenOffsetMin;
         if (anomalyEye2Panel != null)
             anomalyEye2Panel.offsetMax = anomalyEye2OpenOffsetMax;
+    }
+
+    private void CacheFailureHandCoveredPositions()
+    {
+        if (failureHandPositionsCached || failureLeftHand == null || failureRightHand == null)
+            return;
+
+        failureLeftHandCoveredPosition = failureLeftHand.anchoredPosition;
+        failureRightHandCoveredPosition = failureRightHand.anchoredPosition;
+        failureHandPositionsCached = true;
+    }
+
+    private float GetFailureHandOffscreenDistance()
+    {
+        RectTransform effectRootRect = failureHandEffectRoot != null
+            ? failureHandEffectRoot.transform as RectTransform
+            : null;
+        float canvasWidth = effectRootRect != null ? effectRootRect.rect.width : 0f;
+        float handWidth = Mathf.Max(failureLeftHand.rect.width, failureRightHand.rect.width);
+        return Mathf.Max(canvasWidth, Screen.width) * failureHandOffscreenDistanceMultiplier + handWidth * 0.5f;
+    }
+
+    private void ResetFailureHandCoverImmediate()
+    {
+        if (failureHandPositionsCached)
+        {
+            if (failureLeftHand != null)
+                failureLeftHand.anchoredPosition = failureLeftHandCoveredPosition;
+            if (failureRightHand != null)
+                failureRightHand.anchoredPosition = failureRightHandCoveredPosition;
+        }
+
+        SetImageAlpha(failureHandBlackoutImage, 0f);
+        if (failureHandEffectRoot != null)
+            failureHandEffectRoot.SetActive(false);
     }
 
     private void CacheCameraDefaults()

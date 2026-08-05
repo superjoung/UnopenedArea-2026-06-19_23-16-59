@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>메인룸의 전화기, CCTV, 문 클릭을 Day 1 진행 상태에 맞춰 제어합니다.</summary>
+/// <summary>메인룸의 전화기, CCTV, 문, 보고판 클릭을 Day 1 진행 상태에 맞춰 제어합니다.</summary>
 public class MainRoomInteractionController : MonoBehaviour
 {
     [Header("References")]
@@ -8,11 +8,14 @@ public class MainRoomInteractionController : MonoBehaviour
     [SerializeField] private MainRoomInteractionTarget phoneTarget;
     [SerializeField] private MainRoomInteractionTarget cctvTarget;
     [SerializeField] private MainRoomInteractionTarget doorTarget;
+    [SerializeField] private MainRoomInteractionTarget reportTarget;
     [SerializeField] private TransitionEffect transitionEffect;
+    [SerializeField] private FoundAnomalyPanelController foundAnomalyPanelController;
     private Day1FlowController subscribedFlowController;
     private bool inputLocked;
+    private bool reportPanelInputLocked;
 
-    public bool InputLocked => inputLocked;
+    public bool InputLocked => inputLocked || reportPanelInputLocked;
 
     private void Awake() => ResolveReferences();
     private void OnEnable() { ResolveReferences(); Subscribe(); RefreshAvailability(); }
@@ -21,7 +24,20 @@ public class MainRoomInteractionController : MonoBehaviour
 
     public void TryInteract(MainRoomInteractionType interactionType)
     {
-        if (inputLocked || DayTitleController.IsBlockingWorldInteractions || day1FlowController == null) return;
+        if (InputLocked || DayTitleController.IsBlockingWorldInteractions) return;
+
+        ResolveReferences();
+        if (interactionType == MainRoomInteractionType.Report)
+        {
+            if (foundAnomalyPanelController != null)
+                foundAnomalyPanelController.OpenPanel();
+            else
+                Debug.LogWarning("[MainRoomInteractionController] FoundAnomalyPanelController가 없습니다.", this);
+
+            return;
+        }
+
+        if (day1FlowController == null) return;
         switch (interactionType)
         {
             case MainRoomInteractionType.Phone: day1FlowController.AcceptPhoneMission(); break;
@@ -43,12 +59,15 @@ public class MainRoomInteractionController : MonoBehaviour
     public void SetInputLocked(bool locked)
     {
         inputLocked = locked;
-        if (locked)
-        {
-            if (phoneTarget != null) phoneTarget.ForceHideOutline();
-            if (cctvTarget != null) cctvTarget.ForceHideOutline();
-            if (doorTarget != null) doorTarget.ForceHideOutline();
-        }
+        if (InputLocked)
+            HideAllOutlines();
+    }
+
+    public void SetReportPanelInputLocked(bool locked)
+    {
+        reportPanelInputLocked = locked;
+        if (InputLocked)
+            HideAllOutlines();
     }
 
     private void HandleStateChanged(Day1FlowState state) => RefreshAvailability();
@@ -61,6 +80,9 @@ public class MainRoomInteractionController : MonoBehaviour
                                                         state == Day1FlowState.EmergencyRecovery ||
                                                         state == Day1FlowState.Monitoring);
         if (doorTarget != null) doorTarget.SetAvailable(state == Day1FlowState.EmergencyDispatch);
+        if (reportTarget != null) reportTarget.SetAvailable(state != Day1FlowState.None &&
+                                                            state != Day1FlowState.Completed &&
+                                                            state != Day1FlowState.Failed);
     }
 
     private void Subscribe()
@@ -82,12 +104,24 @@ public class MainRoomInteractionController : MonoBehaviour
     {
         if (day1FlowController == null) day1FlowController = FindFirstObjectByType<Day1FlowController>();
         if (transitionEffect == null) transitionEffect = FindFirstObjectByType<TransitionEffect>();
+        if (foundAnomalyPanelController == null)
+            foundAnomalyPanelController = FindFirstObjectByType<FoundAnomalyPanelController>(FindObjectsInactive.Include);
+
         foreach (MainRoomInteractionTarget target in GetComponentsInChildren<MainRoomInteractionTarget>(true))
         {
             if (target == null) continue;
             if (target.InteractionType == MainRoomInteractionType.Phone && phoneTarget == null) phoneTarget = target;
             if (target.InteractionType == MainRoomInteractionType.CCTV && cctvTarget == null) cctvTarget = target;
             if (target.InteractionType == MainRoomInteractionType.Door && doorTarget == null) doorTarget = target;
+            if (target.InteractionType == MainRoomInteractionType.Report && reportTarget == null) reportTarget = target;
         }
+    }
+
+    private void HideAllOutlines()
+    {
+        if (phoneTarget != null) phoneTarget.ForceHideOutline();
+        if (cctvTarget != null) cctvTarget.ForceHideOutline();
+        if (doorTarget != null) doorTarget.ForceHideOutline();
+        if (reportTarget != null) reportTarget.ForceHideOutline();
     }
 }

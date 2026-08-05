@@ -16,6 +16,7 @@ public class Day1ResultPanelController : MonoBehaviour
     [SerializeField] private Day1AreaTransitionController areaTransitionController;
     [SerializeField] private CCTVTestSceneController sceneController;
     [SerializeField] private MainRoomInteractionController mainRoomInteractionController;
+    [SerializeField] private MainRoomStateEffectController mainRoomStateEffectController;
     [SerializeField] private TransitionEffect transitionEffect;
     [SerializeField] private GameObject resultPanel;
     [SerializeField] private TMP_Text stateText;
@@ -28,23 +29,40 @@ public class Day1ResultPanelController : MonoBehaviour
     [SerializeField, Min(0f)] private float successCctvDisplayDuration = 1f;
     [Tooltip("오보고/마지막 미보고 모두 실패 뒤 CCTV를 유지하는 시간입니다.")]
     [SerializeField, Min(0f)] private float failureCctvObservationDuration = 5f;
-    [Tooltip("CCTV에서 메인룸으로 돌아온 뒤 결과 UI를 띄우기 전의 정적 구간입니다.")]
+    [Tooltip("성공 시 CCTV에서 메인룸으로 돌아온 뒤 결과 UI를 띄우기 전의 정적 구간입니다.")]
     [SerializeField, Min(0f)] private float resultUiDelayAfterMainRoomReturn = 1f;
+    [Tooltip("실패 시 메인룸으로 돌아온 뒤 손이 화면을 덮기 전의 정적 구간입니다.")]
+    [SerializeField, Min(0f)] private float failureHandDelayAfterMainRoomReturn = 2f;
     [Tooltip("성공/실패 결과로 CCTV를 자동 탈출할 때 사용하는 전체 전환 시간입니다.")]
     [SerializeField, Min(0.1f)] private float automaticCctvExitEffectDuration = 2f;
-    [Tooltip("CCTV 탈출 후, 실패 UI를 띄우기 직전에 실행됩니다. 메인룸 전용 실패 사건은 나중에 여기에 연결합니다.")]
+    [Tooltip("손 연출로 화면이 완전히 검어진 순간 실행됩니다.")]
     [SerializeField] private UnityEvent onFailureEnteredMainRoom;
 
     [Header("Failure Noise")]
     [SerializeField] private CCTVSceneUI cctvSceneUI;
 
+    [Header("Result Restart")]
+    [SerializeField] private bool restartFailedDayOnAnyClick = true;
+
     private Coroutine presentationRoutine;
+    private bool resultVisible;
+    private bool visibleResultIsSuccess;
+    private bool restartRequested;
 
     private void Awake()
     {
         ResolveReferences();
         SetResultPanelVisible(false);
         SetCctvSuccessIndicatorVisible(false);
+    }
+
+    private void Update()
+    {
+        if (!restartFailedDayOnAnyClick || !resultVisible || visibleResultIsSuccess || restartRequested)
+            return;
+
+        if (Input.GetMouseButtonDown(0))
+            RestartFailedDayWithFade();
     }
 
     private void OnEnable()
@@ -119,11 +137,28 @@ public class Day1ResultPanelController : MonoBehaviour
             areaTransitionController?.EnterMainRoom();
         }
 
-        if (resultUiDelayAfterMainRoomReturn > 0f)
-            yield return new WaitForSecondsRealtime(resultUiDelayAfterMainRoomReturn);
+        float mainRoomDelay = isSuccess
+            ? resultUiDelayAfterMainRoomReturn
+            : failureHandDelayAfterMainRoomReturn;
+        if (mainRoomDelay > 0f)
+            yield return new WaitForSecondsRealtime(mainRoomDelay);
 
         if (!isSuccess)
-            onFailureEnteredMainRoom?.Invoke();
+        {
+            bool handCoverStarted = transitionEffect != null &&
+                                    transitionEffect.TryPlayFailureHandCover(
+                                        RevealFailureMainRoomState,
+                                        null);
+            if (handCoverStarted)
+            {
+                while (transitionEffect != null && transitionEffect.IsPlaying)
+                    yield return null;
+            }
+            else
+            {
+                RevealFailureMainRoomState();
+            }
+        }
 
         ShowResult(isSuccess);
         presentationRoutine = null;
@@ -135,10 +170,13 @@ public class Day1ResultPanelController : MonoBehaviour
             stateText.text = isSuccess ? "성공" : "실패";
 
         if (againButton != null)
-            againButton.SetActive(true);
+            againButton.SetActive(false);
         if (nextButton != null)
-            nextButton.SetActive(isSuccess);
+            nextButton.SetActive(false);
 
+        visibleResultIsSuccess = isSuccess;
+        resultVisible = true;
+        restartRequested = false;
         SetResultPanelVisible(true);
     }
 
@@ -146,12 +184,31 @@ public class Day1ResultPanelController : MonoBehaviour
     {
         if (resultPanel != null)
             resultPanel.SetActive(visible);
+        if (!visible)
+            resultVisible = false;
     }
 
     private void SetCctvSuccessIndicatorVisible(bool visible)
     {
         if (cctvSuccessIndicator != null)
             cctvSuccessIndicator.SetActive(visible);
+    }
+
+    private void RevealFailureMainRoomState()
+    {
+        mainRoomStateEffectController?.RevealTerminalFailureEffect();
+        onFailureEnteredMainRoom?.Invoke();
+    }
+
+    private void RestartFailedDayWithFade()
+    {
+        restartRequested = true;
+        ResolveReferences();
+
+        bool fadeStarted = transitionEffect != null &&
+                           transitionEffect.TryPlayResultRestartFade(RetryCurrentDay);
+        if (!fadeStarted)
+            RetryCurrentDay();
     }
 
     /// <summary>다시하기 버튼에 연결합니다.</summary>
@@ -195,6 +252,8 @@ public class Day1ResultPanelController : MonoBehaviour
             sceneController = FindFirstObjectByType<CCTVTestSceneController>();
         if (mainRoomInteractionController == null)
             mainRoomInteractionController = FindFirstObjectByType<MainRoomInteractionController>();
+        if (mainRoomStateEffectController == null)
+            mainRoomStateEffectController = FindFirstObjectByType<MainRoomStateEffectController>(FindObjectsInactive.Include);
         if (transitionEffect == null)
             transitionEffect = FindFirstObjectByType<TransitionEffect>();
         if (cctvSceneUI == null)

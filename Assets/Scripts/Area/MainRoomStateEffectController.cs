@@ -20,6 +20,8 @@ public class MainRoomStateEffectController : MonoBehaviour
     [Header("Terminal Failure")]
     [Tooltip("오보고 또는 미보고 최종 실패 후 메인룸 배경 위에 표시할 이펙트입니다.")]
     [SerializeField] private GameObject terminalFailureEffect;
+    [Tooltip("실패 이펙트 아래에서 메인룸을 완전히 가릴 검은 배경입니다.")]
+    [SerializeField] private GameObject terminalFailureBackground;
 
     [Header("Blackout Main Room")]
     [SerializeField] private GameObject normalBackground;
@@ -88,6 +90,7 @@ public class MainRoomStateEffectController : MonoBehaviour
         CacheBlackoutDimColors();
         RefreshCalendar();
         SetActive(terminalFailureEffect, false);
+        SetActive(terminalFailureBackground, false);
         ApplyState(day1FlowController != null ? day1FlowController.State : Day1FlowState.None);
     }
 
@@ -128,6 +131,8 @@ public class MainRoomStateEffectController : MonoBehaviour
         SetActive(cctvBlack, false);
         SetActive(normalBackground, true);
         SetActive(darkBackground, false);
+        SetActive(terminalFailureEffect, false);
+        SetActive(terminalFailureBackground, false);
         ApplyControlSignBrightness(1f);
         ApplyBlackoutDimBrightness(1f);
     }
@@ -211,12 +216,20 @@ public class MainRoomStateEffectController : MonoBehaviour
     {
         missedAnomalyCount = 0;
         SetActive(terminalFailureEffect, false);
+        SetActive(terminalFailureBackground, false);
         RefreshMissedApproachVisuals();
         RefreshCalendar();
     }
 
     private void HandleTerminalFailureStarted(DayFailureReason reason)
     {
+        SetActive(terminalFailureEffect, false);
+        SetActive(terminalFailureBackground, false);
+    }
+
+    public void RevealTerminalFailureEffect()
+    {
+        SetActive(terminalFailureBackground, true);
         SetActive(terminalFailureEffect, true);
     }
 
@@ -466,6 +479,8 @@ public class MainRoomStateEffectController : MonoBehaviour
             normalBackground = FindChildObject("BackGround");
         if (darkBackground == null)
             darkBackground = FindChildObject("DarkBackGround");
+        if (terminalFailureBackground == null)
+            terminalFailureBackground = FindChildObject("TerminalFailureBackground");
         if (controlSign == null)
             controlSign = FindChildObject("Controll");
 
