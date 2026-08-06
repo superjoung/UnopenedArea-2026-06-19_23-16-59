@@ -1,4 +1,5 @@
 using System.Collections;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -23,6 +24,20 @@ public class Day1ResultPanelController : MonoBehaviour
     [SerializeField] private GameObject againButton;
     [SerializeField] private GameObject nextButton;
 
+    [Header("Success Day Handoff")]
+    [Tooltip("Use MainSceneUI's TempUI root. It is automatically found when left empty.")]
+    [SerializeField] private GameObject successCompletionPanel;
+    [Tooltip("TempUI's StatusText. It is automatically found when left empty.")]
+    [SerializeField] private TMP_Text successCompletionLine1;
+    [Tooltip("TempUI's ObjectiveText. It is automatically found when left empty.")]
+    [SerializeField] private TMP_Text successCompletionLine2;
+    [SerializeField, Min(0f)] private float successCompletionDelayAfterReturn = 1f;
+    [SerializeField, Min(0f)] private float successCompletionPanelHoldDuration = 3f;
+    [SerializeField, Min(0.05f)] private float successCalendarZoomDuration = 1f;
+    [SerializeField, Min(0.1f)] private float successCalendarZoomOrthographicSize = 1.25f;
+    [SerializeField, Min(0.05f)] private float successCalendarCrossFadeDuration = 0.65f;
+    [SerializeField, Min(0f)] private float successCalendarHoldDuration = 0.8f;
+
     [Header("CCTV Result Presentation")]
     [Tooltip("CCTV 화면에서 잠시 보여줄 성공 표시입니다. 비워두면 별도 표시 없이 1초 대기합니다.")]
     [SerializeField] private GameObject cctvSuccessIndicator;
@@ -44,7 +59,12 @@ public class Day1ResultPanelController : MonoBehaviour
     [Header("Result Restart")]
     [SerializeField] private bool restartFailedDayOnAnyClick = true;
 
+    [Header("Debug")]
+    [Tooltip("F8을 누르면 즉시 하루 성공 처리를 실행합니다. 테스트가 끝나면 끄십시오.")]
+    [SerializeField] private bool enableInstantSuccessShortcut = true;
+
     private Coroutine presentationRoutine;
+    private MainSceneUI successMessageUi;
     private bool resultVisible;
     private bool visibleResultIsSuccess;
     private bool restartRequested;
@@ -53,16 +73,36 @@ public class Day1ResultPanelController : MonoBehaviour
     {
         ResolveReferences();
         SetResultPanelVisible(false);
+        SetSuccessCompletionVisible(false);
         SetCctvSuccessIndicatorVisible(false);
     }
 
     private void Update()
     {
+        if (enableInstantSuccessShortcut && Input.GetKeyDown(KeyCode.F8))
+            DebugCompleteDay();
+
         if (!restartFailedDayOnAnyClick || !resultVisible || visibleResultIsSuccess || restartRequested)
             return;
 
         if (Input.GetMouseButtonDown(0))
             RestartFailedDayWithFade();
+    }
+
+    /// <summary>Debug-only entry point. Also callable from a temporary Inspector button/event.</summary>
+    public void DebugCompleteDay()
+    {
+        ResolveReferences();
+        if (presentationRoutine != null || resultVisible)
+            return;
+
+        if (dayRuntimeController == null)
+        {
+            Debug.LogWarning("[Day1ResultPanelController] Cannot complete the day: DayRuntimeController is missing.");
+            return;
+        }
+
+        dayRuntimeController.ClearDay();
     }
 
     private void OnEnable()
@@ -138,7 +178,7 @@ public class Day1ResultPanelController : MonoBehaviour
         }
 
         float mainRoomDelay = isSuccess
-            ? resultUiDelayAfterMainRoomReturn
+            ? successCompletionDelayAfterReturn
             : failureHandDelayAfterMainRoomReturn;
         if (mainRoomDelay > 0f)
             yield return new WaitForSecondsRealtime(mainRoomDelay);
@@ -160,8 +200,95 @@ public class Day1ResultPanelController : MonoBehaviour
             }
         }
 
-        ShowResult(isSuccess);
+        if (isSuccess)
+            yield return PresentSuccessDayHandoff();
+        else
+            ShowResult(false);
+
         presentationRoutine = null;
+    }
+
+    private IEnumerator PresentSuccessDayHandoff()
+    {
+        ShowSuccessCompletionMessage();
+
+        if (successCompletionPanelHoldDuration > 0f)
+            yield return new WaitForSecondsRealtime(successCompletionPanelHoldDuration);
+
+        HideSuccessCompletionMessage();
+        yield return PlayCalendarAdvancePresentation();
+        LoadNextDayWithFade();
+    }
+
+    private IEnumerator PlayCalendarAdvancePresentation()
+    {
+        int completedDay = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
+            ? dayRuntimeController.CurrentDayDefinition.Day
+            : 1;
+        GameObject currentDayVisual = mainRoomStateEffectController?.GetCalendarDayVisual(completedDay);
+        GameObject nextDayVisual = mainRoomStateEffectController?.GetCalendarDayVisual(completedDay + 1);
+        Camera mainCamera = transitionEffect != null ? transitionEffect.MainRoomCamera : Camera.main;
+
+        if (nextDayVisual != null)
+            nextDayVisual.SetActive(true);
+
+        SpriteRenderer currentRenderer = currentDayVisual != null
+            ? currentDayVisual.GetComponentInChildren<SpriteRenderer>(true)
+            : null;
+        SpriteRenderer nextRenderer = nextDayVisual != null
+            ? nextDayVisual.GetComponentInChildren<SpriteRenderer>(true)
+            : null;
+
+        Color currentColor = currentRenderer != null ? currentRenderer.color : Color.white;
+        Color nextColor = nextRenderer != null ? nextRenderer.color : Color.white;
+        float nextTargetAlpha = nextColor.a;
+        if (nextRenderer != null)
+        {
+            nextColor.a = 0f;
+            nextRenderer.color = nextColor;
+        }
+
+        Sequence sequence = DOTween.Sequence().SetUpdate(true);
+        if (mainCamera != null && nextDayVisual != null && mainCamera.orthographic)
+        {
+            Vector3 cameraTarget = nextDayVisual.transform.position;
+            cameraTarget.z = mainCamera.transform.position.z;
+            sequence.Append(mainCamera.transform.DOMove(cameraTarget, successCalendarZoomDuration).SetEase(Ease.InOutQuad));
+            sequence.Join(mainCamera.DOOrthoSize(successCalendarZoomOrthographicSize, successCalendarZoomDuration).SetEase(Ease.InOutQuad));
+        }
+
+        if (currentRenderer != null)
+            sequence.Append(currentRenderer.DOFade(0f, successCalendarCrossFadeDuration));
+        if (nextRenderer != null)
+            sequence.Join(nextRenderer.DOFade(nextTargetAlpha, successCalendarCrossFadeDuration));
+
+        sequence.Play();
+        yield return sequence.WaitForCompletion();
+
+        if (currentDayVisual != null)
+            currentDayVisual.SetActive(false);
+        if (successCalendarHoldDuration > 0f)
+            yield return new WaitForSecondsRealtime(successCalendarHoldDuration);
+    }
+
+    private void LoadNextDayWithFade()
+    {
+        int completedDay = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
+            ? dayRuntimeController.CurrentDayDefinition.Day
+            : 1;
+        DayProgressSave.AdvanceToNextDay(completedDay);
+        DayProgressSave.RequestSkipTitleOnNextSceneLoad();
+        string nextSceneName = $"Day{DayProgressSave.CurrentDay}";
+        if (!Application.CanStreamedLevelBeLoaded(nextSceneName))
+        {
+            Debug.LogWarning($"[Day1ResultPanelController] Next day scene is not in Build Settings: {nextSceneName}");
+            return;
+        }
+
+        bool fadeStarted = transitionEffect != null &&
+                           transitionEffect.TryPlaySceneChangeFade(() => SceneManager.LoadScene(nextSceneName));
+        if (!fadeStarted)
+            SceneManager.LoadScene(nextSceneName);
     }
 
     private void ShowResult(bool isSuccess)
@@ -186,6 +313,39 @@ public class Day1ResultPanelController : MonoBehaviour
             resultPanel.SetActive(visible);
         if (!visible)
             resultVisible = false;
+    }
+
+    private void SetSuccessCompletionVisible(bool visible)
+    {
+        if (successCompletionPanel != null)
+            successCompletionPanel.SetActive(visible);
+    }
+
+    private void ShowSuccessCompletionMessage()
+    {
+        ResolveSuccessMessageUi();
+        if (successMessageUi != null)
+        {
+            successMessageUi.ShowExternalMessage("근무를 끝마쳤다.", "다음 날로 넘어갑니다.");
+            return;
+        }
+
+        SetSuccessCompletionVisible(true);
+        if (successCompletionLine1 != null)
+            successCompletionLine1.text = "근무를 끝마쳤다.";
+        if (successCompletionLine2 != null)
+            successCompletionLine2.text = "다음 날로 넘어갑니다.";
+    }
+
+    private void HideSuccessCompletionMessage()
+    {
+        if (successMessageUi != null)
+        {
+            successMessageUi.HideExternalMessage();
+            return;
+        }
+
+        SetSuccessCompletionVisible(false);
     }
 
     private void SetCctvSuccessIndicatorVisible(bool visible)
@@ -258,5 +418,35 @@ public class Day1ResultPanelController : MonoBehaviour
             transitionEffect = FindFirstObjectByType<TransitionEffect>();
         if (cctvSceneUI == null)
             cctvSceneUI = FindFirstObjectByType<CCTVSceneUI>();
+
+        ResolveSuccessMessageUi();
+        if (successMessageUi != null)
+        {
+            if (successCompletionPanel == null)
+                successCompletionPanel = successMessageUi.TextContentRoot;
+            if (successCompletionLine1 == null)
+                successCompletionLine1 = successMessageUi.SituationText;
+            if (successCompletionLine2 == null)
+                successCompletionLine2 = successMessageUi.ObjectiveText;
+        }
+    }
+
+    private void ResolveSuccessMessageUi()
+    {
+        if (successMessageUi != null && successMessageUi.gameObject.activeInHierarchy)
+            return;
+
+        MainSceneUI[] candidates = FindObjectsByType<MainSceneUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (MainSceneUI candidate in candidates)
+        {
+            if (candidate != null && candidate.gameObject.activeInHierarchy)
+            {
+                successMessageUi = candidate;
+                return;
+            }
+        }
+
+        if (successMessageUi == null && candidates.Length > 0)
+            successMessageUi = candidates[0];
     }
 }

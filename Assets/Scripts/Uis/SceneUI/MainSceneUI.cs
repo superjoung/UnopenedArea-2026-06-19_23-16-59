@@ -31,6 +31,26 @@ public class MainSceneUI : MonoBehaviour
     private TransitionEffect subscribedTransitionEffect;
     private Coroutine messageDisplayRoutine;
     private bool wasTransitionPlaying;
+    private bool externalMessageActive;
+
+    public GameObject TextContentRoot => textContentRoot;
+    public TMP_Text SituationText => situationText;
+    public TMP_Text ObjectiveText => objectiveText;
+
+    /// <summary>Shows TempUI for a one-off presentation that is not tied to flow state.</summary>
+    public void ShowExternalMessage(string situation, string objective)
+    {
+        externalMessageActive = true;
+        CancelScheduledMessage();
+        ApplyMessage(situation, objective);
+        SetVisible(true);
+    }
+
+    public void HideExternalMessage()
+    {
+        externalMessageActive = false;
+        SetVisible(false);
+    }
 
     private void Awake()
     {
@@ -88,6 +108,12 @@ public class MainSceneUI : MonoBehaviour
 
     public void Refresh()
     {
+        if (externalMessageActive)
+        {
+            SetVisible(true);
+            return;
+        }
+
         Day1FlowState flowState = day1FlowController != null
             ? day1FlowController.State
             : Day1FlowState.None;

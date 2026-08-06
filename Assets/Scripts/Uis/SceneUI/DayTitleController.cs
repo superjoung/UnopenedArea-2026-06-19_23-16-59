@@ -43,11 +43,15 @@ public class DayTitleController : MonoBehaviour
         CacheTitleFadeTexts();
 
         // 결과/일시정지 메뉴의 다시하기는 같은 Day를 즉시 재시작하므로 타이틀 입력 대기를 다시 보여주지 않는다.
-        if (DayProgressSave.ConsumeSkipTitleOnNextSceneLoad())
+        bool skipTitleAndBeginImmediately = DayProgressSave.ConsumeSkipTitleOnNextSceneLoad();
+        if (skipTitleAndBeginImmediately)
             waitForPlayerStart = false;
 
         IsBlockingWorldInteractions = waitForPlayerStart;
         ApplyTitleVisibility(waitForPlayerStart);
+
+        if (skipTitleAndBeginImmediately)
+            BeginDayWithoutTitle();
     }
 
     private void Update()
@@ -61,6 +65,13 @@ public class DayTitleController : MonoBehaviour
             BeginDay();
     }
 
+    private void Start()
+    {
+        // Allows a day scene to permanently skip its title through the Inspector as well.
+        if (!waitForPlayerStart && !hasStarted)
+            BeginDayWithoutTitle();
+    }
+
     /// <summary>TitleCanvas의 Button OnClick에도 연결할 수 있습니다.</summary>
     public void BeginDay()
     {
@@ -70,6 +81,24 @@ public class DayTitleController : MonoBehaviour
         hasStarted = true;
         IsBlockingWorldInteractions = true;
         beginDayRoutine = StartCoroutine(BeginDayRoutine());
+    }
+
+    private void BeginDayWithoutTitle()
+    {
+        if (hasStarted)
+            return;
+
+        hasStarted = true;
+        if (titleCanvasRoot != null)
+            titleCanvasRoot.SetActive(false);
+        SetHiddenUiVisible(true);
+
+        int day = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
+            ? dayRuntimeController.CurrentDayDefinition.Day
+            : dayFlowController != null ? dayFlowController.DayNumber : 1;
+        DayProgressSave.SetCurrentDay(day);
+        dayFlowController?.BeginDayBriefing();
+        IsBlockingWorldInteractions = false;
     }
 
     private IEnumerator BeginDayRoutine()

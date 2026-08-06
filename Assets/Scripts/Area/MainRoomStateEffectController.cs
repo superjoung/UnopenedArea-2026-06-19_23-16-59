@@ -253,11 +253,22 @@ public class MainRoomStateEffectController : MonoBehaviour
 
     private void RefreshPhoneGlow()
     {
-        isPhoneGlowPulsing = isPhoneRinging || missedAnomalyCount > 0;
+        // 미보고 접근 Glow는 정전 중 켜져 있으면 전화기만 홀로 빛나는 것처럼 보이므로 끈다.
+        isPhoneGlowPulsing = isPhoneRinging || (missedAnomalyCount > 0 && !IsBlackoutVisualActive());
         SetActive(phoneGlow, isPhoneGlowPulsing);
 
         if (!isPhoneGlowPulsing)
             RestorePhoneGlowColors();
+    }
+
+    private bool IsBlackoutVisualActive()
+    {
+        if (day1FlowController == null)
+            return false;
+
+        return day1FlowController.State == Day1FlowState.EmergencyDispatch ||
+               (day1FlowController.State == Day1FlowState.Monitoring &&
+                day1FlowController.IsEmergencyPresentationLocked);
     }
 
     private static string GetMissedApproachMessage(int count)
@@ -386,6 +397,15 @@ public class MainRoomStateEffectController : MonoBehaviour
 
         for (int i = 0; i < calendarDaySprites.Length; i++)
             SetActive(calendarDaySprites[i], i == day - 1);
+    }
+
+    /// <summary>Returns the calendar visual for the requested 1-based day.</summary>
+    public GameObject GetCalendarDayVisual(int day)
+    {
+        int index = day - 1;
+        return calendarDaySprites != null && index >= 0 && index < calendarDaySprites.Length
+            ? calendarDaySprites[index]
+            : null;
     }
 
     private void ApplyPhoneGlowPulse()

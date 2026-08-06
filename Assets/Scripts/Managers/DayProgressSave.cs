@@ -7,6 +7,7 @@ using UnityEngine;
 public static class DayProgressSave
 {
     private const string CurrentDayKey = "UnopenedArea.CurrentDay";
+    private const string SkipTitleOnNextSceneLoadKey = "UnopenedArea.SkipTitleOnNextSceneLoad";
     // 앱을 다시 실행하면 사라지는 1회성 플래그다. 재시작에서만 타이틀 입력 대기를 건너뛴다.
     private static bool skipTitleOnNextSceneLoad;
 
@@ -31,12 +32,16 @@ public static class DayProgressSave
     public static void RequestSkipTitleOnNextSceneLoad()
     {
         skipTitleOnNextSceneLoad = true;
+        PlayerPrefs.SetInt(SkipTitleOnNextSceneLoadKey, 1);
+        PlayerPrefs.Save();
     }
 
     public static bool ConsumeSkipTitleOnNextSceneLoad()
     {
-        bool shouldSkip = skipTitleOnNextSceneLoad;
+        bool shouldSkip = skipTitleOnNextSceneLoad || PlayerPrefs.GetInt(SkipTitleOnNextSceneLoadKey, 0) == 1;
         skipTitleOnNextSceneLoad = false;
+        PlayerPrefs.DeleteKey(SkipTitleOnNextSceneLoadKey);
+        PlayerPrefs.Save();
         return shouldSkip;
     }
 }

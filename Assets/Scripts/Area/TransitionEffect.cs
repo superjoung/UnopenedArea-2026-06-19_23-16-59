@@ -18,6 +18,7 @@ public class TransitionEffect : MonoBehaviour
     [SerializeField] private Day1FlowController day1FlowController;
     [SerializeField] private Camera mainRoomCamera;
     [SerializeField] private Transform cctvFocusTarget;
+    [SerializeField] private CCTVSceneUI cctvSceneUI;
 
     [Header("Enter CCTV")]
     [SerializeField] private CctvTransitionStyle cctvTransitionStyle = CctvTransitionStyle.ZoomAndFade;
@@ -119,6 +120,14 @@ public class TransitionEffect : MonoBehaviour
     private static bool resultRestartFadeInRequested;
 
     public bool IsPlaying => isPlaying;
+    public Camera MainRoomCamera
+    {
+        get
+        {
+            ResolveReferences();
+            return mainRoomCamera;
+        }
+    }
     public bool IsAnomalyBlinkPlaying => anomalyBlinkSequence != null && anomalyBlinkSequence.IsActive();
     public float AnomalyBlinkTotalDuration => GetAnomalyBlinkCloseDuration() + anomalyClosedHoldAfterChange + anomalySnapOpenDuration;
     public event Action<bool> PlaybackChanged;
@@ -219,6 +228,7 @@ public class TransitionEffect : MonoBehaviour
             return false;
 
         CacheCameraDefaults();
+        ForceCloseReportPanel();
         SetPlaying(true);
         activeSequence?.Kill();
         blackoutPanelImage.gameObject.SetActive(true);
@@ -447,11 +457,42 @@ public class TransitionEffect : MonoBehaviour
     }
 
     /// <summary>
+    /// Fades the entire screen to black for a scene handoff. Unlike the retry fade,
+    /// this does not request title skipping in the destination scene.
+    /// </summary>
+    public bool TryPlaySceneChangeFade(Action onOpaque)
+    {
+        if (isPlaying || blackoutPanelImage == null)
+            return false;
+
+        SetPlaying(true);
+        activeSequence?.Kill();
+        blackoutPanelImage.gameObject.SetActive(true);
+        blackoutPanelImage.transform.SetAsLastSibling();
+        SetImageAlpha(blackoutPanelImage, 0f);
+
+        activeSequence = DOTween.Sequence().SetUpdate(true);
+        activeSequence.Append(blackoutPanelImage.DOFade(1f, resultRestartFadeOutDuration).SetEase(Ease.InQuad));
+        activeSequence.AppendInterval(resultRestartBlackHoldDuration);
+        activeSequence.AppendCallback(() =>
+        {
+            // The next scene's TransitionEffect starts fully black and fades in,
+            // making the scene load invisible to the player.
+            resultRestartFadeInRequested = true;
+            onOpaque?.Invoke();
+        });
+        activeSequence.OnComplete(CompleteSequence);
+        return true;
+    }
+
+    /// <summary>
     /// 이상현상 적용을 가리기 위한 눈꺼풀 연출을 시작하고,
     /// 패널이 완전히 닫히는 시점까지의 시간을 반환합니다.
     /// </summary>
     public float PlayAnomalyAppearanceBlink()
     {
+        ForceCloseReportPanel();
+
         if (anomalyEye1Panel == null || anomalyEye2Panel == null)
             return 0f;
 
@@ -617,6 +658,7 @@ public class TransitionEffect : MonoBehaviour
     private void ResolveReferences()
     {
         if (day1FlowController == null) day1FlowController = FindFirstObjectByType<Day1FlowController>();
+        if (cctvSceneUI == null) cctvSceneUI = FindFirstObjectByType<CCTVSceneUI>();
         if (mainRoomCamera == null)
         {
             GameObject cameraObject = GameObject.Find("MainCamera");
@@ -634,5 +676,13 @@ public class TransitionEffect : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void ForceCloseReportPanel()
+    {
+        if (cctvSceneUI == null)
+            cctvSceneUI = FindFirstObjectByType<CCTVSceneUI>();
+
+        cctvSceneUI?.ForceCloseReportPanel();
     }
 }
