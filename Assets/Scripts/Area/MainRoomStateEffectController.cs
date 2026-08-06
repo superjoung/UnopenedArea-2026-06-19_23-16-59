@@ -147,6 +147,15 @@ public class MainRoomStateEffectController : MonoBehaviour
         ApplyState(state);
     }
 
+    /// <summary>
+    /// 전화 수신 순간에만 호출합니다. 대사 진행 중에는 아직 Briefing 상태를 유지하므로,
+    /// 상태 전환을 기다리지 않고 전화 Glow/진동을 즉시 종료해야 합니다.
+    /// </summary>
+    public void StopPhoneRingingImmediately()
+    {
+        SetPhoneRinging(false);
+    }
+
     private void ApplyState(Day1FlowState state)
     {
         SetPhoneRinging(state == Day1FlowState.Briefing);

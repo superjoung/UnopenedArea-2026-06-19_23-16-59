@@ -33,6 +33,11 @@ public class DayTitleController : MonoBehaviour
     /// <summary>타이틀 클릭이 메인룸 Collider까지 전달되지 않도록 하는 전역 입력 차단 상태입니다.</summary>
     public static bool IsBlockingWorldInteractions { get; private set; }
 
+    public static void ResetGlobalInputBlock()
+    {
+        IsBlockingWorldInteractions = false;
+    }
+
     private bool hasStarted;
     private Coroutine beginDayRoutine;
     private readonly List<Color> titleTextOriginalColors = new List<Color>();
@@ -96,6 +101,7 @@ public class DayTitleController : MonoBehaviour
         int day = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
             ? dayRuntimeController.CurrentDayDefinition.Day
             : dayFlowController != null ? dayFlowController.DayNumber : 1;
+        day = DaySessionLoader.GetLoadedDayOrFallback(day);
         DayProgressSave.SetCurrentDay(day);
         dayFlowController?.BeginDayBriefing();
         IsBlockingWorldInteractions = false;
@@ -116,6 +122,7 @@ public class DayTitleController : MonoBehaviour
         int day = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
             ? dayRuntimeController.CurrentDayDefinition.Day
             : dayFlowController != null ? dayFlowController.DayNumber : 1;
+        day = DaySessionLoader.GetLoadedDayOrFallback(day);
         DayProgressSave.SetCurrentDay(day);
         dayFlowController?.BeginDayBriefing();
         IsBlockingWorldInteractions = false;

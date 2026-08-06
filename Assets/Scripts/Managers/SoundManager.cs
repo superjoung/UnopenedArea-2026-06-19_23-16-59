@@ -152,6 +152,28 @@ public class SoundManager : MonoBehaviour
             secondaryBgmSource.Play();
     }
 
+    /// <summary>
+    /// SoundManager persists across scenes, so retries and manual day selection
+    /// must explicitly leave CCTV/failure BGM modes before the next day begins.
+    /// Volume preferences are intentionally preserved.
+    /// </summary>
+    public void ResetForDayLoad()
+    {
+        isCctvBgmMode = false;
+        isFailBgmMode = false;
+        useFirstFootstepClip = true;
+
+        secondaryBgmSource?.Stop();
+        sfxSource?.Stop();
+
+        if (initialBgm != null)
+            PlayBgm(initialBgm);
+        else if (bgmSource != null && bgmSource.clip != null && !bgmSource.isPlaying)
+            bgmSource.Play();
+
+        ApplyVolumes();
+    }
+
     public void PlayPhoneRingSfx()
     {
         if (phoneRingSfx == null || sfxSource == null)

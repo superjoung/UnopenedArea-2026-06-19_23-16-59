@@ -19,8 +19,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9d13d1b21e63abb4594f360b587d5f4e, type: 2}
   - {fileID: 11400000, guid: fc8ee4399cd0c2443a7ca9013befb3db, type: 2}
   - {fileID: 11400000, guid: 626dfe864efcc494f84bfe42dc893136, type: 2}
-  - {fileID: 11400000, guid: 5dffb5832f8d91640811ae7834b71080, type: 2}
-  - {fileID: 11400000, guid: 4fb5f58ae177fd444a4a7b8c818b9b30, type: 2}
   tutorialAnomaly: {fileID: 11400000, guid: 2929c5f3ddd306c46b9a707aff5a91fa, type: 2}
   tutorialRequiredChannelSwitches: 3
   tutorialFallbackElapsedSec: 60
@@ -97,10 +95,23 @@ MonoBehaviour:
     weight: 1
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 2e09500cf8864c97b221f9871ec4f0b6, type: 2}
+    weight: 1
+    allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 3e5d014a3d9d1ca40a12070e4f4aa2fc, type: 2}
+    weight: 1
+    allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 286810c2ed6b5ad46932cccc5ba58892, type: 2}
+    weight: 1
+    allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 736ccb74835e60e4abacfbff2e532cd7, type: 2}
+    weight: 1
+    allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: f0fd0f9dbd6752a4bb4c1422adb54b54, type: 2}
+    weight: 1
+    allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 3e69f7299ba088b459002da40d0fb6e3, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 67e0d872291db2b4297adb50a2f1378b, type: 2}
     weight: 1
     allowRepeat: 1

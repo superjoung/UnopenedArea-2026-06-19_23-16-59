@@ -85,6 +85,10 @@ public class DayRuntimeController : MonoBehaviour
 
     public void StartDay()
     {
+        // GameManager survives scene changes. A retry must never inherit the
+        // terminal failure input lock from the previous day.
+        GameManager.Instance?.SetReportInputEnabled(true);
+
         ElapsedSec = 0f;
         SuccessReportCount = 0;
         WrongReportCount = 0;

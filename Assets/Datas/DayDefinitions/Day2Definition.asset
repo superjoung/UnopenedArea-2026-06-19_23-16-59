@@ -19,8 +19,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9d13d1b21e63abb4594f360b587d5f4e, type: 2}
   - {fileID: 11400000, guid: fc8ee4399cd0c2443a7ca9013befb3db, type: 2}
   - {fileID: 11400000, guid: 626dfe864efcc494f84bfe42dc893136, type: 2}
-  - {fileID: 11400000, guid: 5dffb5832f8d91640811ae7834b71080, type: 2}
-  - {fileID: 11400000, guid: 4fb5f58ae177fd444a4a7b8c818b9b30, type: 2}
   tutorialAnomaly: {fileID: 0}
   tutorialRequiredChannelSwitches: 3
   tutorialFallbackElapsedSec: 60

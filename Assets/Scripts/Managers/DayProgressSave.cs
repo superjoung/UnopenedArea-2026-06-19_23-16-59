@@ -44,4 +44,11 @@ public static class DayProgressSave
         PlayerPrefs.Save();
         return shouldSkip;
     }
+
+    public static void ClearSkipTitleOnNextSceneLoad()
+    {
+        skipTitleOnNextSceneLoad = false;
+        PlayerPrefs.DeleteKey(SkipTitleOnNextSceneLoadKey);
+        PlayerPrefs.Save();
+    }
 }

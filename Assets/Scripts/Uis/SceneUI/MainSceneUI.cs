@@ -32,6 +32,7 @@ public class MainSceneUI : MonoBehaviour
     private Coroutine messageDisplayRoutine;
     private bool wasTransitionPlaying;
     private bool externalMessageActive;
+    private bool temporarilySuppressed;
 
     public GameObject TextContentRoot => textContentRoot;
     public TMP_Text SituationText => situationText;
@@ -50,6 +51,20 @@ public class MainSceneUI : MonoBehaviour
     {
         externalMessageActive = false;
         SetVisible(false);
+    }
+
+    /// <summary>스토리 대화처럼 다른 화면 UI를 단독으로 보여줄 때 안내 텍스트를 잠시 숨깁니다.</summary>
+    public void SetTemporarilySuppressed(bool suppressed)
+    {
+        temporarilySuppressed = suppressed;
+        if (suppressed)
+        {
+            CancelScheduledMessage();
+            SetVisible(false);
+            return;
+        }
+
+        Refresh();
     }
 
     private void Awake()
@@ -108,6 +123,13 @@ public class MainSceneUI : MonoBehaviour
 
     public void Refresh()
     {
+        if (temporarilySuppressed)
+        {
+            CancelScheduledMessage();
+            SetVisible(false);
+            return;
+        }
+
         if (externalMessageActive)
         {
             SetVisible(true);

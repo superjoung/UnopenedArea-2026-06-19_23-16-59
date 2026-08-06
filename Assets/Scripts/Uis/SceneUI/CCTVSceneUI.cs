@@ -95,6 +95,7 @@ public class CCTVSceneUI : BaseUI
     private Coroutine missedSignalLossCoroutine;
     private Coroutine terminalWrongReportRoutine;
     private Coroutine initialMonitoringIntroCoroutine;
+    private Coroutine initialReportSelectionRoutine;
     private bool initialMonitoringIntroPlayed;
 
     // 보고 제출 시 사용할 내부 선택값. UI 표시 문자열이 아니라 enum/id 값을 저장한다.
@@ -144,6 +145,10 @@ public class CCTVSceneUI : BaseUI
         EffectSetting();
         ReportHeightSetting();
         ReportContentSetting();
+
+        // CCTV 채널/Area 인스턴스는 다른 Start()에서 준비된다. 한 프레임 뒤 실제
+        // 0번 후보를 다시 확정해, 프리팹에 보이는 기본 문구와 내부 선택값이 어긋나지 않게 한다.
+        initialReportSelectionRoutine = StartCoroutine(InitializeReportSelectionsAfterSceneReady());
     }
 
     private void OnClickReportSendButton(PointerEventData eventData)
@@ -244,6 +249,7 @@ public class CCTVSceneUI : BaseUI
         sceneController?.SetCCTVInputEnabled(true);
         panController?.SetInputLocked(false);
         GameManager.Instance?.SetReportInputEnabled(true);
+        SetReportSendInteractable(CanSubmitReport());
         initialMonitoringIntroCoroutine = null;
     }
 
@@ -336,6 +342,9 @@ public class CCTVSceneUI : BaseUI
         // W키 보고 패널 토글: 열 때는 기본 보고 높이, 닫을 때는 전체 높이 기준 아래로 내린다.
         if (!_isReport)
         {
+            // 선택값은 새 씬의 최초 준비 때만 확정한다. 보고판 재오픈/CCTV 재진입에서는
+            // 플레이어가 마지막으로 고른 장소·물건·현상을 그대로 유지한다.
+            SetReportSendInteractable(CanSubmitReport());
             _slideTween = panel
                 .DOAnchorPosY(_reportDefaultHeight, 0.5f)
                 .SetEase(Ease.OutQuint);
@@ -495,6 +504,21 @@ public class CCTVSceneUI : BaseUI
             button.interactable = interactable;
     }
 
+    private bool CanSubmitReport()
+    {
+        if (_isNormalizingReport)
+            return false;
+
+        if (dayRuntimeController != null &&
+            (dayRuntimeController.State == DayRuntimeState.Failed ||
+             dayRuntimeController.State == DayRuntimeState.Cleared))
+        {
+            return false;
+        }
+
+        return GameManager.Instance == null || GameManager.Instance.ReportInputEnabled;
+    }
+
     private void ChangeReportImage()
     {
         TMP_Text errorReportText = GetText((int)Texts.ErrorReportText);
@@ -562,6 +586,24 @@ public class CCTVSceneUI : BaseUI
             return;
 
         // 시작 시 한 번 생성하고, 버튼을 누를 때마다 최신 구역/오브젝트 상태로 다시 갱신한다.
+        RefreshInitialReportSelections();
+    }
+
+    private IEnumerator InitializeReportSelectionsAfterSceneReady()
+    {
+        yield return null;
+        RefreshInitialReportSelections();
+
+        // 눈깜빡임/강제 닫힘 연출이 이전에 버튼을 꺼두었더라도, 정상 감시 상태라면
+        // 보고판을 다시 열어 제출할 수 있어야 한다.
+        if (!_isReport)
+            SetReportSendInteractable(CanSubmitReport());
+
+        initialReportSelectionRoutine = null;
+    }
+
+    private void RefreshInitialReportSelections()
+    {
         RefreshAreaReportContents();
         RefreshObjectReportContents();
         RefreshTypeReportContents();
@@ -1061,6 +1103,9 @@ public class CCTVSceneUI : BaseUI
 
         if (missedSignalLossCoroutine != null)
             StopCoroutine(missedSignalLossCoroutine);
+
+        if (initialReportSelectionRoutine != null)
+            StopCoroutine(initialReportSelectionRoutine);
 
         CancelInitialMonitoringIntro();
 

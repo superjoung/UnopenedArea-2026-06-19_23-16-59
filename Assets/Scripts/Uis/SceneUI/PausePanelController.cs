@@ -89,10 +89,11 @@ public class PausePanelController : MonoBehaviour
         if (dayTitleController != null && dayTitleController.WaitForPlayerStart)
             return;
 
-        IsPaused = false;
-        Time.timeScale = 1f;
-        DayProgressSave.RequestSkipTitleOnNextSceneLoad();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        int day = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
+            ? dayRuntimeController.CurrentDayDefinition.Day
+            : DayProgressSave.CurrentDay;
+        day = DaySessionLoader.GetLoadedDayOrFallback(day);
+        DaySessionLoader.LoadDay(day, true);
     }
 
     public void QuitGame()
@@ -177,5 +178,11 @@ public class PausePanelController : MonoBehaviour
             Time.timeScale = 1f;
             IsPaused = false;
         }
+    }
+
+    public static void ResetGlobalPauseState()
+    {
+        Time.timeScale = 1f;
+        IsPaused = false;
     }
 }

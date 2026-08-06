@@ -29,6 +29,8 @@ public class Day1FlowController : MonoBehaviour
     [SerializeField] private TransitionEffect transitionEffect;
     [SerializeField] private CCTVScreenEffectController screenEffectController;
     [SerializeField] private CCTVSceneUI cctvSceneUI;
+    [SerializeField] private StoryDialogueController storyDialogueController;
+    [SerializeField] private MainRoomStateEffectController mainRoomStateEffectController;
 
     [Header("Tutorial Presentation")]
     [SerializeField, Min(0f)] private float tutorialChannelActivationDelay = 0.5f;
@@ -183,6 +185,20 @@ public class Day1FlowController : MonoBehaviour
         if (State == Day1FlowState.Briefing)
         {
             SoundManager.Instance?.StopPhoneRingAndPlayHangupSfx();
+
+            if (mainRoomStateEffectController == null)
+                mainRoomStateEffectController = FindFirstObjectByType<MainRoomStateEffectController>();
+            mainRoomStateEffectController?.StopPhoneRingingImmediately();
+
+            if (storyDialogueController == null)
+                storyDialogueController = FindFirstObjectByType<StoryDialogueController>();
+
+            if (storyDialogueController != null && storyDialogueController.HasDialogue)
+            {
+                storyDialogueController.PlayPhoneDialogue(BeginBaselineReview);
+                return;
+            }
+
             BeginBaselineReview();
         }
     }
@@ -766,6 +782,12 @@ public class Day1FlowController : MonoBehaviour
 
         if (cctvSceneUI == null)
             cctvSceneUI = FindFirstObjectByType<CCTVSceneUI>(FindObjectsInactive.Include);
+
+        if (storyDialogueController == null)
+            storyDialogueController = FindFirstObjectByType<StoryDialogueController>();
+
+        if (mainRoomStateEffectController == null)
+            mainRoomStateEffectController = FindFirstObjectByType<MainRoomStateEffectController>();
     }
 
     /// <summary>

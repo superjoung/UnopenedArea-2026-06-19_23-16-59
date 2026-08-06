@@ -276,6 +276,7 @@ public class Day1ResultPanelController : MonoBehaviour
         int completedDay = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
             ? dayRuntimeController.CurrentDayDefinition.Day
             : 1;
+        completedDay = DaySessionLoader.GetLoadedDayOrFallback(completedDay);
         DayProgressSave.AdvanceToNextDay(completedDay);
         DayProgressSave.RequestSkipTitleOnNextSceneLoad();
         string nextSceneName = $"Day{DayProgressSave.CurrentDay}";
@@ -286,9 +287,9 @@ public class Day1ResultPanelController : MonoBehaviour
         }
 
         bool fadeStarted = transitionEffect != null &&
-                           transitionEffect.TryPlaySceneChangeFade(() => SceneManager.LoadScene(nextSceneName));
+                           transitionEffect.TryPlaySceneChangeFade(() => DaySessionLoader.LoadDay(DayProgressSave.CurrentDay, true));
         if (!fadeStarted)
-            SceneManager.LoadScene(nextSceneName);
+            DaySessionLoader.LoadDay(DayProgressSave.CurrentDay, true);
     }
 
     private void ShowResult(bool isSuccess)
@@ -377,9 +378,8 @@ public class Day1ResultPanelController : MonoBehaviour
         int day = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
             ? dayRuntimeController.CurrentDayDefinition.Day
             : 1;
-        DayProgressSave.SetCurrentDay(day);
-        DayProgressSave.RequestSkipTitleOnNextSceneLoad();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        day = DaySessionLoader.GetLoadedDayOrFallback(day);
+        DaySessionLoader.LoadDay(day, true);
     }
 
     /// <summary>성공 결과의 다음으로 버튼에 연결합니다.</summary>
@@ -388,6 +388,7 @@ public class Day1ResultPanelController : MonoBehaviour
         int completedDay = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
             ? dayRuntimeController.CurrentDayDefinition.Day
             : 1;
+        completedDay = DaySessionLoader.GetLoadedDayOrFallback(completedDay);
         DayProgressSave.AdvanceToNextDay(completedDay);
 
         string nextSceneName = $"Day{DayProgressSave.CurrentDay}";
@@ -397,7 +398,7 @@ public class Day1ResultPanelController : MonoBehaviour
             return;
         }
 
-        SceneManager.LoadScene(nextSceneName);
+        DaySessionLoader.LoadDay(DayProgressSave.CurrentDay, true);
     }
 
     private void ResolveReferences()

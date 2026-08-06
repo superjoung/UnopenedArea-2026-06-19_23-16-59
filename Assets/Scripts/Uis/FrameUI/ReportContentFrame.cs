@@ -27,8 +27,8 @@ public class ReportContentFrame : BaseUI
     [Tooltip("이 글자 수를 초과한 선택지는 한 줄 유지를 위해 글자 크기를 줄입니다.")]
     [SerializeField, Min(1)] private int shrinkAfterCharacterCount = 5;
     [Tooltip("하단 선택지의 기본 글자 크기입니다.")]
-    [SerializeField, Min(1f)] private float shortLabelFontSize = 44f;
-    [SerializeField, Range(0.8f, 1f)] private float longLabelFontSizeMultiplier = 0.92f;
+    [SerializeField, Min(1f)] private float shortLabelFontSize = 32f;
+    [SerializeField, Range(0.8f, 1f)] private float longLabelFontSizeMultiplier = 0.9f;
 
     void Start()
     {

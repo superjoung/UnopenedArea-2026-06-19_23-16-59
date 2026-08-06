@@ -68,7 +68,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 1410689979471864984, guid: 5b7a47dbc91160f4ea9038c4180189e2, type: 3}
+  m_Sprite: {fileID: -1968341736203375746, guid: ea94f9693c5bebe408b5263d6f4122de, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -134,6 +134,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 930c726af25301b478c063d4c6c015af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  shrinkAfterCharacterCount: 5
+  shortLabelFontSize: 32
+  longLabelFontSizeMultiplier: 0.9
 --- !u!1 &4433654832080165162
 GameObject:
   m_ObjectHideFlags: 0
@@ -201,8 +204,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uB0A1\uC740 \uD720\uCCB4\uC5B4"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 388a92534e7431e44ab37ac9aab6172e, type: 2}
-  m_sharedMaterial: {fileID: -3823646030156034263, guid: 388a92534e7431e44ab37ac9aab6172e, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 7fa6499f646b5c04c817bb3bd676a826, type: 2}
+  m_sharedMaterial: {fileID: -3111853698787025756, guid: 7fa6499f646b5c04c817bb3bd676a826, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -232,7 +235,7 @@ MonoBehaviour:
   m_enableAutoSizing: 1
   m_fontSizeMin: 30
   m_fontSizeMax: 55
-  m_fontStyle: 1
+  m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
