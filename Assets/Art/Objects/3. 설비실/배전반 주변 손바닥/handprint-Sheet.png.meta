@@ -1,0 +1,715 @@
+fileFormatVersion: 2
+guid: 29258c79b617cc842b057994029e05b5
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 6109844687981524502
+    second: handprint-Sheet_0
+  - first:
+      213: -7835527019644076388
+    second: handprint-Sheet_1
+  - first:
+      213: 6303666387430390163
+    second: handprint-Sheet_2
+  - first:
+      213: 8349364401128618597
+    second: handprint-Sheet_3
+  - first:
+      213: 2058372884093818215
+    second: handprint-Sheet_4
+  - first:
+      213: 6499477581907408832
+    second: handprint-Sheet_5
+  - first:
+      213: -2014732611514171819
+    second: handprint-Sheet_6
+  - first:
+      213: -8476702223468654778
+    second: handprint-Sheet_7
+  - first:
+      213: -2184157863987382229
+    second: handprint-Sheet_8
+  - first:
+      213: -1366237728693989858
+    second: handprint-Sheet_9
+  - first:
+      213: 7987829750210714569
+    second: handprint-Sheet_10
+  - first:
+      213: -8480367196662853418
+    second: handprint-Sheet_11
+  - first:
+      213: -1318718246084916600
+    second: handprint-Sheet_12
+  - first:
+      213: 996893571041483523
+    second: handprint-Sheet_13
+  - first:
+      213: 6769287651582531496
+    second: handprint-Sheet_14
+  - first:
+      213: 6660654386560602290
+    second: handprint-Sheet_15
+  - first:
+      213: 3616336191373775562
+    second: handprint-Sheet_16
+  - first:
+      213: -8464067403811303791
+    second: handprint-Sheet_17
+  - first:
+      213: 8882396752217581600
+    second: handprint-Sheet_18
+  - first:
+      213: -1963711264708486862
+    second: handprint-Sheet_19
+  - first:
+      213: 8381883590479806116
+    second: handprint-Sheet_20
+  - first:
+      213: 4380291908772997969
+    second: handprint-Sheet_21
+  - first:
+      213: 7840055676229968803
+    second: handprint-Sheet_22
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: handprint-Sheet_0
+      rect:
+        serializedVersion: 2
+        x: 97
+        y: 73
+        width: 20
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61632f35f578ac450800000000000000
+      internalID: 6109844687981524502
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_1
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 73
+        width: 20
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9eb326a0bd924390800000000000000
+      internalID: -7835527019644076388
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_2
+      rect:
+        serializedVersion: 2
+        x: 312
+        y: 71
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 399bb5d5e2f1b7750800000000000000
+      internalID: 6303666387430390163
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_3
+      rect:
+        serializedVersion: 2
+        x: 351
+        y: 73
+        width: 20
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56a309d9fa6eed370800000000000000
+      internalID: 8349364401128618597
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_4
+      rect:
+        serializedVersion: 2
+        x: 439
+        y: 71
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76555bb7b3fc09c10800000000000000
+      internalID: 2058372884093818215
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_5
+      rect:
+        serializedVersion: 2
+        x: 478
+        y: 73
+        width: 20
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c7b43fcc68c23a50800000000000000
+      internalID: 6499477581907408832
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_6
+      rect:
+        serializedVersion: 2
+        x: 531
+        y: 64
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55e7d454d5b3a04e0800000000000000
+      internalID: -2014732611514171819
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_7
+      rect:
+        serializedVersion: 2
+        x: 566
+        y: 71
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64f036f3d34bc5a80800000000000000
+      internalID: -8476702223468654778
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_8
+      rect:
+        serializedVersion: 2
+        x: 605
+        y: 73
+        width: 20
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b28f7afaeff40b1e0800000000000000
+      internalID: -2184157863987382229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_9
+      rect:
+        serializedVersion: 2
+        x: 658
+        y: 64
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1e457e36062a0de0800000000000000
+      internalID: -1366237728693989858
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_10
+      rect:
+        serializedVersion: 2
+        x: 693
+        y: 71
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9cb5b9326d87ade60800000000000000
+      internalID: 7987829750210714569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_11
+      rect:
+        serializedVersion: 2
+        x: 732
+        y: 73
+        width: 20
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d0190e27feaf4a80800000000000000
+      internalID: -8480367196662853418
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_12
+      rect:
+        serializedVersion: 2
+        x: 206
+        y: 51
+        width: 20
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 88a4847fdb8f2bde0800000000000000
+      internalID: -1318718246084916600
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_13
+      rect:
+        serializedVersion: 2
+        x: 333
+        y: 51
+        width: 20
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30b5ccccb6da5dd00800000000000000
+      internalID: 996893571041483523
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_14
+      rect:
+        serializedVersion: 2
+        x: 423
+        y: 44
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a7d30ff04751fd50800000000000000
+      internalID: 6769287651582531496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_15
+      rect:
+        serializedVersion: 2
+        x: 460
+        y: 51
+        width: 20
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b0979affd56f6c50800000000000000
+      internalID: 6660654386560602290
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_16
+      rect:
+        serializedVersion: 2
+        x: 550
+        y: 44
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ac2193b1b9ecf2230800000000000000
+      internalID: 3616336191373775562
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_17
+      rect:
+        serializedVersion: 2
+        x: 587
+        y: 51
+        width: 20
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19e4dd07a87998a80800000000000000
+      internalID: -8464067403811303791
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_18
+      rect:
+        serializedVersion: 2
+        x: 638
+        y: 36
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 028230209cc944b70800000000000000
+      internalID: 8882396752217581600
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_19
+      rect:
+        serializedVersion: 2
+        x: 648
+        y: 47
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2391e99420f7fb4e0800000000000000
+      internalID: -1963711264708486862
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_20
+      rect:
+        serializedVersion: 2
+        x: 677
+        y: 44
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ae793767be625470800000000000000
+      internalID: 8381883590479806116
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_21
+      rect:
+        serializedVersion: 2
+        x: 714
+        y: 51
+        width: 20
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15baee2884ce9cc30800000000000000
+      internalID: 4380291908772997969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: handprint-Sheet_22
+      rect:
+        serializedVersion: 2
+        x: 650
+        y: 39
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a3e8f069197dcc60800000000000000
+      internalID: 7840055676229968803
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      handprint-Sheet_0: 6109844687981524502
+      handprint-Sheet_1: -7835527019644076388
+      handprint-Sheet_10: 7987829750210714569
+      handprint-Sheet_11: -8480367196662853418
+      handprint-Sheet_12: -1318718246084916600
+      handprint-Sheet_13: 996893571041483523
+      handprint-Sheet_14: 6769287651582531496
+      handprint-Sheet_15: 6660654386560602290
+      handprint-Sheet_16: 3616336191373775562
+      handprint-Sheet_17: -8464067403811303791
+      handprint-Sheet_18: 8882396752217581600
+      handprint-Sheet_19: -1963711264708486862
+      handprint-Sheet_2: 6303666387430390163
+      handprint-Sheet_20: 8381883590479806116
+      handprint-Sheet_21: 4380291908772997969
+      handprint-Sheet_22: 7840055676229968803
+      handprint-Sheet_3: 8349364401128618597
+      handprint-Sheet_4: 2058372884093818215
+      handprint-Sheet_5: 6499477581907408832
+      handprint-Sheet_6: -2014732611514171819
+      handprint-Sheet_7: -8476702223468654778
+      handprint-Sheet_8: -2184157863987382229
+      handprint-Sheet_9: -1366237728693989858
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

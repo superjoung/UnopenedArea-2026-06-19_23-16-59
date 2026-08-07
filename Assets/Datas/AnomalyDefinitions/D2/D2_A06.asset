@@ -14,11 +14,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   anomalyId: D2_A06
   areaId: 200
-  reportTargetId: 200
-  reportType: 105
+  reportTargetId: 104
+  reportType: 104
   warningDurationSec: 0
   activeDurationSec: 20
   canEscalate: 0
   nextStage: {fileID: 0}
   isEmergency: 0
-  actions: []
+  actions:
+  - actionType: 3
+    targetObjectId: OBJ_TREAT_PORTRAIT_FEMALE_01
+    delaySec: 0
+    presentationId: 
+    activeValue: 0
+    animatorEnabledValue: 1
+    targetLocalPosition: {x: 0, y: 0, z: 0}
+    localPositionOffset: {x: 0, y: 0, z: 0}
+    targetLocalEulerAngles: {x: 0, y: 0, z: 0}
+    targetSprite: {fileID: -7986921476836220228, guid: f012e194146644841a8b0855db0c503d, type: 3}
+    targetColor: {r: 0, g: 0, b: 0, a: 0}

@@ -55,6 +55,8 @@ public class DayDefinition : ScriptableObject
 
     [Header("Random Anomaly Schedule")]
     [SerializeField] private bool enableRandomSchedule;
+    [Tooltip("첫 번째 Fixed Schedule 항목이 발동될 때까지 랜덤 이상현상 추첨을 보류합니다. 도입용 고정 이상현상이 필요한 일차에 사용합니다.")]
+    [SerializeField] private bool waitForFirstFixedAnomalyBeforeRandom;
     [SerializeField, Min(0f)] private float randomMinIntervalSec = 30f;
     [SerializeField, Min(0f)] private float randomMaxIntervalSec = 60f;
     [SerializeField] private RandomAnomalyPoolEntry[] randomPool;
@@ -73,6 +75,7 @@ public class DayDefinition : ScriptableObject
     public IReadOnlyList<FixedAnomalyScheduleEntry> FixedSchedule => fixedSchedule;
     public IReadOnlyList<RandomAnomalyPoolEntry> RandomPool => randomPool;
     public bool EnableRandomSchedule => enableRandomSchedule;
+    public bool WaitForFirstFixedAnomalyBeforeRandom => waitForFirstFixedAnomalyBeforeRandom;
     public float RandomMinIntervalSec => Mathf.Max(0f, randomMinIntervalSec);
     public float RandomMaxIntervalSec => Mathf.Max(RandomMinIntervalSec, randomMaxIntervalSec);
 }

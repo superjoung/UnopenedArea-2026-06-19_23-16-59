@@ -16,6 +16,7 @@ public class CCTVAreaView : MonoBehaviour
 
     public CCTVAreaDefinition CurrentArea { get; private set; }
     public CCTVAreaInstance CurrentInstance { get; private set; }
+    public System.Action<CCTVAreaInstance> AreaShown;
 
     private void Awake()
     {
@@ -100,6 +101,7 @@ public class CCTVAreaView : MonoBehaviour
         {
             backgroundRenderer.sprite = null;
             CurrentInstance = null;
+            AreaShown?.Invoke(null);
             return;
         }
 
@@ -107,10 +109,12 @@ public class CCTVAreaView : MonoBehaviour
         {
             Debug.LogWarning($"[CCTVAreaView] Area instance is not prepared. areaId={area.AreaId}, area={area.name}");
             CurrentInstance = null;
+            AreaShown?.Invoke(null);
             return;
         }
 
         CurrentInstance = instance;
+        AreaShown?.Invoke(CurrentInstance);
     }
 
     public bool TryGetAreaInstance(AreaId areaId, out CCTVAreaInstance instance)

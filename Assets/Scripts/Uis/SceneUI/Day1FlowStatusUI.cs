@@ -159,24 +159,28 @@ public class Day1FlowStatusUI : MonoBehaviour
             primaryActionLabel.text = GetPrimaryActionLabel(state);
     }
 
-    private static string GetStatusLabel(Day1FlowState state)
+    private string GetStatusLabel(Day1FlowState state)
     {
+        int day = flowController != null && flowController.DayNumber > 0
+            ? flowController.DayNumber
+            : 1;
+
         switch (state)
         {
             case Day1FlowState.Briefing:
-                return "DAY 1 · 브리핑";
+                return $"DAY {day} · 브리핑";
             case Day1FlowState.BaselineReview:
-                return "DAY 1 · 기준 상태 확인";
+                return $"DAY {day} · 기준 상태 확인";
             case Day1FlowState.Monitoring:
-                return "DAY 1 · 감시 중";
+                return $"DAY {day} · 감시 중";
             case Day1FlowState.EmergencyDispatch:
-                return "DAY 1 · 정전 발생";
+                return $"DAY {day} · 정전 발생";
             case Day1FlowState.EmergencyRecovery:
-                return "DAY 1 · 전력 복구 중";
+                return $"DAY {day} · 전력 복구 중";
             case Day1FlowState.Completed:
-                return "DAY 1 · 근무 종료";
+                return $"DAY {day} · 근무 종료";
             case Day1FlowState.Failed:
-                return "DAY 1 · 근무 실패";
+                return $"DAY {day} · 근무 실패";
             default:
                 return string.Empty;
         }

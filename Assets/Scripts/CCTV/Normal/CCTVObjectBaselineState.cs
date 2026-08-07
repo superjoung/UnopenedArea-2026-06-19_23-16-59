@@ -9,6 +9,8 @@ public sealed class CCTVObjectBaselineState
     public Sprite Sprite { get; }
     public Color SpriteColor { get; }
     public int SortingOrder { get; }
+    public bool HasAnimator { get; }
+    public bool AnimatorEnabled { get; }
 
     public CCTVObjectBaselineState(CCTVSceneObject sceneObject)
     {
@@ -29,6 +31,10 @@ public sealed class CCTVObjectBaselineState
         {
             SpriteColor = Color.white;
         }
+
+        Animator animator = sceneObject.GetComponent<Animator>();
+        HasAnimator = animator != null;
+        AnimatorEnabled = animator != null && animator.enabled;
     }
 
     public void Restore(CCTVSceneObject sceneObject)
@@ -45,6 +51,13 @@ public sealed class CCTVObjectBaselineState
             renderer.sprite = Sprite;
             renderer.color = SpriteColor;
             renderer.sortingOrder = SortingOrder;
+        }
+
+        if (HasAnimator)
+        {
+            Animator animator = sceneObject.GetComponent<Animator>();
+            if (animator != null)
+                animator.enabled = AnimatorEnabled;
         }
     }
 }

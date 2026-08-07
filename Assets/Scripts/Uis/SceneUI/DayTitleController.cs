@@ -27,6 +27,8 @@ public class DayTitleController : MonoBehaviour
     [SerializeField, Min(0f)] private float titleFadeDuration = 0.45f;
     [Tooltip("타이틀이 완전히 사라진 뒤 전화가 울리기까지의 대기 시간입니다.")]
     [SerializeField, Min(0f)] private float phoneStartDelay = 1f;
+    [Tooltip("성공 후 다음 날로 넘어가며 타이틀을 건너뛴 경우, 씬 페이드가 끝난 뒤 전화가 울리기까지의 대기 시간입니다.")]
+    [SerializeField, Min(0f)] private float nextDayPhoneStartDelay = 4f;
 
     public bool WaitForPlayerStart => waitForPlayerStart && !hasStarted;
     public bool HasStarted => hasStarted;
@@ -94,17 +96,30 @@ public class DayTitleController : MonoBehaviour
             return;
 
         hasStarted = true;
+        // 씬 전환 암전이 풀리는 동안에는 메인룸 클릭이 전달되지 않게 유지한다.
+        IsBlockingWorldInteractions = true;
         if (titleCanvasRoot != null)
             titleCanvasRoot.SetActive(false);
         SetHiddenUiVisible(true);
 
+        beginDayRoutine = StartCoroutine(BeginDayWithoutTitleRoutine());
+    }
+
+    private IEnumerator BeginDayWithoutTitleRoutine()
+    {
         int day = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
             ? dayRuntimeController.CurrentDayDefinition.Day
             : dayFlowController != null ? dayFlowController.DayNumber : 1;
         day = DaySessionLoader.GetLoadedDayOrFallback(day);
         DayProgressSave.SetCurrentDay(day);
+
+        // Day 1 재시작은 즉시 시작하고, 다음 날 씬 전환만 페이드 완료 후 대기 시간을 둔다.
+        if (day > 1 && nextDayPhoneStartDelay > 0f)
+            yield return new WaitForSecondsRealtime(nextDayPhoneStartDelay);
+
         dayFlowController?.BeginDayBriefing();
         IsBlockingWorldInteractions = false;
+        beginDayRoutine = null;
     }
 
     private IEnumerator BeginDayRoutine()

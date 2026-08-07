@@ -50,6 +50,7 @@ public class CCTVScreenEffectController : MonoBehaviour
 
     public RenderTexture CurrentRenderTexture => runtimeRenderTexture != null ? runtimeRenderTexture : renderTextureAsset;
     public Material RuntimeMaterial => runtimeMaterial;
+    public Camera WorldCamera => worldCamera;
     public bool IsNoisePlaying => noiseCoroutine != null;
 
     public void StopActiveNoise()

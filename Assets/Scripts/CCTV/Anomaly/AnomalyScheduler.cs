@@ -87,6 +87,10 @@ public class AnomalyScheduler : MonoBehaviour
         if (awaitingObservationCycleResult || HasActiveAnomalies())
             return;
 
+        // 도입용 고정 이상현상이 있는 날에는, 그 첫 항목이 발동되기 전 랜덤이 앞서지 않는다.
+        if (currentDayDefinition.WaitForFirstFixedAnomalyBeforeRandom && !HasFirstFixedScheduleTriggered())
+            return;
+
         TickRandomSchedule(Time.deltaTime);
     }
 
@@ -132,9 +136,29 @@ public class AnomalyScheduler : MonoBehaviour
             if (TryActivateScheduledAnomaly(entry.Anomaly))
             {
                 triggeredFixedScheduleIndexes.Add(i);
+                // 고정 도입 이상현상도 직전 출현 항목으로 기억해,
+                // 바로 다음 랜덤 추첨에서 같은 항목이 연속되지 않게 한다.
+                if (preventConsecutiveRandomAnomaly)
+                    lastRandomAnomaly = entry.Anomaly;
                 return;
             }
         }
+    }
+
+    private bool HasFirstFixedScheduleTriggered()
+    {
+        IReadOnlyList<FixedAnomalyScheduleEntry> fixedSchedule = currentDayDefinition.FixedSchedule;
+        if (fixedSchedule == null || fixedSchedule.Count == 0)
+            return true;
+
+        for (int i = 0; i < fixedSchedule.Count; i++)
+        {
+            FixedAnomalyScheduleEntry entry = fixedSchedule[i];
+            if (entry != null && entry.Anomaly != null)
+                return triggeredFixedScheduleIndexes.Contains(i);
+        }
+
+        return true;
     }
 
     private void TickRandomSchedule(float deltaTime)
