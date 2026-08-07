@@ -64,7 +64,7 @@ public static class CCTVReportLabelProvider
             case ReportTargetId.CeilingWire:
                 return "천장 전선";
             case ReportTargetId.Person:
-                return "사람";
+                return "인물";
             case ReportTargetId.Monitor:
                 return "모니터";
             case ReportTargetId.ServerRack:

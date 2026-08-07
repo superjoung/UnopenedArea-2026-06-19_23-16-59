@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   anomalyId: D2_A11
   areaId: 200
-  reportTargetId: 200
-  reportType: 105
+  reportTargetId: 102
+  reportType: 104
   warningDurationSec: 0
   activeDurationSec: 20
   canEscalate: 0

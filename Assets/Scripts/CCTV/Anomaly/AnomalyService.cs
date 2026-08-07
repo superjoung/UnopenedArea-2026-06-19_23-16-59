@@ -159,14 +159,20 @@ public class AnomalyService : MonoBehaviour
     {
         CCTVAreaInstance instance = areaView != null ? areaView.CurrentInstance : null;
         if (instance != null)
+        {
+            StopAreaPresentations(instance);
             instance.RestoreBaseline();
+        }
     }
 
     public void RestoreAreaBaseline(AreaId areaId)
     {
         CCTVAreaInstance instance = GetAreaInstance(areaId);
         if (instance != null)
+        {
+            StopAreaPresentations(instance);
             instance.RestoreBaseline();
+        }
     }
 
     public void SetTimersPaused(bool paused)
@@ -317,6 +323,12 @@ public class AnomalyService : MonoBehaviour
             case AnomalyActionType.ChangeSprite:
                 ApplySprite(sceneObject, action.TargetSprite);
                 break;
+            case AnomalyActionType.PlayPresentation:
+                StartPresentation(definition, sceneObject, action.PresentationId);
+                break;
+            case AnomalyActionType.SetAnimatorEnabled:
+                ApplyAnimatorEnabled(definition, sceneObject, action.AnimatorEnabledValue);
+                break;
             case AnomalyActionType.ChangeColor:
                 ApplyColor(sceneObject, action.TargetColor);
                 break;
@@ -336,6 +348,41 @@ public class AnomalyService : MonoBehaviour
         renderer.sprite = sprite;
     }
 
+    private void StartPresentation(AnomalyDefinition definition, CCTVSceneObject sceneObject, string presentationId)
+    {
+        AnomalyPresentationController[] presentations = sceneObject.GetComponents<AnomalyPresentationController>();
+        AnomalyPresentationController presentation = null;
+
+        foreach (AnomalyPresentationController candidate in presentations)
+        {
+            if (candidate != null && candidate.PresentationId == presentationId)
+            {
+                presentation = candidate;
+                break;
+            }
+        }
+
+        if (presentation == null && string.IsNullOrWhiteSpace(presentationId) && presentations.Length == 1)
+            presentation = presentations[0];
+
+        if (presentation == null)
+        {
+            Debug.LogWarning($"[AnomalyService] Presentation not found. anomaly={definition.AnomalyId}, targetObject={sceneObject.name}, presentationId={presentationId}");
+            return;
+        }
+
+        presentation.PlayPresentation();
+    }
+
+    private static void StopAreaPresentations(CCTVAreaInstance instance)
+    {
+        if (instance == null)
+            return;
+
+        foreach (AnomalyPresentationController presentation in instance.GetComponentsInChildren<AnomalyPresentationController>(true))
+            presentation.StopPresentation();
+    }
+
     private void ApplyColor(CCTVSceneObject sceneObject, Color color)
     {
         SpriteRenderer renderer = sceneObject.GetComponent<SpriteRenderer>();
@@ -343,6 +390,18 @@ public class AnomalyService : MonoBehaviour
             return;
 
         renderer.color = color;
+    }
+
+    private void ApplyAnimatorEnabled(AnomalyDefinition definition, CCTVSceneObject sceneObject, bool enabled)
+    {
+        Animator animator = sceneObject.GetComponent<Animator>();
+        if (animator == null)
+        {
+            Debug.LogWarning($"[AnomalyService] Animator toggle target has no Animator. anomaly={definition.AnomalyId}, targetObject={sceneObject.name}");
+            return;
+        }
+
+        animator.enabled = enabled;
     }
 
     private void MarkMissed(AnomalyRuntime runtime)

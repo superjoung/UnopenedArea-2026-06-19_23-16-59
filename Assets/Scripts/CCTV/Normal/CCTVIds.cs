@@ -57,6 +57,8 @@ public enum AnomalyActionType
     ChangeColor = 4,
     SetLocalEulerAngles = 5,
     MoveByLocalPositionOffset = 6,
+    PlayPresentation = 7,
+    SetAnimatorEnabled = 8,
 }
 
 public enum AnomalyState
