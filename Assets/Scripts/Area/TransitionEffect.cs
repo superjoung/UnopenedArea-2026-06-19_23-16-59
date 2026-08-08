@@ -92,6 +92,8 @@ public class TransitionEffect : MonoBehaviour
     [SerializeField, Min(0.05f)] private float failureHandCloseDuration = 0.85f;
     [SerializeField, Range(0f, 1f)] private float failureHandBlackoutStartNormalized = 0.72f;
     [SerializeField, Min(0f)] private float failureHandClosedHoldDuration = 0.18f;
+    [Tooltip("손이 닫히는 전체 시간 중 임팩트 효과음을 재생할 비율입니다. 0=시작, 1=완전히 닫힌 뒤.")]
+    [SerializeField, Range(0f, 1f)] private float failureHandImpactTimingNormalized = 0.62f;
     [SerializeField, Min(0.05f)] private float failureBackgroundRevealDuration = 0.55f;
     [SerializeField, Min(0f)] private float failureBackgroundHoldDuration = 0.5f;
     [SerializeField, Min(0.1f)] private float failureHandOffscreenDistanceMultiplier = 0.65f;
@@ -204,6 +206,7 @@ public class TransitionEffect : MonoBehaviour
 
         CacheCameraDefaults();
         SetPlaying(true);
+        SoundManager.Instance?.PlayCctvEntryTransitionSfx();
         activeSequence?.Kill();
         cctvEnterPanelImage.gameObject.SetActive(true);
         SetImageAlpha(cctvEnterPanelImage, 0f);
@@ -349,6 +352,7 @@ public class TransitionEffect : MonoBehaviour
     private bool TryPlayQuickCctvEntry()
     {
         SetPlaying(true);
+        SoundManager.Instance?.PlayCctvEntryTransitionSfx();
         activeSequence?.Kill();
         toCctvPanel2.gameObject.SetActive(true);
         SetImageAlpha(toCctvPanel2, 0f);
@@ -413,7 +417,13 @@ public class TransitionEffect : MonoBehaviour
         activeSequence.Insert(blackoutStart, failureHandBlackoutImage
             .DOFade(1f, blackoutDuration)
             .SetEase(Ease.InQuad));
-        activeSequence.AppendCallback(() => onCovered?.Invoke());
+        activeSequence.InsertCallback(
+            failureHandCloseDuration * failureHandImpactTimingNormalized,
+            () => SoundManager.Instance?.PlayFailureHandCoverSfx());
+        activeSequence.AppendCallback(() =>
+        {
+            onCovered?.Invoke();
+        });
         activeSequence.AppendInterval(failureHandClosedHoldDuration);
         activeSequence.AppendCallback(() =>
         {

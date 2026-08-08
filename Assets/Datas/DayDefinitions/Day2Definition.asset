@@ -27,8 +27,8 @@ MonoBehaviour:
   emergencyTriggerProgress: 0.72
   emergencyRequiresBothConditions: 0
   emergencyObjectiveType: 1
-  emergencyFieldObjectiveText: ''
-  emergencyRecoveryText: ''
+  emergencyFieldObjectiveText: "바닥에 수상한 기록물이 떨어져 있다. 가까이 다가가 E 키로 조사하십시오."
+  emergencyRecoveryText: "시스템이 자동으로 복구되고 있다. 제어실로 돌아가 감시를 재개하십시오."
   enableMissedEscalationChannels: 0
   fixedSchedule:
   - triggerElapsedSec: 20
