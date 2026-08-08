@@ -304,7 +304,7 @@ public class Day1FlowController : MonoBehaviour
         if (!emergencyFieldModeStarted)
             return;
 
-        FlowMessageChanged?.Invoke("외부 현장에 진입했습니다. 배전반을 복구한 뒤 문으로 메인룸에 돌아가십시오.");
+        FlowMessageChanged?.Invoke(GetEmergencyFieldObjectiveMessage());
     }
 
     public void BeginMonitoring()
@@ -470,7 +470,11 @@ public class Day1FlowController : MonoBehaviour
             : dayRuntimeController.ElapsedSec / dayRuntimeController.DurationSec;
         bool reachedProgress = progress >= dayDefinition.EmergencyTriggerProgress;
 
-        if (!hasRequiredReports || !reachedProgress)
+        bool shouldWaitForConditions = dayDefinition.EmergencyRequiresBothConditions
+            ? !hasRequiredReports || !reachedProgress
+            : !hasRequiredReports && !reachedProgress;
+
+        if (shouldWaitForConditions)
             return;
 
         if (Time.unscaledTime < lastCorrectReportTime + minimumEmergencyDelayAfterCorrectReport)
@@ -551,11 +555,7 @@ public class Day1FlowController : MonoBehaviour
             emergencyFieldModeStarted = fieldModeController != null && fieldModeController.EnterFieldMode();
         }
 
-        string message = emergencyFieldModeStarted
-            ? "정전 발생. 설비실로 이동하십시오."
-            : $"정전 발생. 현장 복구가 필요합니다. 임시 테스트에서는 {emergencyRecoveryKey} 키로 배전반을 복구합니다.";
-
-        message = "정전 발생. 메인룸의 문을 통해 외부 현장으로 이동하십시오.";
+        string message = GetEmergencyDispatchMessage();
 
         if (isDebug)
             message = $"[DEBUG] {message}";
@@ -575,7 +575,7 @@ public class Day1FlowController : MonoBehaviour
         // 전력은 복구됐지만 플레이어는 아직 현장에 있다. 제어실 문까지 돌아가기 전에는
         // 타이머와 스케줄러를 재개하지 않아 현장에 있는 플레이어가 보이지 않는 이상현상으로
         // 실패하는 일을 막는다.
-        ChangeState(Day1FlowState.EmergencyRecovery, "전력 복구 완료. 제어실로 돌아가 CCTV를 재가동하십시오.");
+        ChangeState(Day1FlowState.EmergencyRecovery, GetEmergencyRecoveryMessage());
     }
 
     /// <summary>
@@ -598,6 +598,39 @@ public class Day1FlowController : MonoBehaviour
 
         emergencyFieldModeStarted = false;
         FlowMessageChanged?.Invoke("메인룸에 복귀했습니다. CCTV를 눌러 감시 업무를 재개하십시오.");
+    }
+
+    private string GetEmergencyDispatchMessage()
+    {
+        return dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection
+            ? "정전이 발생했다. 메인룸의 문을 통해 설비실 기록을 확인하십시오."
+            : dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.ServerReboot
+                ? "서버 경보가 발생했다. 메인룸의 문을 통해 서버실 제어반을 확인하십시오."
+                : "정전이 발생했다. 메인룸의 문을 통해 제어실 외부로 나가십시오.";
+    }
+
+    private string GetEmergencyFieldObjectiveMessage()
+    {
+        if (dayDefinition != null && !string.IsNullOrWhiteSpace(dayDefinition.EmergencyFieldObjectiveText))
+            return dayDefinition.EmergencyFieldObjectiveText;
+
+        return dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection
+            ? "설비실의 찢긴 기록을 찾아 조사하십시오."
+            : dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.ServerReboot
+                ? "서버 제어반을 조작해 시스템을 재부팅하십시오."
+                : "배전반을 찾아 E를 꾹 눌러 전력을 복구하십시오.";
+    }
+
+    private string GetEmergencyRecoveryMessage()
+    {
+        if (dayDefinition != null && !string.IsNullOrWhiteSpace(dayDefinition.EmergencyRecoveryText))
+            return dayDefinition.EmergencyRecoveryText;
+
+        return dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection
+            ? "기록 확인 완료. 제어실로 돌아가 CCTV 감시를 재개하십시오."
+            : dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.ServerReboot
+                ? "서버 재부팅 완료. 제어실로 돌아가 CCTV 감시를 재개하십시오."
+                : "전력 복구 완료. 제어실로 돌아가 CCTV를 재가동하십시오.";
     }
 
     private void HandleDayCleared()

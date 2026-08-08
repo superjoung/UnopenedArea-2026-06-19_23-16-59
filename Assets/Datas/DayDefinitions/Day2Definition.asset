@@ -25,6 +25,10 @@ MonoBehaviour:
   enableEmergencyDispatch: 1
   emergencyRequiredCorrectReports: 4
   emergencyTriggerProgress: 0.72
+  emergencyRequiresBothConditions: 0
+  emergencyObjectiveType: 1
+  emergencyFieldObjectiveText: ''
+  emergencyRecoveryText: ''
   enableMissedEscalationChannels: 0
   fixedSchedule:
   - triggerElapsedSec: 20
