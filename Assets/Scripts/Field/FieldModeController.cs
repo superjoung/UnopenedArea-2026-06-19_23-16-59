@@ -165,6 +165,16 @@ public class FieldModeController : MonoBehaviour
             Transform root = transform.root.Find("FieldModeRoot");
             if (root != null)
                 fieldModeRoot = root.gameObject;
+
+            // CommonRoot is a scene-level prefab while FieldModeRoot is placed
+            // alongside it in each Day scene. In that layout transform.root.Find
+            // cannot reach the sibling, so also resolve the scene root by name.
+            if (fieldModeRoot == null)
+            {
+                GameObject sceneFieldRoot = GameObject.Find("FieldModeRoot");
+                if (sceneFieldRoot != null)
+                    fieldModeRoot = sceneFieldRoot;
+            }
         }
 
         if (fieldModeRoot != null)
