@@ -71,6 +71,7 @@ public sealed class FoundAnomalyPanelController : MonoBehaviour
 
         SetMainRoomInputBlocked(true);
         panelRoot.SetActive(true);
+        SoundManager.Instance?.PlayFoundAnomalyPanelOpenSfx();
         ScheduleScrollToBottom();
     }
 

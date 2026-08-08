@@ -841,8 +841,8 @@ Transform:
   m_GameObject: {fileID: 241043249}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 24.74, y: -1.19, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 25.702, y: -1.632, z: 0}
+  m_LocalScale: {x: 3, y: 3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1668883247}
@@ -891,7 +891,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: 2382542705151310463, guid: 103073274dd346a4faa624d5f232071b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1831,8 +1831,8 @@ Transform:
   m_GameObject: {fileID: 490630904}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -13.49, y: -0.3, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -6.246, y: -1.734, z: 0}
+  m_LocalScale: {x: 3, y: 3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1668883247}
@@ -1881,7 +1881,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: 2382542705151310463, guid: 103073274dd346a4faa624d5f232071b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -3002,7 +3002,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: -2.3}
+  m_Offset: {x: 2.1130695, y: -2.3}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -3012,7 +3012,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 31.030304, y: 0.2}
+  m_Size: {x: 53.94469, y: 0.19999981}
   m_EdgeRadius: 0
 --- !u!212 &641985236
 SpriteRenderer:
@@ -3244,22 +3244,10 @@ PrefabInstance:
       propertyPath: dayDefinition
       value: 
       objectReference: {fileID: 11400000, guid: e9d85e3efd71cb14d96b5081ba421203, type: 2}
-    - target: {fileID: 8606943109048087527, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
-      propertyPath: fieldModeRoot
-      value: 
-      objectReference: {fileID: 1777691979}
-    - target: {fileID: 8606943109048087527, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
-      propertyPath: fieldCamera
-      value: 
-      objectReference: {fileID: 502464378}
-    - target: {fileID: 8606943109048087527, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
-      propertyPath: fieldPlayer
-      value: 
-      objectReference: {fileID: 1518328090}
-    - target: {fileID: 8606943109048087527, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
-      propertyPath: fieldCameraFollowController
-      value: 
-      objectReference: {fileID: 502464379}
+    - target: {fileID: 2124271214125467839, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 1463
+      objectReference: {fileID: 0}
     - target: {fileID: 2400054260187300110, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0.0000009536743
@@ -3363,7 +3351,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2772275788164938856, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_fontColor.a
-      value: 0.21662879
+      value: 0.20040204
       objectReference: {fileID: 0}
     - target: {fileID: 2772275788164938856, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_sharedMaterial
@@ -3473,6 +3461,34 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3665218472505093952, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: failureResultSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: 58cad2e1faa966b4289604193cece66d, type: 3}
+    - target: {fileID: 3665218472505093952, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: dialogueTypingSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: 0223238cb3ab6af4e8e192aa9169ac64, type: 3}
+    - target: {fileID: 3665218472505093952, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: failureHandCoverSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: fc9664d7a411c1b46abfd4d984267eef, type: 3}
+    - target: {fileID: 3665218472505093952, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: cctvEntryTransitionSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: 13e4f39a1d98a204fb059cc6f0b9c7f9, type: 3}
+    - target: {fileID: 3665218472505093952, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: reportSelectionClickSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: 1731db7dadd9c4145b7c016d4a4785ec, type: 3}
+    - target: {fileID: 3665218472505093952, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: foundAnomalyPanelOpenSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: 168fc841a6203ca4888d6c246762d000, type: 3}
+    - target: {fileID: 3665218472505093952, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: day2FirstCorrectReportSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: f2947d9adf41e07489b0ba1f92d68d28, type: 3}
     - target: {fileID: 4073004850791743384, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_fontSize
       value: 25.6
@@ -3692,7 +3708,7 @@ PrefabInstance:
     - target: {fileID: 8434193301515147197, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_Material
       value: 
-      objectReference: {fileID: 1317110339}
+      objectReference: {fileID: 1526181733}
     - target: {fileID: 8490501581998884333, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_fontSize
       value: 96
@@ -3733,6 +3749,22 @@ PrefabInstance:
       propertyPath: m_hasFontAssetChanged
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8606943109048087527, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: fieldCamera
+      value: 
+      objectReference: {fileID: 502464378}
+    - target: {fileID: 8606943109048087527, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: fieldPlayer
+      value: 
+      objectReference: {fileID: 1518328090}
+    - target: {fileID: 8606943109048087527, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: fieldModeRoot
+      value: 
+      objectReference: {fileID: 1777691979}
+    - target: {fileID: 8606943109048087527, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: fieldCameraFollowController
+      value: 
+      objectReference: {fileID: 502464379}
     - target: {fileID: 8710841520294549159, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -3743,7 +3775,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8994957770357762096, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_fontColor.a
-      value: 0.21662879
+      value: 0.20040204
       objectReference: {fileID: 0}
     - target: {fileID: 8994957770357762096, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_sharedMaterial
@@ -3921,58 +3953,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!21 &708438998
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: ReportBackGround_CCTV_UI_Panel_Runtime
-  m_Shader: {fileID: 4800000, guid: ec239ae2aedd33e4dbe5b1f14b729ee3, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _Brightness: 1
-    - _ChromaticAberration: 0
-    - _ColorMask: 15
-    - _Desaturation: 0
-    - _EffectIntensity: 1
-    - _FlickerStrength: 0
-    - _GlitchStrength: 0
-    - _NoiseSpeed: 0
-    - _NoiseStrength: 0
-    - _NoiseTime: 7.9469905
-    - _ScanlineCount: 50
-    - _ScanlineStrength: 0
-    - _Stencil: 0
-    - _StencilComp: 8
-    - _StencilOp: 0
-    - _StencilReadMask: 255
-    - _StencilWriteMask: 255
-    - _UseUIAlphaClip: 0
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _TintColor: {r: 1, g: 1, b: 1, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &709629006
 GameObject:
   m_ObjectHideFlags: 0
@@ -5627,8 +5607,8 @@ Transform:
   m_GameObject: {fileID: 923114252}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.14, y: 0.85, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -11.26, y: -0.15, z: 0}
+  m_LocalScale: {x: 3, y: 3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1668883247}
@@ -5677,7 +5657,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: 2382542705151310463, guid: 103073274dd346a4faa624d5f232071b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -6459,8 +6439,8 @@ Transform:
   m_GameObject: {fileID: 1082239183}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -23.08, y: -0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -22.91, y: -1.66, z: 0}
+  m_LocalScale: {x: 3, y: 3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1668883247}
@@ -6509,7 +6489,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: 2382542705151310463, guid: 103073274dd346a4faa624d5f232071b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -6578,7 +6558,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 6536014898038185801, guid: c00ceeff1fbec32449dccf2a1aeefa9f, type: 3}
+  m_Sprite: {fileID: 7746830264146656825, guid: c44195ceeb2cd0a40832802e43ddec6e, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -6786,7 +6766,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1164918214
 Transform:
   m_ObjectHideFlags: 0
@@ -6797,7 +6777,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.1, y: 1.1, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1503816379}
@@ -6845,8 +6825,8 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_SortingOrder: 3
+  m_Sprite: {fileID: 5285319605638824797, guid: d1ad9c6c355ed6c4fb99b52d5692b316, type: 3}
   m_Color: {r: 1, g: 0, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -7181,8 +7161,8 @@ Transform:
   m_GameObject: {fileID: 1293498996}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 19.29, y: 0.67, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 22.428, y: -0.415, z: 0}
+  m_LocalScale: {x: 3, y: 3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1668883247}
@@ -7231,7 +7211,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: 2382542705151310463, guid: 103073274dd346a4faa624d5f232071b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -7463,58 +7443,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!21 &1317110339
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: ReportBackGround_CCTV_UI_Panel_Runtime
-  m_Shader: {fileID: 4800000, guid: ec239ae2aedd33e4dbe5b1f14b729ee3, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _Brightness: 1
-    - _ChromaticAberration: 0
-    - _ColorMask: 15
-    - _Desaturation: 0
-    - _EffectIntensity: 1
-    - _FlickerStrength: 0
-    - _GlitchStrength: 0
-    - _NoiseSpeed: 0
-    - _NoiseStrength: 0
-    - _NoiseTime: 68.45383
-    - _ScanlineCount: 50
-    - _ScanlineStrength: 0
-    - _Stencil: 0
-    - _StencilComp: 8
-    - _StencilOp: 0
-    - _StencilReadMask: 255
-    - _StencilWriteMask: 255
-    - _UseUIAlphaClip: 0
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _TintColor: {r: 1, g: 1, b: 1, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &1319746066
 GameObject:
   m_ObjectHideFlags: 0
@@ -8518,8 +8446,8 @@ Transform:
   m_GameObject: {fileID: 1503816378}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8.05, y: -0.22, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 9.005, y: -0.882, z: 0}
+  m_LocalScale: {x: 3, y: 3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1164918214}
@@ -8598,7 +8526,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: 2382542705151310463, guid: 103073274dd346a4faa624d5f232071b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -9134,6 +9062,58 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!21 &1526181733
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ReportBackGround_CCTV_UI_Panel_Runtime
+  m_Shader: {fileID: 4800000, guid: ec239ae2aedd33e4dbe5b1f14b729ee3, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Brightness: 1
+    - _ChromaticAberration: 0
+    - _ColorMask: 15
+    - _Desaturation: 0
+    - _EffectIntensity: 1
+    - _FlickerStrength: 0
+    - _GlitchStrength: 0
+    - _NoiseSpeed: 0
+    - _NoiseStrength: 0
+    - _NoiseTime: 687.4876
+    - _ScanlineCount: 50
+    - _ScanlineStrength: 0
+    - _Stencil: 0
+    - _StencilComp: 8
+    - _StencilOp: 0
+    - _StencilReadMask: 255
+    - _StencilWriteMask: 255
+    - _UseUIAlphaClip: 0
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _TintColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1 &1529663832
 GameObject:
   m_ObjectHideFlags: 0

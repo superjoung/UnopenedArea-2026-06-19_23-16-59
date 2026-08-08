@@ -122,6 +122,17 @@ public class FieldStoryRecordInspect : MonoBehaviour
         {
             if (dayFlowController == null)
                 dayFlowController = FindFirstObjectByType<Day1FlowController>();
+
+            // Day 2 기록물은 배전반을 조작해 복구하는 목표가 아니다.
+            // 문서를 닫은 뒤 시설이 스스로 정상화되는 듯한 조명 연출만 재생한다.
+            if (dayFlowController != null &&
+                dayFlowController.CurrentEmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection)
+            {
+                FieldModeController fieldModeController = FindFirstObjectByType<FieldModeController>(FindObjectsInactive.Include);
+                fieldModeController?.PlayPowerRestoreLightEffect();
+                SoundManager.Instance?.PlayBreakerPowerOnSfx();
+            }
+
             dayFlowController?.CompleteEmergencyObjective();
         }
     }

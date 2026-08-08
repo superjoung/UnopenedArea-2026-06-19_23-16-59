@@ -17,6 +17,8 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private AudioSource secondaryBgmSource;
     [Tooltip("모든 효과음을 PlayOneShot으로 재생하는 AudioSource")]
     [SerializeField] private AudioSource sfxSource;
+    [Tooltip("대사 타이핑 중에만 루프로 재생하는 전용 AudioSource입니다. 다른 효과음과 겹치지 않게 별도로 할당합니다.")]
+    [SerializeField] private AudioSource dialogueTypingSource;
 
     [Header("Initial BGM")]
     [SerializeField] private AudioClip initialBgm;
@@ -32,9 +34,23 @@ public class SoundManager : MonoBehaviour
     [Header("Common SFX")]
     [SerializeField] private AudioClip phoneRingSfx;
     [SerializeField] private AudioClip phoneHangupSfx;
+    [Tooltip("대사가 한 글자씩 출력되는 동안 반복 재생됩니다.")]
+    [SerializeField] private AudioClip dialogueTypingSfx;
+    [Tooltip("실패 결과 패널의 '실패' 문구가 표시되는 순간 재생합니다.")]
+    [SerializeField] private AudioClip failureResultSfx;
+    [Tooltip("최종 실패 손 연출이 화면을 완전히 덮는 순간 재생합니다.")]
+    [SerializeField] private AudioClip failureHandCoverSfx;
     [SerializeField] private AudioClip reportPaperSfx;
+    [Tooltip("메인룸의 발견 기록/힌트 종이를 펼칠 때 재생합니다.")]
+    [SerializeField] private AudioClip foundAnomalyPanelOpenSfx;
+    [Tooltip("보고판에서 장소·대상·현상 버튼 및 선택지를 누를 때 재생합니다.")]
+    [SerializeField] private AudioClip reportSelectionClickSfx;
+    [Tooltip("메인룸 CCTV를 눌러 진입 전환 효과가 시작될 때 재생합니다.")]
+    [SerializeField] private AudioClip cctvEntryTransitionSfx;
     [SerializeField] private AudioClip cctvChannelSwitchSfx;
     [SerializeField] private AudioClip correctReportSfx;
+    [Tooltip("Day 2에서 그날 첫 정답 보고에만 추가로 재생되는 연출 효과음입니다.")]
+    [SerializeField] private AudioClip day2FirstCorrectReportSfx;
     [SerializeField] private AudioClip anomalyAppearedSfx;
     [SerializeField] private AudioClip wrongOrMissedReportSfx;
     [SerializeField] private AudioClip doorOpenSfx;
@@ -57,6 +73,7 @@ public class SoundManager : MonoBehaviour
     private bool isCctvBgmMode;
     private bool isFailBgmMode;
     private bool useFirstFootstepClip = true;
+    private AudioSource activeDialogueTypingSource;
 
     private void Awake()
     {
@@ -165,6 +182,8 @@ public class SoundManager : MonoBehaviour
 
         secondaryBgmSource?.Stop();
         sfxSource?.Stop();
+        dialogueTypingSource?.Stop();
+        activeDialogueTypingSource = null;
 
         if (initialBgm != null)
             PlayBgm(initialBgm);
@@ -196,8 +215,57 @@ public class SoundManager : MonoBehaviour
     }
 
     public void PlayReportPaperSfx() => PlaySfx(reportPaperSfx);
+    public void PlayFailureResultSfx() => PlaySfx(failureResultSfx);
+    public void PlayFailureHandCoverSfx() => PlaySfx(failureHandCoverSfx);
+    public void PlayFoundAnomalyPanelOpenSfx()
+    {
+        // 전용 클립을 아직 넣지 않은 경우에도 힌트 종이는 기존 종이 펼침음으로 들린다.
+        PlaySfx(foundAnomalyPanelOpenSfx != null ? foundAnomalyPanelOpenSfx : reportPaperSfx);
+    }
+    public void PlayReportSelectionClickSfx() => PlaySfx(reportSelectionClickSfx);
+    public void PlayCctvEntryTransitionSfx() => PlaySfx(cctvEntryTransitionSfx);
     public void PlayCctvChannelSwitchSfx() => PlaySfx(cctvChannelSwitchSfx);
     public void PlayCorrectReportSfx() => PlaySfx(correctReportSfx);
+    /// <summary>전용 클립이 설정된 경우에만 재생하고, 재생 여부를 반환합니다.</summary>
+    public bool PlayDay2FirstCorrectReportSfx()
+    {
+        if (day2FirstCorrectReportSfx == null)
+            return false;
+
+        PlaySfx(day2FirstCorrectReportSfx);
+        return true;
+    }
+
+    /// <summary>대사 타이핑 시작 시 루프를 시작합니다. 긴 문장도 클립 끝에서 끊기지 않습니다.</summary>
+    public void StartDialogueTypingSfx()
+    {
+        if (dialogueTypingSfx == null)
+            return;
+
+        // 전용 소스를 할당하면 다른 SFX와 완전히 분리된다. 아직 미할당 상태에서도
+        // 기능 검증은 가능하도록 공용 SFX 소스를 안전한 대체값으로 사용한다.
+        AudioSource source = dialogueTypingSource != null ? dialogueTypingSource : sfxSource;
+        if (source == null)
+            return;
+
+        if (source.isPlaying && source.clip == dialogueTypingSfx)
+            return;
+
+        source.Stop();
+        source.clip = dialogueTypingSfx;
+        source.loop = true;
+        source.Play();
+        activeDialogueTypingSource = source;
+    }
+
+    /// <summary>문장 출력 완료, 즉시 출력, 대화 종료 시 타이핑 루프를 즉시 정지합니다.</summary>
+    public void StopDialogueTypingSfx()
+    {
+        if (activeDialogueTypingSource != null && activeDialogueTypingSource.isPlaying)
+            activeDialogueTypingSource.Stop();
+
+        activeDialogueTypingSource = null;
+    }
     public void PlayAnomalyAppearedSfx() => PlaySfx(anomalyAppearedSfx);
     public void PlayWrongOrMissedReportSfx() => PlaySfx(wrongOrMissedReportSfx);
     public void PlayDoorOpenSfx() => PlaySfx(doorOpenSfx);
@@ -234,6 +302,8 @@ public class SoundManager : MonoBehaviour
         SfxVolume = Mathf.Clamp01(volume);
         if (sfxSource != null)
             sfxSource.volume = SfxVolume;
+        if (dialogueTypingSource != null)
+            dialogueTypingSource.volume = SfxVolume;
         SaveVolume(SfxVolumePreferenceKey, SfxVolume);
     }
 
@@ -242,6 +312,8 @@ public class SoundManager : MonoBehaviour
         ApplyBgmVolumes();
         if (sfxSource != null)
             sfxSource.volume = SfxVolume;
+        if (dialogueTypingSource != null)
+            dialogueTypingSource.volume = SfxVolume;
     }
 
     private void ApplyBgmVolumes()

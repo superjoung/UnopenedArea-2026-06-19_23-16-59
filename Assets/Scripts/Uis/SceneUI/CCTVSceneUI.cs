@@ -177,10 +177,21 @@ public class CCTVSceneUI : BaseUI
                 ? matchedRuntime.Definition.AnomalyId
                 : "Unknown";
 
+            // Day 2의 첫 정답 보고는 공용 정답음과 별도로 전용 연출음을 한 번만 더 낸다.
+            bool isDay2FirstCorrectReport = dayRuntimeController != null &&
+                                            dayRuntimeController.CurrentDayDefinition != null &&
+                                            dayRuntimeController.CurrentDayDefinition.Day == 2 &&
+                                            dayRuntimeController.SuccessReportCount == 0;
+
             if (dayRuntimeController != null)
                 dayRuntimeController.RegisterCorrectReport();
 
-            SoundManager.Instance?.PlayCorrectReportSfx();
+            if (!isDay2FirstCorrectReport ||
+                SoundManager.Instance == null ||
+                !SoundManager.Instance.PlayDay2FirstCorrectReportSfx())
+            {
+                SoundManager.Instance?.PlayCorrectReportSfx();
+            }
 
             if (GameManager.Instance != null)
                 GameManager.Instance.NotifyDayCorrectReport(matchedRuntime);
@@ -269,6 +280,7 @@ public class CCTVSceneUI : BaseUI
     private void OnClickAreaSelectButton(PointerEventData eventData)
     {
         Debug.Log("[INFO] CCTVSceneUI::OnClickAreaSelectButton - 구역 선택 버튼 클릭");
+        SoundManager.Instance?.PlayReportSelectionClickSfx();
 
         // 현재 일차/채널 기준 구역 후보를 갱신한 뒤 구역 리스트만 표시한다.
         RefreshAreaReportContents();
@@ -278,6 +290,7 @@ public class CCTVSceneUI : BaseUI
     private void OnClickObjectSelectButton(PointerEventData eventData)
     {
         Debug.Log("[INFO] CCTVSceneUI::OnClickObjectSelectButton - 오브젝트 선택 버튼 클릭");
+        SoundManager.Instance?.PlayReportSelectionClickSfx();
 
         // 선택된 구역이 있으면 해당 구역, 없으면 현재 CCTV 구역의 보고 가능 오브젝트를 표시한다.
         RefreshObjectReportContents();
@@ -287,6 +300,7 @@ public class CCTVSceneUI : BaseUI
     private void OnClickTypeSelectButton(PointerEventData eventData)
     {
         Debug.Log("[INFO] CCTVSceneUI::OnClickTypeSelectButton - 이상현상 타입 선택 버튼 클릭");
+        SoundManager.Instance?.PlayReportSelectionClickSfx();
 
         // 이상현상 타입은 정답 힌트를 막기 위해 활성 이상현상 기준이 아닌 고정 타입 목록을 표시한다.
         RefreshTypeReportContents();
@@ -741,6 +755,8 @@ public class CCTVSceneUI : BaseUI
 
     private void OnReportOptionSelected(ReportSelectOption option)
     {
+        SoundManager.Instance?.PlayReportSelectionClickSfx();
+
         // ReportContentFrame은 선택 판정을 하지 않고 option만 돌려준다. 실제 선택 상태는 여기서만 갱신한다.
         switch (option.Kind)
         {

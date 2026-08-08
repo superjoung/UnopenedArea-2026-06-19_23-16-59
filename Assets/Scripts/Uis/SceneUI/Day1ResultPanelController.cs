@@ -306,6 +306,9 @@ public class Day1ResultPanelController : MonoBehaviour
         resultVisible = true;
         restartRequested = false;
         SetResultPanelVisible(true);
+
+        if (!isSuccess)
+            SoundManager.Instance?.PlayFailureResultSfx();
     }
 
     private void SetResultPanelVisible(bool visible)
