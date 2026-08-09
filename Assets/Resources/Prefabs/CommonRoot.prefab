@@ -2503,14 +2503,14 @@ MonoBehaviour:
   m_text: 00:00
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 72dfcde239451f747b224788e6e91db6, type: 2}
-  m_sharedMaterial: {fileID: 0}
+  m_sharedMaterial: {fileID: 7707905585773083037, guid: 72dfcde239451f747b224788e6e91db6, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 1106575214
-  m_fontColor: {r: 0.43295518, g: 1, b: 0.95793676, a: 0.25295034}
+    rgba: 1073020782
+  m_fontColor: {r: 0.43295518, g: 1, b: 0.95793676, a: 0.24671283}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -5570,6 +5570,8 @@ MonoBehaviour:
   storyUiRoot: {fileID: 2379043747029488630}
   speakerNameText: {fileID: 3787402302827370862}
   dialogueText: {fileID: 4348033836821820290}
+  fallbackBackgroundSprite: {fileID: 0}
+  fallbackFontAsset: {fileID: 0}
   mainSceneUI: {fileID: 5925089524056581342}
   mainRoomInteractionController: {fileID: 0}
   hideWhilePlaying:
@@ -10365,14 +10367,14 @@ MonoBehaviour:
   m_text: "CCTV - 001\n\uC5F0\uAD6C\uC2E4 \uBCF5\uB3C4"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 72dfcde239451f747b224788e6e91db6, type: 2}
-  m_sharedMaterial: {fileID: 0}
+  m_sharedMaterial: {fileID: 7707905585773083037, guid: 72dfcde239451f747b224788e6e91db6, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 1106575214
-  m_fontColor: {r: 0.43295518, g: 1, b: 0.95793676, a: 0.25295034}
+    rgba: 1073020782
+  m_fontColor: {r: 0.43295518, g: 1, b: 0.95793676, a: 0.24671283}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
