@@ -183,7 +183,7 @@ public class MainSceneUI : MonoBehaviour
         SetVisible(false);
     }
 
-    private static void GetMessage(Day1FlowState flowState, Day1AreaMode areaMode, out string situation, out string objective)
+    private void GetMessage(Day1FlowState flowState, Day1AreaMode areaMode, out string situation, out string objective)
     {
         situation = string.Empty;
         objective = string.Empty;
@@ -213,6 +213,15 @@ public class MainSceneUI : MonoBehaviour
                 return;
 
             case Day1FlowState.EmergencyDispatch:
+                if (day1FlowController != null && day1FlowController.DayNumber == 3)
+                {
+                    situation = "\uAE30\uB85D \uC2DC\uC2A4\uD15C\uC774 \uC190\uC0C1\uB418\uC5C8\uB2E4.";
+                    objective = areaMode == Day1AreaMode.Field
+                        ? "\uC11C\uBC84\uC2E4\uC758 \uAE30\uB85D \uB2E8\uB9D0\uC744 \uCC3E\uC544 \uC190\uC0C1\uB41C \uAD00\uCE21 \uAE30\uB85D\uC744 \uBCF5\uAD6C\uD558\uC2ED\uC2DC\uC624."
+                        : "\uBA54\uC778\uB8F8\uC758 \uBB38\uC744 \uD1B5\uD574 \uC11C\uBC84\uC2E4\uB85C \uC774\uB3D9\uD558\uC2ED\uC2DC\uC624.";
+                    return;
+                }
+
                 situation = "정전이 발생했다.";
                 objective = areaMode == Day1AreaMode.Field
                     ? "배전반을 찾아 E를 꾹 눌러 고치세요."
@@ -220,6 +229,15 @@ public class MainSceneUI : MonoBehaviour
                 return;
 
             case Day1FlowState.EmergencyRecovery:
+                if (day1FlowController != null && day1FlowController.DayNumber == 3)
+                {
+                    situation = "\uAD00\uCE21 \uAE30\uB85D \uBCF5\uAD6C\uAC00 \uC644\uB8CC\uB418\uC5C8\uB2E4.";
+                    objective = areaMode == Day1AreaMode.Field
+                        ? "\uC81C\uC5B4\uC2E4\uB85C \uB3CC\uC544\uAC00 CCTV \uAC10\uC2DC\uB97C \uC7AC\uAC1C\uD558\uC2ED\uC2DC\uC624."
+                        : "CCTV\uB97C \uB2E4\uC2DC \uD655\uC778\uD558\uC2ED\uC2DC\uC624.";
+                    return;
+                }
+
                 if (areaMode == Day1AreaMode.Field)
                 {
                     situation = "전력이 복구되었다.";

@@ -602,6 +602,9 @@ public class Day1FlowController : MonoBehaviour
 
     private string GetEmergencyDispatchMessage()
     {
+        if (dayDefinition != null && !string.IsNullOrWhiteSpace(dayDefinition.EmergencyDispatchText))
+            return dayDefinition.EmergencyDispatchText;
+
         return dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection
             ? "정전이 발생했다. 메인룸의 문을 통해 설비실 기록을 확인하십시오."
             : dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.ServerReboot

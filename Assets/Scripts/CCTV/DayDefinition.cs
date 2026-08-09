@@ -61,6 +61,8 @@ public class DayDefinition : ScriptableObject
 
     [Header("Emergency Objective")]
     [SerializeField] private EmergencyObjectiveType emergencyObjectiveType = EmergencyObjectiveType.PowerRestore;
+    [Tooltip("Leave empty to use the default dispatch message for the objective type.")]
+    [SerializeField, TextArea(2, 3)] private string emergencyDispatchText;
     [Tooltip("비워두면 목표 유형에 맞는 기본 안내 문구를 사용합니다.")]
     [SerializeField, TextArea(2, 3)] private string emergencyFieldObjectiveText;
     [Tooltip("비워두면 목표 유형에 맞는 기본 완료 문구를 사용합니다.")]
@@ -93,6 +95,7 @@ public class DayDefinition : ScriptableObject
     public float EmergencyTriggerProgress => Mathf.Clamp01(emergencyTriggerProgress);
     public bool EmergencyRequiresBothConditions => emergencyRequiresBothConditions;
     public EmergencyObjectiveType EmergencyObjectiveType => emergencyObjectiveType;
+    public string EmergencyDispatchText => emergencyDispatchText;
     public string EmergencyFieldObjectiveText => emergencyFieldObjectiveText;
     public string EmergencyRecoveryText => emergencyRecoveryText;
     public bool EnableMissedEscalationChannels => day == 1 || enableMissedEscalationChannels;
