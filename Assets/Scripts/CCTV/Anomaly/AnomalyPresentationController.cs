@@ -11,6 +11,9 @@ public class AnomalyPresentationController : MonoBehaviour
         None,
         GlideHorizontal,
         AnimatorState,
+        SpriteFrames,
+        StepRotation,
+        LinearMoveToPosition,
     }
 
     public enum StartTiming
@@ -39,12 +42,31 @@ public class AnomalyPresentationController : MonoBehaviour
     [SerializeField, Min(0)] private int animatorLayer;
     [SerializeField, Min(0f)] private float animatorCrossFadeDuration;
 
+    [Header("Sprite Frames")]
+    [Tooltip("Assign Day3 anomaly frames here. Null slots keep the current sprite.")]
+    [SerializeField] private SpriteRenderer targetSpriteRenderer;
+    [SerializeField] private Sprite[] spriteFrames;
+    [SerializeField, Min(0.01f)] private float spriteFrameDuration = 0.12f;
+    [SerializeField] private bool loopSpriteFrames = true;
+
+    [Header("Step Rotation")]
+    [SerializeField] private float stepRotationDegrees = 30f;
+    [SerializeField, Min(0.01f)] private float stepRotationInterval = 0.15f;
+
+
     private CCTVAreaView areaView;
     private CCTVAreaInstance ownerArea;
     private bool playRequested;
     private bool isPlaying;
     private Vector3 glideStartLocalPosition;
     private float glideElapsed;
+    private float stepRotationElapsed;
+    private Quaternion originalLocalRotation;
+    private bool originalLocalRotationCached;
+    private float spriteFrameElapsed;
+    private int spriteFrameIndex;
+    private Sprite originalSprite;
+    private bool originalSpriteCached;
 
     public string PresentationId => presentationId;
 
@@ -68,16 +90,34 @@ public class AnomalyPresentationController : MonoBehaviour
 
     private void Update()
     {
-        if (!isPlaying || presentationMode != PresentationMode.GlideHorizontal)
+        if (!isPlaying)
             return;
 
-        float distance = Vector3.Distance(glideStartLocalPosition, glideEndLocalPosition);
-        if (distance <= Mathf.Epsilon)
-            return;
+        if (presentationMode == PresentationMode.GlideHorizontal)
+        {
+            float distance = Vector3.Distance(glideStartLocalPosition, glideEndLocalPosition);
+            if (distance <= Mathf.Epsilon)
+                return;
 
-        glideElapsed += Time.deltaTime;
-        float normalized = Mathf.PingPong(glideElapsed * glideUnitsPerSecond / distance, 1f);
-        transform.localPosition = Vector3.Lerp(glideStartLocalPosition, glideEndLocalPosition, normalized);
+            glideElapsed += Time.deltaTime;
+            float normalized = Mathf.PingPong(glideElapsed * glideUnitsPerSecond / distance, 1f);
+            transform.localPosition = Vector3.Lerp(glideStartLocalPosition, glideEndLocalPosition, normalized);
+            return;
+        }
+
+        if (presentationMode == PresentationMode.LinearMoveToPosition)
+        {
+            transform.localPosition = Vector3.MoveTowards(
+                transform.localPosition,
+                glideEndLocalPosition,
+                glideUnitsPerSecond * Time.deltaTime);
+            return;
+        }
+
+        if (presentationMode == PresentationMode.SpriteFrames)
+            UpdateSpriteFrames();
+        else if (presentationMode == PresentationMode.StepRotation)
+            UpdateStepRotation();
     }
 
     public void PlayPresentation()
@@ -95,6 +135,15 @@ public class AnomalyPresentationController : MonoBehaviour
         playRequested = false;
         isPlaying = false;
         glideElapsed = 0f;
+        stepRotationElapsed = 0f;
+        spriteFrameElapsed = 0f;
+        spriteFrameIndex = 0;
+
+        if (originalSpriteCached && targetSpriteRenderer != null)
+            targetSpriteRenderer.sprite = originalSprite;
+
+        if (originalLocalRotationCached)
+            transform.localRotation = originalLocalRotation;
 
         if (targetAnimator != null)
             targetAnimator.Rebind();
@@ -125,8 +174,19 @@ public class AnomalyPresentationController : MonoBehaviour
         switch (presentationMode)
         {
             case PresentationMode.GlideHorizontal:
+            case PresentationMode.LinearMoveToPosition:
                 glideStartLocalPosition = transform.localPosition;
                 glideElapsed = 0f;
+                break;
+
+            case PresentationMode.StepRotation:
+                if (!originalLocalRotationCached)
+                {
+                    originalLocalRotation = transform.localRotation;
+                    originalLocalRotationCached = true;
+                }
+
+                stepRotationElapsed = 0f;
                 break;
 
             case PresentationMode.AnimatorState:
@@ -141,13 +201,81 @@ public class AnomalyPresentationController : MonoBehaviour
                 else
                     targetAnimator.Play(animatorStateName, animatorLayer, 0f);
                 break;
+
+            case PresentationMode.SpriteFrames:
+                if (targetSpriteRenderer == null)
+                    targetSpriteRenderer = GetComponent<SpriteRenderer>();
+
+                if (targetSpriteRenderer == null)
+                {
+                    Debug.LogWarning($"[AnomalyPresentationController] Sprite Frames mode needs a SpriteRenderer. object={name}");
+                    isPlaying = false;
+                    return;
+                }
+
+                if (!originalSpriteCached)
+                {
+                    originalSprite = targetSpriteRenderer.sprite;
+                    originalSpriteCached = true;
+                }
+
+                spriteFrameElapsed = 0f;
+                spriteFrameIndex = 0;
+                ApplySpriteFrame(spriteFrameIndex);
+                break;
         }
+    }
+
+    private void UpdateStepRotation()
+    {
+        stepRotationElapsed += Time.deltaTime;
+        if (stepRotationElapsed < stepRotationInterval)
+            return;
+
+        int stepCount = Mathf.FloorToInt(stepRotationElapsed / stepRotationInterval);
+        stepRotationElapsed -= stepCount * stepRotationInterval;
+
+        Vector3 euler = transform.localEulerAngles;
+        euler.z += stepRotationDegrees * stepCount;
+        transform.localEulerAngles = euler;
+    }
+
+
+    private void UpdateSpriteFrames()
+    {
+        if (spriteFrames == null || spriteFrames.Length == 0)
+            return;
+
+        spriteFrameElapsed += Time.deltaTime;
+        if (spriteFrameElapsed < spriteFrameDuration)
+            return;
+
+        spriteFrameElapsed %= spriteFrameDuration;
+        if (loopSpriteFrames)
+            spriteFrameIndex = (spriteFrameIndex + 1) % spriteFrames.Length;
+        else
+            spriteFrameIndex = Mathf.Min(spriteFrameIndex + 1, spriteFrames.Length - 1);
+
+        ApplySpriteFrame(spriteFrameIndex);
+    }
+
+    private void ApplySpriteFrame(int index)
+    {
+        if (targetSpriteRenderer == null || spriteFrames == null || index < 0 || index >= spriteFrames.Length)
+            return;
+
+        Sprite frame = spriteFrames[index];
+        if (frame != null)
+            targetSpriteRenderer.sprite = frame;
     }
 
     private void ResolveReferences()
     {
         if (targetAnimator == null)
             targetAnimator = GetComponent<Animator>();
+
+        if (targetSpriteRenderer == null)
+            targetSpriteRenderer = GetComponent<SpriteRenderer>();
 
         if (ownerArea == null)
             ownerArea = GetComponentInParent<CCTVAreaInstance>();

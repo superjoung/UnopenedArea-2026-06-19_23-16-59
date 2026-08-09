@@ -14,6 +14,7 @@ public static class DaySessionLoader
     public static bool ResetAllAndLoadDay1()
     {
         DayProgressSave.ResetProgress();
+        StoryFlagStore.ClearAll("D2_LOG_O06_READ", "D3_OBSERVATION_RECORD_RESTORED");
         DayProgressSave.ClearSkipTitleOnNextSceneLoad();
         return LoadDay(1, false);
     }

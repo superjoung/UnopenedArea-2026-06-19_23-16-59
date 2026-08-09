@@ -213,40 +213,28 @@ public class MainSceneUI : MonoBehaviour
                 return;
 
             case Day1FlowState.EmergencyDispatch:
-                if (day1FlowController != null &&
-                    day1FlowController.CurrentEmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection)
+                if (day1FlowController != null && day1FlowController.DayNumber == 3)
                 {
-                    situation = areaMode == Day1AreaMode.Field
-                        ? "바닥에 수상한 기록물이 떨어져 있다."
-                        : "제어실 외부에서 이상 신호가 감지된다.";
+                    situation = "\uAE30\uB85D \uC2DC\uC2A4\uD15C\uC774 \uC190\uC0C1\uB418\uC5C8\uB2E4.";
                     objective = areaMode == Day1AreaMode.Field
-                        ? "가까이 다가가 E 키로 조사하십시오."
-                        : "문을 통해 외부를 조사하십시오.";
+                        ? "\uC11C\uBC84\uC2E4\uC758 \uAE30\uB85D \uB2E8\uB9D0\uC744 \uCC3E\uC544 \uC190\uC0C1\uB41C \uAD00\uCE21 \uAE30\uB85D\uC744 \uBCF5\uAD6C\uD558\uC2ED\uC2DC\uC624."
+                        : "\uBA54\uC778\uB8F8\uC758 \uBB38\uC744 \uD1B5\uD574 \uC11C\uBC84\uC2E4\uB85C \uC774\uB3D9\uD558\uC2ED\uC2DC\uC624.";
+                    return;
                 }
-                else
-                {
-                    situation = "정전이 발생했다.";
-                    objective = areaMode == Day1AreaMode.Field
-                        ? "배전반을 찾아 E를 꾹 눌러 고치세요."
-                        : "메인룸의 문으로 제어실 외부로 나가십시오.";
-                }
+
+                situation = "정전이 발생했다.";
+                objective = areaMode == Day1AreaMode.Field
+                    ? "배전반을 찾아 E를 꾹 눌러 고치세요."
+                    : "메인룸의 문으로 제어실 외부로 나가십시오.";
                 return;
 
             case Day1FlowState.EmergencyRecovery:
-                if (day1FlowController != null &&
-                    day1FlowController.CurrentEmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection)
+                if (day1FlowController != null && day1FlowController.DayNumber == 3)
                 {
-                    if (areaMode == Day1AreaMode.Field)
-                    {
-                        situation = "시스템이 자동으로 복구되고 있다.";
-                        objective = "문으로 메인룸에 돌아가십시오.";
-                    }
-                    else
-                    {
-                        situation = "메인룸에 복귀했다.";
-                        objective = "CCTV를 다시 확인하십시오.";
-                    }
-
+                    situation = "\uAD00\uCE21 \uAE30\uB85D \uBCF5\uAD6C\uAC00 \uC644\uB8CC\uB418\uC5C8\uB2E4.";
+                    objective = areaMode == Day1AreaMode.Field
+                        ? "\uC81C\uC5B4\uC2E4\uB85C \uB3CC\uC544\uAC00 CCTV \uAC10\uC2DC\uB97C \uC7AC\uAC1C\uD558\uC2ED\uC2DC\uC624."
+                        : "CCTV\uB97C \uB2E4\uC2DC \uD655\uC778\uD558\uC2ED\uC2DC\uC624.";
                     return;
                 }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// 전화 수신 뒤 사용하는 간단한 대화 진행기입니다.
@@ -21,6 +22,10 @@ public class StoryDialogueController : MonoBehaviour
     [SerializeField] private GameObject storyUiRoot;
     [SerializeField] private TMP_Text speakerNameText;
     [SerializeField] private TMP_Text dialogueText;
+
+    [Header("Fallback Story UI")]
+    [SerializeField] private Sprite fallbackBackgroundSprite;
+    [SerializeField] private TMP_FontAsset fallbackFontAsset;
 
     [Header("Flow References")]
     [SerializeField] private MainSceneUI mainSceneUI;
@@ -77,6 +82,8 @@ public class StoryDialogueController : MonoBehaviour
             onFinished?.Invoke();
             return;
         }
+
+        EnsureFallbackStoryUi();
 
         isPlaying = true;
         inputReady = false;
@@ -268,6 +275,117 @@ public class StoryDialogueController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 일부 Day 씬은 CommonRoot가 풀린 채 StoryUI 자식만 누락되어 있습니다.
+    /// Day1·Day2 CommonRoot의 StoryUI 규격과 같은 런타임 UI를 생성합니다.
+    /// </summary>
+    private void EnsureFallbackStoryUi()
+    {
+        if (storyUiRoot != null)
+            return;
+
+        GameObject root = new GameObject("StoryUI_Runtime", typeof(RectTransform));
+        root.transform.SetParent(transform, false);
+        RectTransform rootRect = root.GetComponent<RectTransform>();
+        ApplyRect(
+            rootRect,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(0.5f, 0.5f),
+            new Vector2(457f, -162f),
+            new Vector2(100f, 100f));
+
+        GameObject imageObject = new GameObject(
+            "Image",
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(Image));
+        imageObject.transform.SetParent(root.transform, false);
+        RectTransform imageRect = imageObject.GetComponent<RectTransform>();
+        ApplyRect(
+            imageRect,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(0.5f, 0.5f),
+            new Vector2(127.524414f, -39.956898f),
+            new Vector2(684.0383f, 258.4344f));
+        Image background = imageObject.GetComponent<Image>();
+        background.sprite = fallbackBackgroundSprite;
+        background.color = Color.white;
+        background.raycastTarget = true;
+
+        TMP_FontAsset font = fallbackFontAsset != null
+            ? fallbackFontAsset
+            : mainSceneUI != null ? mainSceneUI.ObjectiveText?.font : TMP_Settings.defaultFontAsset;
+
+        speakerNameText = CreateRuntimeText(
+            root.transform,
+            "NameText",
+            new Vector2(0f, 1f),
+            new Vector2(0f, 1f),
+            new Vector2(279f, -12f),
+            new Vector2(838.75f, 50f),
+            33.8f,
+            FontStyles.Bold,
+            font);
+        dialogueText = CreateRuntimeText(
+            root.transform,
+            "DialougeText",
+            new Vector2(0.5f, 0.5f),
+            new Vector2(0.5f, 0.5f),
+            new Vector2(313f, -29f),
+            new Vector2(1004.81f, 50f),
+            24.27f,
+            FontStyles.Normal,
+            font);
+
+        storyUiRoot = root;
+        storyUiRoot.SetActive(false);
+    }
+
+    private static TMP_Text CreateRuntimeText(
+        Transform parent,
+        string objectName,
+        Vector2 anchorMin,
+        Vector2 anchorMax,
+        Vector2 anchoredPosition,
+        Vector2 sizeDelta,
+        float fontSize,
+        FontStyles fontStyle,
+        TMP_FontAsset font)
+    {
+        GameObject textObject = new GameObject(
+            objectName,
+            typeof(RectTransform),
+            typeof(CanvasRenderer),
+            typeof(TextMeshProUGUI));
+        textObject.transform.SetParent(parent, false);
+
+        RectTransform rect = textObject.GetComponent<RectTransform>();
+        ApplyRect(rect, anchorMin, anchorMax, anchoredPosition, sizeDelta);
+
+        TextMeshProUGUI text = textObject.GetComponent<TextMeshProUGUI>();
+        text.font = font != null ? font : TMP_Settings.defaultFontAsset;
+        text.fontSize = fontSize;
+        text.fontStyle = fontStyle;
+        text.color = Color.white;
+        text.alignment = TextAlignmentOptions.TopLeft;
+        text.textWrappingMode = TextWrappingModes.Normal;
+        text.raycastTarget = false;
+        return text;
+    }
+
+    private static void ApplyRect(
+        RectTransform rect,
+        Vector2 anchorMin,
+        Vector2 anchorMax,
+        Vector2 anchoredPosition,
+        Vector2 sizeDelta)
+    {
+        rect.anchorMin = anchorMin;
+        rect.anchorMax = anchorMax;
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = sizeDelta;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+    }
     private void OnDisable()
     {
         if (typingRoutine != null)
