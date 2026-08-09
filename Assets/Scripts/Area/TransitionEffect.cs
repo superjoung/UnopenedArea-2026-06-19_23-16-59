@@ -90,6 +90,9 @@ public class TransitionEffect : MonoBehaviour
     [SerializeField] private RectTransform failureRightHand;
     [SerializeField] private Image failureHandBlackoutImage;
     [SerializeField, Min(0.05f)] private float failureHandCloseDuration = 0.85f;
+    [SerializeField, Min(1f)] private float failureHandZoomScale = 1.18f;
+    [SerializeField, Min(0.02f)] private float failureHandZoomDuration = 0.22f;
+    [Tooltip("손이 도착한 뒤 확대되는 구간 중 암전이 시작될 비율입니다. 0=확대 시작, 1=확대 완료.")]
     [SerializeField, Range(0f, 1f)] private float failureHandBlackoutStartNormalized = 0.72f;
     [SerializeField, Min(0f)] private float failureHandClosedHoldDuration = 0.18f;
     [Tooltip("손이 닫히는 전체 시간 중 임팩트 효과음을 재생할 비율입니다. 0=시작, 1=완전히 닫힌 뒤.")]
@@ -98,6 +101,7 @@ public class TransitionEffect : MonoBehaviour
     [SerializeField, Min(0f)] private float failureBackgroundHoldDuration = 0.5f;
     [SerializeField, Min(0.1f)] private float failureHandOffscreenDistanceMultiplier = 0.65f;
     [SerializeField] private Ease failureHandCloseEase = Ease.OutCubic;
+    [SerializeField] private Ease failureHandZoomEase = Ease.InQuad;
     [SerializeField] private Ease failureBackgroundRevealEase = Ease.OutQuad;
 
     [Header("Result Restart Fade")]
@@ -117,6 +121,8 @@ public class TransitionEffect : MonoBehaviour
     private bool anomalyBlinkOffsetsCached;
     private Vector2 failureLeftHandCoveredPosition;
     private Vector2 failureRightHandCoveredPosition;
+    private Vector3 failureLeftHandDefaultScale;
+    private Vector3 failureRightHandDefaultScale;
     private bool failureHandPositionsCached;
     private bool playResultRestartFadeIn;
     private static bool resultRestartFadeInRequested;
@@ -403,9 +409,14 @@ public class TransitionEffect : MonoBehaviour
         Vector2 rightOpenPosition = failureRightHandCoveredPosition + Vector2.right * offscreenDistance;
         failureLeftHand.anchoredPosition = leftOpenPosition;
         failureRightHand.anchoredPosition = rightOpenPosition;
+        failureLeftHand.localScale = failureLeftHandDefaultScale;
+        failureRightHand.localScale = failureRightHandDefaultScale;
 
-        float blackoutStart = failureHandCloseDuration * failureHandBlackoutStartNormalized;
-        float blackoutDuration = Mathf.Max(0.01f, failureHandCloseDuration - blackoutStart);
+        float blackoutStart = failureHandCloseDuration +
+            failureHandZoomDuration * failureHandBlackoutStartNormalized;
+        float blackoutDuration = Mathf.Max(
+            0.01f,
+            failureHandZoomDuration * (1f - failureHandBlackoutStartNormalized));
 
         activeSequence = DOTween.Sequence().SetUpdate(true);
         activeSequence.Append(failureLeftHand
@@ -414,6 +425,12 @@ public class TransitionEffect : MonoBehaviour
         activeSequence.Join(failureRightHand
             .DOAnchorPos(failureRightHandCoveredPosition, failureHandCloseDuration)
             .SetEase(failureHandCloseEase));
+        activeSequence.Append(failureLeftHand
+            .DOScale(failureLeftHandDefaultScale * failureHandZoomScale, failureHandZoomDuration)
+            .SetEase(failureHandZoomEase));
+        activeSequence.Join(failureRightHand
+            .DOScale(failureRightHandDefaultScale * failureHandZoomScale, failureHandZoomDuration)
+            .SetEase(failureHandZoomEase));
         activeSequence.Insert(blackoutStart, failureHandBlackoutImage
             .DOFade(1f, blackoutDuration)
             .SetEase(Ease.InQuad));
@@ -429,6 +446,8 @@ public class TransitionEffect : MonoBehaviour
         {
             failureLeftHand.anchoredPosition = leftOpenPosition;
             failureRightHand.anchoredPosition = rightOpenPosition;
+            failureLeftHand.localScale = failureLeftHandDefaultScale;
+            failureRightHand.localScale = failureRightHandDefaultScale;
         });
         activeSequence.Append(failureHandBlackoutImage
             .DOFade(0f, failureBackgroundRevealDuration)
@@ -629,6 +648,8 @@ public class TransitionEffect : MonoBehaviour
 
         failureLeftHandCoveredPosition = failureLeftHand.anchoredPosition;
         failureRightHandCoveredPosition = failureRightHand.anchoredPosition;
+        failureLeftHandDefaultScale = failureLeftHand.localScale;
+        failureRightHandDefaultScale = failureRightHand.localScale;
         failureHandPositionsCached = true;
     }
 
@@ -647,9 +668,15 @@ public class TransitionEffect : MonoBehaviour
         if (failureHandPositionsCached)
         {
             if (failureLeftHand != null)
+            {
                 failureLeftHand.anchoredPosition = failureLeftHandCoveredPosition;
+                failureLeftHand.localScale = failureLeftHandDefaultScale;
+            }
             if (failureRightHand != null)
+            {
                 failureRightHand.anchoredPosition = failureRightHandCoveredPosition;
+                failureRightHand.localScale = failureRightHandDefaultScale;
+            }
         }
 
         SetImageAlpha(failureHandBlackoutImage, 0f);

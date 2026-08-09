@@ -88,6 +88,7 @@ public class FieldStoryRecordInspect : MonoBehaviour
         IsInspecting = true;
         closeUnlockAt = Time.unscaledTime + closeUnlockDelay;
         SetOutlineVisible(false);
+        SoundManager.Instance?.PlayReportPaperSfx();
         ShowRecordPopup();
         playerMovement?.SetInputEnabled(false);
     }

@@ -136,6 +136,20 @@ public class CCTVPanController : MonoBehaviour
             : Mathf.Lerp(minX, maxX, Mathf.Clamp01(normalizedX));
     }
 
+    /// <summary>연출에서 특정 CCTV 오브젝트 위치를 즉시 보여줄 때 사용합니다.</summary>
+    public void SnapToWorldX(float worldX)
+    {
+        if (currentArea == null || targetCamera == null)
+            return;
+
+        targetX = ClampCameraX(worldX);
+        velocityX = 0f;
+
+        Vector3 position = targetCamera.transform.position;
+        position.x = targetX;
+        targetCamera.transform.position = position;
+    }
+
     /// <summary>새 근무를 시작하거나 디버그 초기화를 할 때 채널별 카메라 기억값을 비웁니다.</summary>
     public void ClearSavedAreaPositions()
     {
