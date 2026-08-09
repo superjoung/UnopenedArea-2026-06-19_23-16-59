@@ -5305,7 +5305,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetCamera: {fileID: 5931519510071672690}
-  panSpeed: 6
+  panSpeed: 8
   smoothTime: 0.08
   useKeyboard: 1
   useMouseEdge: 0
@@ -8344,6 +8344,7 @@ MonoBehaviour:
   storyDialogueController: {fileID: 0}
   mainRoomStateEffectController: {fileID: 0}
   day2BlackoutForeshadowController: {fileID: 0}
+  missedAnomalyWarningOverlay: {fileID: 0}
   tutorialChannelActivationDelay: 0.5
   minimumEmergencyDelayAfterCorrectReport: 3
   useKeyboardAdvance: 0
@@ -10304,8 +10305,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uBC1C\uACAC\uD55C \uC774\uC0C1\uD604\uC0C1"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 73fb75041efa79948935011614904bf7, type: 2}
-  m_sharedMaterial: {fileID: 5728327715111234235, guid: 73fb75041efa79948935011614904bf7, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 7fa6499f646b5c04c817bb3bd676a826, type: 2}
+  m_sharedMaterial: {fileID: -3111853698787025756, guid: 7fa6499f646b5c04c817bb3bd676a826, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -10329,8 +10330,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 80.5
-  m_fontSizeBase: 80.5
+  m_fontSize: 60.9
+  m_fontSizeBase: 60.9
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -10811,7 +10812,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 2881306688264789129, guid: 7dba3233d1ce7634ba27bb6c9bd4dad3, type: 3}
+  m_Sprite: {fileID: 6536014898038185801, guid: c00ceeff1fbec32449dccf2a1aeefa9f, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

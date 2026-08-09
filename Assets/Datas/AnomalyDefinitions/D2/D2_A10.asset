@@ -17,7 +17,7 @@ MonoBehaviour:
   reportTargetId: 200
   reportType: 104
   warningDurationSec: 0
-  activeDurationSec: 20
+  activeDurationSec: 30
   canEscalate: 0
   nextStage: {fileID: 0}
   isEmergency: 0
@@ -25,7 +25,7 @@ MonoBehaviour:
   - actionType: 3
     targetObjectId: OBJ_D2_LAB_STAFF_NORMAL
     delaySec: 0
-    presentationId: ""
+    presentationId: 
     activeValue: 0
     animatorEnabledValue: 0
     targetLocalPosition: {x: 0, y: 0, z: 0}

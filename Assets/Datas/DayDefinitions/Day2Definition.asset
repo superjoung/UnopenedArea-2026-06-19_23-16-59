@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Day2Definition
   m_EditorClassIdentifier: 
   day: 2
-  durationSec: 300
+  durationSec: 250
   maxMissed: 4
   activeAreas:
   - {fileID: 11400000, guid: 9d13d1b21e63abb4594f360b587d5f4e, type: 2}
@@ -27,8 +27,13 @@ MonoBehaviour:
   emergencyTriggerProgress: 0.72
   emergencyRequiresBothConditions: 0
   emergencyObjectiveType: 1
-  emergencyFieldObjectiveText: "바닥에 수상한 기록물이 떨어져 있다. 가까이 다가가 E 키로 조사하십시오."
-  emergencyRecoveryText: "시스템이 자동으로 복구되고 있다. 제어실로 돌아가 감시를 재개하십시오."
+  emergencyDispatchText: 
+  emergencyFieldObjectiveText: "\uBC14\uB2E5\uC5D0 \uC218\uC0C1\uD55C \uAE30\uB85D\uBB3C\uC774
+    \uB5A8\uC5B4\uC838 \uC788\uB2E4. \uAC00\uAE4C\uC774 \uB2E4\uAC00\uAC00 E \uD0A4\uB85C
+    \uC870\uC0AC\uD558\uC2ED\uC2DC\uC624."
+  emergencyRecoveryText: "\uC2DC\uC2A4\uD15C\uC774 \uC790\uB3D9\uC73C\uB85C \uBCF5\uAD6C\uB418\uACE0
+    \uC788\uB2E4. \uC81C\uC5B4\uC2E4\uB85C \uB3CC\uC544\uAC00 \uAC10\uC2DC\uB97C
+    \uC7AC\uAC1C\uD558\uC2ED\uC2DC\uC624."
   enableMissedEscalationChannels: 0
   fixedSchedule:
   - triggerElapsedSec: 20

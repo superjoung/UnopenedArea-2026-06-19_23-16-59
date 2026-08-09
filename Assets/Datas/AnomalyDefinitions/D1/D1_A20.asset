@@ -17,7 +17,7 @@ MonoBehaviour:
   reportTargetId: 113
   reportType: 102
   warningDurationSec: 0
-  activeDurationSec: 20
+  activeDurationSec: 30
   canEscalate: 0
   nextStage: {fileID: 0}
   isEmergency: 0
@@ -25,7 +25,9 @@ MonoBehaviour:
   - actionType: 1
     targetObjectId: OBJ_TREAT_STAND_02
     delaySec: 0
+    presentationId: 
     activeValue: 0
+    animatorEnabledValue: 1
     targetLocalPosition: {x: 0, y: 0, z: 0}
     localPositionOffset: {x: 0, y: 0, z: 0}
     targetLocalEulerAngles: {x: 0, y: 0, z: 0}

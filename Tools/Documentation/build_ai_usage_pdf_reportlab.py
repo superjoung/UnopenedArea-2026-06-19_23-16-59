@@ -102,12 +102,12 @@ class CoverFlowable(Flowable):
         c.setFillColor(colors.HexColor("#E3ECEF"))
         c.setFont("Malgun", 12.5)
         c.drawString(x, PAGE_H - 278, "AI 도구·프롬프트·활용 내역")
-        c.drawString(x, PAGE_H - 301, "아트 제작 파이프라인 · 시스템 및 콘텐츠 개발")
+        c.drawString(x, PAGE_H - 301, "기획 · 스토리 · 아트 · 시스템 · 데이터 QA")
 
         labels = [
-            ("개발 환경", "Unity 6 · 2D Art · C# · ScriptableObject · Git"),
+            ("개발 환경", "Unity 6 · 2D Art · C# · Google Sheets · Git"),
             ("AI 도구", "ChatGPT · Gemini · OpenAI Codex"),
-            ("기록 기간", "2026.07.22 - 2026.08.09"),
+            ("기록 기간", "2026.07.22 - 2026.08.10"),
             ("활용 원칙", "Human-in-the-loop · 결정적 게임 규칙 유지"),
         ]
         y = PAGE_H - 438
@@ -122,7 +122,7 @@ class CoverFlowable(Flowable):
 
         c.setFillColor(colors.HexColor("#9EADB5"))
         c.setFont("Malgun", 8.5)
-        c.drawString(x, 24, "공모전 제출용 · 2026.08.09")
+        c.drawString(x, 24, "NHN 공모전 제출용 · 2026.08.10")
 
 
 def draw_cover_page(canvas, doc) -> None:
@@ -170,16 +170,18 @@ def make_styles() -> dict[str, ParagraphStyle]:
         "body": ParagraphStyle(
             "BodyK", parent=styles["BodyText"], fontName="Malgun", fontSize=8.8,
             leading=14.2, textColor=INK, spaceAfter=7, wordWrap="CJK",
+            allowWidows=0, allowOrphans=0,
         ),
         "bullet": ParagraphStyle(
             "BulletK", parent=styles["BodyText"], fontName="Malgun", fontSize=8.7,
-            leading=13.7, leftIndent=13, firstLineIndent=0, textColor=INK,
-            bulletIndent=1, spaceAfter=3.5, wordWrap="CJK",
+            leading=13.4, leftIndent=13, firstLineIndent=0, textColor=INK,
+            bulletIndent=1, spaceAfter=2.5, wordWrap="CJK",
+            allowWidows=0, allowOrphans=0,
         ),
         "number": ParagraphStyle(
             "NumberK", parent=styles["BodyText"], fontName="Malgun", fontSize=8.7,
             leading=13.7, leftIndent=17, firstLineIndent=-15, textColor=INK,
-            spaceAfter=4, wordWrap="CJK",
+            spaceAfter=3, wordWrap="CJK", allowWidows=0, allowOrphans=0,
         ),
         "quote": ParagraphStyle(
             "QuoteK", parent=styles["BodyText"], fontName="Malgun", fontSize=8.5,
@@ -254,15 +256,15 @@ def make_table(rows: list[list[str]], styles) -> Table:
 def make_executive_summary(styles) -> list:
     story = [section_heading("한눈에 보는 AI 활용", styles)]
     story.append(Paragraph(
-        "본 프로젝트는 생성형 AI를 아트 시안·제작 공정·에셋 초안과 Unity 개발 협업에 활용했다. 이미지와 코드 결과는 담당자가 리터칭·검토·테스트한 뒤 반영했으며, 게임 규칙은 재현 가능한 데이터 로직으로 유지했다.",
+        "본 프로젝트는 생성형 AI를 게임 기획·스토리 구조화, 아트 시안·제작 공정, Unity 개발과 데이터 QA에 활용했다. 이미지·문서·코드 결과는 담당자가 선택·리터칭·검토·테스트한 뒤 반영했으며, 게임 규칙은 재현 가능한 데이터 로직으로 유지했다.",
         styles["body"],
     ))
     cards = [
-        ("01", "비주얼 탐색", "공포 배경 시안과 키 비주얼을 빠르게 비교해 방향 확정"),
-        ("02", "공정 설계", "제약 기반 심리스 타일·공간 변주·제작 우선순위 수립"),
+        ("01", "기획·스토리", "핵심 플레이 역할, 세계관, Day별 서사와 콘텐츠 기준 구체화"),
+        ("02", "비주얼·공정", "공포 시안 비교와 심리스 타일·공간 변주 제작 순서 수립"),
         ("03", "에셋 제작", "컨셉아트의 배경·프랍 분리와 수작업 리터칭·색 보정"),
         ("04", "게임 적용", "Unity 프리팹·스프라이트·Animator·이상현상 데이터 연결"),
-        ("05", "개발·QA", "CCTV 흐름 구현과 Definition·프리팹 ID·렌더 문제 검증"),
+        ("05", "개발·데이터 QA", "CCTV 흐름 구현과 Definition·프리팹·Sheets ID 교차 검증"),
         ("06", "책임 있는 활용", "AI 초안과 사람의 선택·후가공·플레이 검증을 명확히 분리"),
     ]
     cells = []
@@ -350,6 +352,11 @@ def markdown_to_story(markdown: str, styles) -> list:
         if stripped.startswith("### "):
             flush_paragraph()
             story.append(Paragraph(inline_markup(stripped[4:]), styles["sub"]))
+            i += 1
+            continue
+        if stripped.startswith("#### "):
+            flush_paragraph()
+            story.append(Paragraph(inline_markup(stripped[5:]), styles["sub"]))
             i += 1
             continue
         if stripped.startswith("| "):
