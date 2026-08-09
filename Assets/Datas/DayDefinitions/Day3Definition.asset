@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Day3Definition
   m_EditorClassIdentifier: 
   day: 3
-  durationSec: 600
+  durationSec: 250
   maxMissed: 3
   activeAreas:
   - {fileID: 11400000, guid: 9d13d1b21e63abb4594f360b587d5f4e, type: 2}
