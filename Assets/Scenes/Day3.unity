@@ -321,8 +321,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 1190461294
-  m_fontColor: {r: 0.43295518, g: 1, b: 0.95793676, a: 0.27311203}
+    rgba: 1056243566
+  m_fontColor: {r: 0.43295518, g: 1, b: 0.95793676, a: 0.24357381}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -1064,6 +1064,58 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 98481096}
   m_CullTransparentMesh: 1
+--- !u!21 &105894600
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ReportBackGround_CCTV_UI_Panel_Runtime
+  m_Shader: {fileID: 4800000, guid: ec239ae2aedd33e4dbe5b1f14b729ee3, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Brightness: 1
+    - _ChromaticAberration: 0
+    - _ColorMask: 15
+    - _Desaturation: 0
+    - _EffectIntensity: 1
+    - _FlickerStrength: 0
+    - _GlitchStrength: 0
+    - _NoiseSpeed: 0
+    - _NoiseStrength: 0
+    - _NoiseTime: 32.764713
+    - _ScanlineCount: 50
+    - _ScanlineStrength: 0
+    - _Stencil: 0
+    - _StencilComp: 8
+    - _StencilOp: 0
+    - _StencilReadMask: 255
+    - _StencilWriteMask: 255
+    - _UseUIAlphaClip: 0
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _TintColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1 &156223344
 GameObject:
   m_ObjectHideFlags: 0
@@ -1983,6 +2035,7 @@ MonoBehaviour:
   cctvSceneUI: {fileID: 0}
   storyDialogueController: {fileID: 1473290255}
   mainRoomStateEffectController: {fileID: 0}
+  day2BlackoutForeshadowController: {fileID: 0}
   tutorialChannelActivationDelay: 0.5
   minimumEmergencyDelayAfterCorrectReport: 3
   useKeyboardAdvance: 0
@@ -2114,12 +2167,16 @@ MonoBehaviour:
   failureRightHand: {fileID: 2147100022}
   failureHandBlackoutImage: {fileID: 2147100034}
   failureHandCloseDuration: 0.85
+  failureHandZoomScale: 1.18
+  failureHandZoomDuration: 0.22
   failureHandBlackoutStartNormalized: 0.72
   failureHandClosedHoldDuration: 0.18
+  failureHandImpactTimingNormalized: 0.62
   failureBackgroundRevealDuration: 0.55
   failureBackgroundHoldDuration: 1
   failureHandOffscreenDistanceMultiplier: 0.65
   failureHandCloseEase: 9
+  failureHandZoomEase: 5
   failureBackgroundRevealEase: 6
   resultRestartFadeOutDuration: 0.5
   resultRestartBlackHoldDuration: 0.15
@@ -4453,6 +4510,7 @@ GameObject:
   m_Component:
   - component: {fileID: 709629007}
   - component: {fileID: 709629008}
+  - component: {fileID: 709629009}
   m_Layer: 0
   m_Name: Day3ContentRoot
   m_TagString: Untagged
@@ -4494,6 +4552,7 @@ MonoBehaviour:
   returnDoor: {fileID: 0}
   dayFlowController: {fileID: 290021285}
   fieldModeController: {fileID: 290021286}
+  mainSceneUI: {fileID: 0}
   playerStartLocalPosition: {x: -21.6, y: 0.129, z: 0}
   returnDoorLocalPosition: {x: -21.6, y: 0.32, z: 0}
   terminalObjectName: Computer_0
@@ -4501,6 +4560,83 @@ MonoBehaviour:
   requiredHoldSeconds: 2.5
   interactionKey: 101
   completionStoryFlag: D3_OBSERVATION_RECORD_RESTORED
+  interfaceFont: {fileID: 12800000, guid: f4b7e064472f1634cb236047b3636fe6, type: 3}
+  progressBarBackgroundSprite: {fileID: -4608988584043512144, guid: 9eb9581c474121047823087e178b2ef4, type: 3}
+  progressBarFillSprite: {fileID: 4287482654393196856, guid: 709b9a4fdcaa6bb4cb07f2f71a6670ed, type: 3}
+--- !u!114 &709629009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 709629006}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d974133acc41c8889e1d3c7b8a4052, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dayRuntimeController: {fileID: 882595420}
+  areaView: {fileID: 2090929919}
+  panController: {fileID: 519420033}
+  sceneController: {fileID: 156223346}
+  fieldModeController: {fileID: 290021286}
+  anomalyService: {fileID: 388806901}
+  screenEffectController: {fileID: 0}
+  cctvCamera: {fileID: 0}
+  sfxAudioSource: {fileID: 0}
+  serverFace:
+    eventId: D3_NR01
+    areaId: 400
+    effectObjectId: 
+    probability: 0.3
+    duration: 0.5
+    triggerDelay: 0.35
+    viewportMargin: 0.05
+    horizontalCenterTolerance: 0.2
+    lockCctvInput: 0
+    moveDuringPresentation: 0
+    movementLocalOffset: {x: 0, y: 0, z: 0}
+    frameDuration: 0.1
+    frames:
+    - {fileID: -3984394465764819075, guid: aba526a12c923e34a89a77fbd992e721, type: 3}
+    sfx: {fileID: 0}
+  ceilingPerson:
+    eventId: D3_NR02
+    areaId: 100
+    effectObjectId: OBJ_DORM_CEILING_PERSON_01
+    probability: 0.25
+    duration: 2
+    triggerDelay: 0
+    viewportMargin: 0.05
+    horizontalCenterTolerance: 0.2
+    lockCctvInput: 1
+    moveDuringPresentation: 1
+    movementLocalOffset: {x: 5, y: 0, z: 0}
+    frameDuration: 0.2
+    frames:
+    - {fileID: -5374424138294719847, guid: af13aaf8a13a1204faff208cf74bf430, type: 3}
+    - {fileID: -4902575091346270205, guid: af13aaf8a13a1204faff208cf74bf430, type: 3}
+    - {fileID: -3649012883325709004, guid: af13aaf8a13a1204faff208cf74bf430, type: 3}
+    - {fileID: -3497126290187406219, guid: af13aaf8a13a1204faff208cf74bf430, type: 3}
+    sfx: {fileID: 0}
+  reflectionPerson:
+    eventId: D3_NR03
+    areaId: 200
+    effectObjectId: OBJ_TREAT_REFLECTION_01
+    probability: 0.3
+    duration: 2
+    triggerDelay: 0
+    viewportMargin: 0.05
+    horizontalCenterTolerance: 0.2
+    lockCctvInput: 0
+    moveDuringPresentation: 0
+    movementLocalOffset: {x: 0, y: 0, z: 0}
+    frameDuration: 0.1
+    frames: []
+    sfx: {fileID: 0}
+  reflectionNormalSprite: {fileID: -9051692800306759852, guid: a49afddf973a7f9468781a1cacb72c82, type: 3}
+  reflectionAbnormalSprite: {fileID: -3408982569624325271, guid: eb157b7d4a03ff849ba17603bd25490d, type: 3}
+  forceProbabilitySuccess: 0
 --- !u!1 &718819757
 GameObject:
   m_ObjectHideFlags: 0
@@ -4950,7 +5086,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 1700187389}
+  m_Material: {fileID: 105894600}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -6834,8 +6970,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 1190461294
-  m_fontColor: {r: 0.43295518, g: 1, b: 0.95793676, a: 0.27311203}
+    rgba: 1056243566
+  m_fontColor: {r: 0.43295518, g: 1, b: 0.95793676, a: 0.24357381}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -9522,58 +9658,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1673547497}
   m_CullTransparentMesh: 1
---- !u!21 &1700187389
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: ReportBackGround_CCTV_UI_Panel_Runtime
-  m_Shader: {fileID: 4800000, guid: ec239ae2aedd33e4dbe5b1f14b729ee3, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _Brightness: 1
-    - _ChromaticAberration: 0
-    - _ColorMask: 15
-    - _Desaturation: 0
-    - _EffectIntensity: 1
-    - _FlickerStrength: 0
-    - _GlitchStrength: 0
-    - _NoiseSpeed: 0
-    - _NoiseStrength: 0
-    - _NoiseTime: 90.09663
-    - _ScanlineCount: 50
-    - _ScanlineStrength: 0
-    - _Stencil: 0
-    - _StencilComp: 8
-    - _StencilOp: 0
-    - _StencilReadMask: 255
-    - _StencilWriteMask: 255
-    - _UseUIAlphaClip: 0
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _TintColor: {r: 1, g: 1, b: 1, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &1715698137
 GameObject:
   m_ObjectHideFlags: 0
@@ -10914,6 +10998,7 @@ MonoBehaviour:
   bgmSource: {fileID: 918415046}
   secondaryBgmSource: {fileID: 2109122750}
   sfxSource: {fileID: 1365220175}
+  dialogueTypingSource: {fileID: 0}
   initialBgm: {fileID: 8300000, guid: 17d49c9a87ff6c84cba107acea050ecd, type: 3}
   playInitialBgmOnStart: 1
   cctvBgm: {fileID: 8300000, guid: c3e3965f550151b46816a22f799e4f08, type: 3}
@@ -10923,9 +11008,16 @@ MonoBehaviour:
   failBgmVolumeMultiplier: 0.4
   phoneRingSfx: {fileID: 8300000, guid: ca3d9278e139d8444a83a85c7191b6eb, type: 3}
   phoneHangupSfx: {fileID: 8300000, guid: f8cd2c9b173bd1c4c892d2769443209a, type: 3}
+  dialogueTypingSfx: {fileID: 0}
+  failureResultSfx: {fileID: 0}
+  failureHandCoverSfx: {fileID: 0}
   reportPaperSfx: {fileID: 8300000, guid: d8a41d25b15f67c448384dd67d6e5fed, type: 3}
+  foundAnomalyPanelOpenSfx: {fileID: 0}
+  reportSelectionClickSfx: {fileID: 0}
+  cctvEntryTransitionSfx: {fileID: 0}
   cctvChannelSwitchSfx: {fileID: 8300000, guid: 6457b67328cf9af4cadcc014ff1f55a9, type: 3}
   correctReportSfx: {fileID: 8300000, guid: c64eb93f26d2220448ea7f66b0705ad1, type: 3}
+  day2FirstCorrectReportSfx: {fileID: 0}
   anomalyAppearedSfx: {fileID: 8300000, guid: 49cabc911895f544c89ec93ed537b386, type: 3}
   wrongOrMissedReportSfx: {fileID: 8300000, guid: 92ebd22693dd5634881a2f807cec262e, type: 3}
   doorOpenSfx: {fileID: 8300000, guid: 8015cfc262f40f745ad5c386c948e094, type: 3}
