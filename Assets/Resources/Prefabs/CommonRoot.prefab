@@ -2503,7 +2503,7 @@ MonoBehaviour:
   m_text: 00:00
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 72dfcde239451f747b224788e6e91db6, type: 2}
-  m_sharedMaterial: {fileID: 0}
+  m_sharedMaterial: {fileID: 7707905585773083037, guid: 72dfcde239451f747b224788e6e91db6, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4771,9 +4771,9 @@ MonoBehaviour:
   terminalFailureNoiseProfile: {fileID: 0}
   fallbackTerminalFailureNoiseDuration: 2
   ReportSprites:
-  - {fileID: 2881306688264789129, guid: 7dba3233d1ce7634ba27bb6c9bd4dad3, type: 3}
-  - {fileID: -7612740012447542524, guid: f7be1e587e49c9647893465bbd14010e, type: 3}
-  - {fileID: -5577983563727503907, guid: f0ec861f2b873a74684ec24ca688ddaa, type: 3}
+  - {fileID: 6536014898038185801, guid: c00ceeff1fbec32449dccf2a1aeefa9f, type: 3}
+  - {fileID: 6536014898038185801, guid: c00ceeff1fbec32449dccf2a1aeefa9f, type: 3}
+  - {fileID: 6536014898038185801, guid: c00ceeff1fbec32449dccf2a1aeefa9f, type: 3}
 --- !u!114 &8577024215975134248
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10442,7 +10442,7 @@ MonoBehaviour:
   m_text: "CCTV - 001\n\uC5F0\uAD6C\uC2E4 \uBCF5\uB3C4"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 72dfcde239451f747b224788e6e91db6, type: 2}
-  m_sharedMaterial: {fileID: 0}
+  m_sharedMaterial: {fileID: 7707905585773083037, guid: 72dfcde239451f747b224788e6e91db6, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
