@@ -70,6 +70,15 @@ public class FieldStoryRecordCollection : MonoBehaviour
 
         if (dayFlowController == null)
             dayFlowController = FindFirstObjectByType<Day1FlowController>(FindObjectsInactive.Include);
+
+        if (dayFlowController != null &&
+            dayFlowController.CurrentEmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection)
+        {
+            FieldModeController fieldModeController = FindFirstObjectByType<FieldModeController>(FindObjectsInactive.Include);
+            fieldModeController?.PlayPowerRestoreLightEffect();
+            SoundManager.Instance?.PlayBreakerPowerOnSfx();
+        }
+
         dayFlowController?.CompleteEmergencyObjective();
         Debug.Log($"[FieldStoryRecordCollection] Collection completed. flag={completionStoryFlag}");
     }

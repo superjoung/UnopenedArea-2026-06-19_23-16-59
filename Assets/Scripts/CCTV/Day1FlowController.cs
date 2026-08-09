@@ -78,6 +78,9 @@ public class Day1FlowController : MonoBehaviour
     public bool IsTerminalFailurePresentationActive { get; private set; }
     public bool IsAwaitingTitleStart { get; private set; }
     public int DayNumber => dayDefinition != null ? dayDefinition.Day : 0;
+    public EmergencyObjectiveType CurrentEmergencyObjectiveType => dayDefinition != null
+        ? dayDefinition.EmergencyObjectiveType
+        : global::EmergencyObjectiveType.PowerRestore;
 
     public System.Action<Day1FlowState> StateChanged;
     public System.Action<string> FlowMessageChanged;
@@ -606,7 +609,7 @@ public class Day1FlowController : MonoBehaviour
             return dayDefinition.EmergencyDispatchText;
 
         return dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection
-            ? "정전이 발생했다. 메인룸의 문을 통해 설비실 기록을 확인하십시오."
+            ? "통신과 전력이 불안정하다. 메인룸의 문을 통해 제어실 외부를 확인하십시오."
             : dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.ServerReboot
                 ? "서버 경보가 발생했다. 메인룸의 문을 통해 서버실 제어반을 확인하십시오."
                 : "정전이 발생했다. 메인룸의 문을 통해 제어실 외부로 나가십시오.";
@@ -618,7 +621,7 @@ public class Day1FlowController : MonoBehaviour
             return dayDefinition.EmergencyFieldObjectiveText;
 
         return dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection
-            ? "설비실의 찢긴 기록을 찾아 조사하십시오."
+            ? "바닥에 수상한 기록물이 떨어져 있다. 가까이 다가가 E 키로 조사하십시오."
             : dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.ServerReboot
                 ? "서버 제어반을 조작해 시스템을 재부팅하십시오."
                 : "배전반을 찾아 E를 꾹 눌러 전력을 복구하십시오.";
@@ -630,7 +633,7 @@ public class Day1FlowController : MonoBehaviour
             return dayDefinition.EmergencyRecoveryText;
 
         return dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection
-            ? "기록 확인 완료. 제어실로 돌아가 CCTV 감시를 재개하십시오."
+            ? "시스템이 자동으로 복구되고 있다. 제어실로 돌아가 감시를 재개하십시오."
             : dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.ServerReboot
                 ? "서버 재부팅 완료. 제어실로 돌아가 CCTV 감시를 재개하십시오."
                 : "전력 복구 완료. 제어실로 돌아가 CCTV를 재가동하십시오.";

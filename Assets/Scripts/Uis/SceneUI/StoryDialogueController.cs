@@ -138,6 +138,7 @@ public class StoryDialogueController : MonoBehaviour
     {
         if (typingRoutine != null)
             StopCoroutine(typingRoutine);
+        SoundManager.Instance?.StopDialogueTypingSfx();
 
         DialogueLine line = phoneDialogue[currentLineIndex];
         if (speakerNameText != null)
@@ -152,6 +153,7 @@ public class StoryDialogueController : MonoBehaviour
         dialogueText.text = line.dialogue ?? string.Empty;
         dialogueText.maxVisibleCharacters = 0;
         lineFullyShown = false;
+        SoundManager.Instance?.StartDialogueTypingSfx();
         typingRoutine = StartCoroutine(TypeCurrentLine());
     }
 
@@ -167,6 +169,7 @@ public class StoryDialogueController : MonoBehaviour
 
         lineFullyShown = true;
         typingRoutine = null;
+        SoundManager.Instance?.StopDialogueTypingSfx();
     }
 
     private void CompleteCurrentLineImmediately()
@@ -176,6 +179,8 @@ public class StoryDialogueController : MonoBehaviour
             StopCoroutine(typingRoutine);
             typingRoutine = null;
         }
+
+        SoundManager.Instance?.StopDialogueTypingSfx();
 
         if (dialogueText != null)
             dialogueText.maxVisibleCharacters = int.MaxValue;
@@ -191,6 +196,7 @@ public class StoryDialogueController : MonoBehaviour
         if (typingRoutine != null)
             StopCoroutine(typingRoutine);
         typingRoutine = null;
+        SoundManager.Instance?.StopDialogueTypingSfx();
 
         isPlaying = false;
         inputReady = false;
@@ -385,6 +391,7 @@ public class StoryDialogueController : MonoBehaviour
         if (typingRoutine != null)
             StopCoroutine(typingRoutine);
         typingRoutine = null;
+        SoundManager.Instance?.StopDialogueTypingSfx();
 
         if (startDialogueRoutine != null)
             StopCoroutine(startDialogueRoutine);
