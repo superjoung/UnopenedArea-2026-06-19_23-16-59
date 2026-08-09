@@ -4588,7 +4588,7 @@ MonoBehaviour:
     eventId: D3_NR01
     areaId: 400
     effectObjectId: 
-    probability: 0.3
+    probability: 0.7
     duration: 0.5
     triggerDelay: 0.35
     viewportMargin: 0.05
@@ -4604,7 +4604,7 @@ MonoBehaviour:
     eventId: D3_NR02
     areaId: 100
     effectObjectId: OBJ_DORM_CEILING_PERSON_01
-    probability: 0.25
+    probability: 0.7
     duration: 2
     triggerDelay: 0
     viewportMargin: 0.05
@@ -4623,7 +4623,7 @@ MonoBehaviour:
     eventId: D3_NR03
     areaId: 200
     effectObjectId: OBJ_TREAT_REFLECTION_01
-    probability: 0.3
+    probability: 0.7
     duration: 2
     triggerDelay: 0
     viewportMargin: 0.05

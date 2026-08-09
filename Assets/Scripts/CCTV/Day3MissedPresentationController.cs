@@ -13,7 +13,7 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
         public string eventId;
         public AreaId areaId;
         public string effectObjectId;
-        [Range(0f, 1f)] public float probability = 0.3f;
+        [Range(0f, 1f)] public float probability = 0.7f;
         [Min(0.05f)] public float duration = 0.5f;
         [Min(0f)] public float triggerDelay;
         [Tooltip("세로 방향으로 화면 밖을 허용할 여유입니다.")]
@@ -47,7 +47,7 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
     {
         eventId = "D3_NR01",
         areaId = AreaId.ServerRoom,
-        probability = 0.3f,
+        probability = 0.7f,
         duration = 0.5f,
         triggerDelay = 0.35f,
     };
@@ -58,7 +58,7 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
         eventId = "D3_NR02",
         areaId = AreaId.LabCorridor,
         effectObjectId = "OBJ_DORM_CEILING_PERSON_01",
-        probability = 0.25f,
+        probability = 0.7f,
         duration = 0.8f,
         viewportMargin = 0.05f,
         horizontalCenterTolerance = 0.2f,
@@ -74,7 +74,7 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
         eventId = "D3_NR03",
         areaId = AreaId.TreatmentRoom,
         effectObjectId = "OBJ_TREAT_REFLECTION_01",
-        probability = 0.3f,
+        probability = 0.7f,
         duration = 2f,
         viewportMargin = 0.05f,
         horizontalCenterTolerance = 0.2f,

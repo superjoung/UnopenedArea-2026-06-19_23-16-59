@@ -105,6 +105,33 @@ public static class CCTVReportLabelProvider
         }
     }
 
+    /// <summary>
+    /// 보고판의 현상 유형이 서로 어떻게 다른지 설명하는 짧은 판정 기준입니다.
+    /// 특정 이상현상의 정답을 직접 알려주지 않고, 유형의 의미만 안내합니다.
+    /// </summary>
+    public static string GetReportTypeDescription(AnomalyReportType type)
+    {
+        switch (type)
+        {
+            case AnomalyReportType.PositionChange:
+                return "대상이 정상 위치에서 다른 자리로 옮겨진 현상입니다.";
+            case AnomalyReportType.Added:
+                return "기준 화면에 없던 대상이 새로 나타난 현상입니다.";
+            case AnomalyReportType.Missing:
+                return "기준 화면에 있던 대상이 보이지 않게 된 현상입니다.";
+            case AnomalyReportType.StateChange:
+                return "대상의 자세·방향·열림과 닫힘 등 상태가 달라진 현상입니다.";
+            case AnomalyReportType.ShapeChange:
+                return "대상의 외형이나 모양 자체가 비정상적으로 변형·훼손된 현상입니다.";
+            case AnomalyReportType.AbnormalBehavior:
+                return "사람이나 물체가 이동·떨림·반복 동작 등 비정상적으로 움직이는 현상입니다.";
+            case AnomalyReportType.None:
+                return string.Empty;
+            default:
+                return "선택한 현상 유형의 판정 기준을 확인할 수 없습니다.";
+        }
+    }
+
     public static List<string> GetAreaLabels(IReadOnlyList<AreaId> ids)
     {
         var labels = new List<string>();

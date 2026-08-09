@@ -137,6 +137,11 @@ MonoBehaviour:
   shrinkAfterCharacterCount: 5
   shortLabelFontSize: 32
   longLabelFontSizeMultiplier: 0.9
+  anomalyTooltipBackground: {fileID: 3103802003055923781, guid: 50ddb8c8d1d4844468c3cf4581e94809, type: 3}
+  anomalyTooltipFont: {fileID: 11400000, guid: 7fa6499f646b5c04c817bb3bd676a826, type: 2}
+  anomalyTooltipSize: {x: 460, y: 190}
+  anomalyTooltipOffset: {x: 30, y: 30}
+  anomalyTooltipFontSize: 28
 --- !u!1 &4433654832080165162
 GameObject:
   m_ObjectHideFlags: 0

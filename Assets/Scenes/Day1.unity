@@ -3948,6 +3948,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 709629007}
+  - component: {fileID: 709629008}
   m_Layer: 0
   m_Name: Day1ContentRoot
   m_TagString: Untagged
@@ -3972,6 +3973,40 @@ Transform:
   - {fileID: 1777691980}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &709629008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 709629006}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8a47d2ed8be42dcb4b2db55763f52a1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  dayRuntimeController: {fileID: 0}
+  areaView: {fileID: 0}
+  sceneController: {fileID: 0}
+  fieldModeController: {fileID: 0}
+  anomalyService: {fileID: 0}
+  screenEffectController: {fileID: 0}
+  cctvCamera: {fileID: 0}
+  edgePerson:
+    eventId: D1_NR01
+    areaId: 100
+    probability: 0.7
+    duration: 0.7
+    sprite: {fileID: 1640325418590000183, guid: afd70b7096ad796499cf42e83361e988, type: 3}
+  edgeStartViewport: {x: 1.12, y: 0.45}
+  edgeEndViewport: {x: 0.82, y: 0.45}
+  edgePersonViewportHeight: 0.65
+  treatmentFace:
+    eventId: D1_NR02
+    areaId: 200
+    probability: 0.7
+    duration: 0.5
+    sprite: {fileID: 7278465062702371622, guid: c0c24ce9c6f93734e8ae87a6f40bf967, type: 3}
 --- !u!1 &726485948
 GameObject:
   m_ObjectHideFlags: 0

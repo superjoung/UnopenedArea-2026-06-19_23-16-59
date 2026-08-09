@@ -20,8 +20,10 @@ public class Day2MissedPresentationController : MonoBehaviour
         [Tooltip("화면 가로 중앙 판정 범위입니다. CCTV는 좌우로만 이동하므로 Y 위치는 판정하지 않습니다.")]
         [Range(0.01f, 0.5f)] public float centerTolerance = 0.1f;
         [Min(0.1f)] public float presentationDuration = 2f;
+        [Range(0f, 1f)] public float probability = 0.7f;
 
         [HideInInspector] public bool played;
+        [HideInInspector] public int lastAttemptedMissedCount;
     }
 
     [Header("References")]
@@ -96,10 +98,17 @@ public class Day2MissedPresentationController : MonoBehaviour
         {
             ViewportIntrusion intrusion = viewportIntrusions[i];
             if (intrusion == null || intrusion.played ||
+                intrusion.lastAttemptedMissedCount >= dayRuntimeController.MissedAnomalyCount ||
                 dayRuntimeController.MissedAnomalyCount < intrusion.requiredMissedCount ||
                 areaView.CurrentArea == null || areaView.CurrentArea.AreaId != intrusion.areaId ||
                 !TryGetCurrentEffectRoot(intrusion, out GameObject effectRoot) ||
                 !IsEffectAtViewportCenter(effectRoot.transform, intrusion.centerTolerance))
+                continue;
+
+            intrusion.lastAttemptedMissedCount = dayRuntimeController.MissedAnomalyCount;
+            bool success = Random.value <= intrusion.probability;
+            Debug.Log($"[Day2MissedPresentationController] chance event={intrusion.effectObjectId}, probability={intrusion.probability:0.00}, success={success}", this);
+            if (!success)
                 continue;
 
             activePresentationRoutine = StartCoroutine(PlayViewportIntrusion(intrusion));
@@ -217,6 +226,7 @@ public class Day2MissedPresentationController : MonoBehaviour
                 continue;
 
             intrusion.played = false;
+            intrusion.lastAttemptedMissedCount = 0;
             if (TryGetEffectRootInAnyPreparedArea(intrusion, out GameObject effectRoot))
             {
                 Animator animator = effectRoot.GetComponentInChildren<Animator>(true);
@@ -276,6 +286,7 @@ public class Day2MissedPresentationController : MonoBehaviour
                 effectObjectId = "OBJ_TREAT_CURTAIN_HAND_01",
                 centerTolerance = 0.1f,
                 presentationDuration = 2f,
+                probability = 0.7f,
             },
             new ViewportIntrusion
             {
@@ -284,6 +295,7 @@ public class Day2MissedPresentationController : MonoBehaviour
                 effectObjectId = "OBJ_TREAT_UNDERBED_PERSON_01",
                 centerTolerance = 0.1f,
                 presentationDuration = 2f,
+                probability = 0.7f,
             },
         };
     }

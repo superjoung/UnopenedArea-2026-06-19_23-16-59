@@ -3803,12 +3803,14 @@ MonoBehaviour:
     effectObjectId: OBJ_TREAT_CURTAIN_HAND_01
     centerTolerance: 0.1
     presentationDuration: 2
+    probability: 0.7
     played: 0
   - requiredMissedCount: 3
     areaId: 200
     effectObjectId: OBJ_TREAT_UNDERBED_PERSON_01
     centerTolerance: 0.1
     presentationDuration: 2
+    probability: 0.7
     played: 0
   faceFlashObjectName: FaceImg
   cctvRawImageName: RawImage_CCTVScreen
