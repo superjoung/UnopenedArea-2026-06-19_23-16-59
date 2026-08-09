@@ -56,6 +56,8 @@ public class AnomalyPresentationController : MonoBehaviour
 
     private CCTVAreaView areaView;
     private CCTVAreaInstance ownerArea;
+    private Camera visibilityCamera;
+    private TransitionEffect transitionEffect;
     private bool playRequested;
     private bool isPlaying;
     private Vector3 glideStartLocalPosition;
@@ -90,6 +92,11 @@ public class AnomalyPresentationController : MonoBehaviour
 
     private void Update()
     {
+        // AreaShown은 채널이 선택된 순간 발생하므로, 긴 맵의 화면 밖 대상은
+        // 카메라가 실제로 도달할 때까지 프레젠테이션 시작을 보류한다.
+        if (playRequested && !isPlaying && startTiming == StartTiming.WhenCctvAreaIsShown)
+            TryStartForCurrentArea();
+
         if (!isPlaying)
             return;
 
@@ -139,14 +146,16 @@ public class AnomalyPresentationController : MonoBehaviour
         spriteFrameElapsed = 0f;
         spriteFrameIndex = 0;
 
-        if (originalSpriteCached && targetSpriteRenderer != null)
-            targetSpriteRenderer.sprite = originalSprite;
-
         if (originalLocalRotationCached)
             transform.localRotation = originalLocalRotation;
 
         if (targetAnimator != null)
             targetAnimator.Rebind();
+
+        // Sprite 키가 없는 Idle 상태는 Rebind만으로 마지막 애니메이션 프레임을
+        // 되돌리지 못한다. Animator 초기화 뒤 활성화 당시의 정상 스프라이트를 복원한다.
+        if (originalSpriteCached && targetSpriteRenderer != null)
+            targetSpriteRenderer.sprite = originalSprite;
     }
 
     private void HandleAreaShown(CCTVAreaInstance shownArea)
@@ -155,7 +164,7 @@ public class AnomalyPresentationController : MonoBehaviour
             return;
 
         if (!isPlaying || replayWhenAreaIsShown)
-            StartNow();
+            TryStartForCurrentArea();
     }
 
     private void TryStartForCurrentArea()
@@ -163,8 +172,41 @@ public class AnomalyPresentationController : MonoBehaviour
         if (!playRequested || startTiming != StartTiming.WhenCctvAreaIsShown)
             return;
 
-        if (areaView != null && areaView.CurrentInstance == ownerArea)
+        if (areaView != null &&
+            areaView.CurrentInstance == ownerArea &&
+            !IsAppearanceMaskActive() &&
+            IsTargetVisibleInCctv())
             StartNow();
+    }
+
+    private bool IsAppearanceMaskActive()
+    {
+        if (transitionEffect == null)
+            transitionEffect = FindFirstObjectByType<TransitionEffect>();
+
+        return transitionEffect != null && transitionEffect.IsAnomalyBlinkPlaying;
+    }
+
+    private bool IsTargetVisibleInCctv()
+    {
+        if (targetSpriteRenderer == null)
+            targetSpriteRenderer = GetComponent<SpriteRenderer>();
+
+        if (visibilityCamera == null)
+        {
+            CCTVScreenEffectController screenEffect = FindFirstObjectByType<CCTVScreenEffectController>();
+            visibilityCamera = screenEffect != null && screenEffect.WorldCamera != null
+                ? screenEffect.WorldCamera
+                : Camera.main;
+        }
+
+        if (targetSpriteRenderer == null || visibilityCamera == null || !targetSpriteRenderer.enabled)
+            return false;
+
+        Vector3 viewport = visibilityCamera.WorldToViewportPoint(targetSpriteRenderer.bounds.center);
+        return viewport.z > 0f &&
+               viewport.x >= 0f && viewport.x <= 1f &&
+               viewport.y >= 0f && viewport.y <= 1f;
     }
 
     private void StartNow()
@@ -276,6 +318,13 @@ public class AnomalyPresentationController : MonoBehaviour
 
         if (targetSpriteRenderer == null)
             targetSpriteRenderer = GetComponent<SpriteRenderer>();
+
+        // Animator 프레젠테이션도 마지막 프레임에서 멈추므로 최초 정상 모습을 보존한다.
+        if (!originalSpriteCached && targetSpriteRenderer != null)
+        {
+            originalSprite = targetSpriteRenderer.sprite;
+            originalSpriteCached = true;
+        }
 
         if (ownerArea == null)
             ownerArea = GetComponentInParent<CCTVAreaInstance>();

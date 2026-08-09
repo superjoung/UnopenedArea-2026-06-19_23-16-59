@@ -97,6 +97,7 @@ public class CCTVSceneUI : BaseUI
     private Coroutine initialMonitoringIntroCoroutine;
     private Coroutine initialReportSelectionRoutine;
     private bool initialMonitoringIntroPlayed;
+    private const int InitialReportSelectionMaxWaitFrames = 60;
 
     // 보고 제출 시 사용할 내부 선택값. UI 표시 문자열이 아니라 enum/id 값을 저장한다.
     private AreaId selectedAreaId = AreaId.None;
@@ -156,6 +157,14 @@ public class CCTVSceneUI : BaseUI
         Debug.Log($"[INFO] CCTVSceneUI::OnClickReportSendButton - 보고서 전송 버튼 클릭 area={selectedAreaId}, object={selectedObjectId}, target={selectedTargetId}, type={selectedReportType}");
 
         ResolveReferences();
+        EnsureInitialReportSelectionsReady();
+
+        if (!HasCompleteReportSelection())
+        {
+            Debug.LogWarning("[WARN] CCTVSceneUI::OnClickReportSendButton - 보고 선택지가 아직 준비되지 않아 제출을 보류합니다.");
+            SetReportSendInteractable(false);
+            return;
+        }
 
         if (anomalyService == null)
         {
@@ -177,7 +186,8 @@ public class CCTVSceneUI : BaseUI
                 ? matchedRuntime.Definition.AnomalyId
                 : "Unknown";
 
-            // Day 2의 첫 정답 보고는 공용 정답음과 별도로 전용 연출음을 한 번만 더 낸다.
+            // 모든 정답 보고는 공용 해결음을 재생한다.
+            // Day 2의 첫 정답 보고만 전용 목소리를 추가로 겹쳐 재생한다.
             bool isDay2FirstCorrectReport = dayRuntimeController != null &&
                                             dayRuntimeController.CurrentDayDefinition != null &&
                                             dayRuntimeController.CurrentDayDefinition.Day == 2 &&
@@ -186,12 +196,9 @@ public class CCTVSceneUI : BaseUI
             if (dayRuntimeController != null)
                 dayRuntimeController.RegisterCorrectReport();
 
-            if (!isDay2FirstCorrectReport ||
-                SoundManager.Instance == null ||
-                !SoundManager.Instance.PlayDay2FirstCorrectReportSfx())
-            {
-                SoundManager.Instance?.PlayCorrectReportSfx();
-            }
+            SoundManager.Instance?.PlayCorrectReportSfx();
+            if (isDay2FirstCorrectReport)
+                SoundManager.Instance?.PlayDay2FirstCorrectReportSfx();
 
             if (GameManager.Instance != null)
                 GameManager.Instance.NotifyDayCorrectReport(matchedRuntime);
@@ -356,6 +363,10 @@ public class CCTVSceneUI : BaseUI
         // W키 보고 패널 토글: 열 때는 기본 보고 높이, 닫을 때는 전체 높이 기준 아래로 내린다.
         if (!_isReport)
         {
+            // Area 프리팹 준비가 Start 순서보다 늦었던 경우에도, 화면에 보이는
+            // 프리팹 기본 문구와 실제 제출값이 어긋난 채 보고판이 열리지 않게 한다.
+            EnsureInitialReportSelectionsReady();
+
             // 선택값은 새 씬의 최초 준비 때만 확정한다. 보고판 재오픈/CCTV 재진입에서는
             // 플레이어가 마지막으로 고른 장소·물건·현상을 그대로 유지한다.
             SetReportSendInteractable(CanSubmitReport());
@@ -605,8 +616,17 @@ public class CCTVSceneUI : BaseUI
 
     private IEnumerator InitializeReportSelectionsAfterSceneReady()
     {
-        yield return null;
-        RefreshInitialReportSelections();
+        // CCTVTestSceneController와 CCTVAreaView의 Start 순서는 씬 구성에 따라 달라질 수 있다.
+        // 실제 Area 오브젝트 후보가 준비될 때까지 잠시 재시도하여 프리팹 문구만 보이고
+        // 내부 선택값은 None인 초기 상태를 남기지 않는다.
+        for (int frame = 0; frame < InitialReportSelectionMaxWaitFrames; frame++)
+        {
+            yield return null;
+            EnsureInitialReportSelectionsReady();
+
+            if (HasCompleteReportSelection())
+                break;
+        }
 
         // 눈깜빡임/강제 닫힘 연출이 이전에 버튼을 꺼두었더라도, 정상 감시 상태라면
         // 보고판을 다시 열어 제출할 수 있어야 한다.
@@ -614,6 +634,30 @@ public class CCTVSceneUI : BaseUI
             SetReportSendInteractable(CanSubmitReport());
 
         initialReportSelectionRoutine = null;
+    }
+
+    private void EnsureInitialReportSelectionsReady()
+    {
+        if (HasCompleteReportSelection())
+            return;
+
+        ResolveReferences();
+
+        if (selectedAreaId == AreaId.None)
+            RefreshAreaReportContents();
+
+        if (selectedTargetId == ReportTargetId.None && GetSelectedOrCurrentAreaInstance() != null)
+            RefreshObjectReportContents();
+
+        if (selectedReportType == AnomalyReportType.None)
+            RefreshTypeReportContents();
+    }
+
+    private bool HasCompleteReportSelection()
+    {
+        return selectedAreaId != AreaId.None &&
+               selectedTargetId != ReportTargetId.None &&
+               selectedReportType != AnomalyReportType.None;
     }
 
     private void RefreshInitialReportSelections()

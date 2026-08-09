@@ -61,7 +61,27 @@ public static class DaySessionLoader
     {
         PausePanelController.ResetGlobalPauseState();
         DayTitleController.ResetGlobalInputBlock();
-        GameManager.Instance?.ResetDayRuntimeState();
-        SoundManager.Instance?.ResetForDayLoad();
+        // Do not use GameManager.Instance here: its lazy getter can manufacture an
+        // empty persistent manager during the narrow scene-unload window.
+        try
+        {
+            GameManager.Instance?.ResetDayRuntimeState();
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogException(exception);
+        }
+
+        // Audio cleanup is optional preparation. A missing AudioSource must never
+        // prevent the requested Day scene from actually loading.
+        try
+        {
+            SoundManager.Instance?.ResetForDayLoad();
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogException(exception);
+        }
     }
+
 }

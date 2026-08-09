@@ -32,6 +32,7 @@ public class Day1FlowController : MonoBehaviour
     [SerializeField] private StoryDialogueController storyDialogueController;
     [SerializeField] private MainRoomStateEffectController mainRoomStateEffectController;
     [SerializeField] private Day2BlackoutForeshadowController day2BlackoutForeshadowController;
+    [SerializeField] private MissedAnomalyWarningOverlay missedAnomalyWarningOverlay;
 
     [Header("Tutorial Presentation")]
     [SerializeField, Min(0f)] private float tutorialChannelActivationDelay = 0.5f;
@@ -109,8 +110,12 @@ public class Day1FlowController : MonoBehaviour
         areaTransitionController?.EnterMainRoom();
 
         DayTitleController titleController = FindFirstObjectByType<DayTitleController>();
-        IsAwaitingTitleStart = titleController != null && titleController.WaitForPlayerStart;
-        if (!IsAwaitingTitleStart)
+        // DayTitleController가 있으면 타이틀 표시 여부와 관계없이 해당 컨트롤러가
+        // 전화 시작 시점(일반 시작/재시작/다음 날 지연)을 전담한다.
+        // WaitForPlayerStart만 확인하면 타이틀을 건너뛴 재시작에서 이 Start가
+        // 지연 코루틴보다 먼저 Briefing을 시작해 전화가 즉시 울리게 된다.
+        IsAwaitingTitleStart = titleController != null;
+        if (titleController == null)
             BeginDayBriefing();
     }
 
@@ -520,6 +525,11 @@ public class Day1FlowController : MonoBehaviour
             return;
 
         emergencyDispatchStarted = true;
+        // 정전 전조(특히 Day 2 Staff 이동) 위에 미보고 5초 붉은 비네트가
+        // 겹치지 않도록 현장 전환을 확정하는 즉시 제거한다.
+        if (missedAnomalyWarningOverlay == null)
+            missedAnomalyWarningOverlay = FindFirstObjectByType<MissedAnomalyWarningOverlay>(FindObjectsInactive.Include);
+        missedAnomalyWarningOverlay?.HideForEmergencyTransition();
         emergencyDispatchRoutine = StartCoroutine(BeginEmergencyDispatchRoutine(isDebug));
     }
 
@@ -837,6 +847,9 @@ public class Day1FlowController : MonoBehaviour
 
         if (day2BlackoutForeshadowController == null)
             day2BlackoutForeshadowController = FindFirstObjectByType<Day2BlackoutForeshadowController>(FindObjectsInactive.Include);
+
+        if (missedAnomalyWarningOverlay == null)
+            missedAnomalyWarningOverlay = FindFirstObjectByType<MissedAnomalyWarningOverlay>(FindObjectsInactive.Include);
     }
 
     /// <summary>

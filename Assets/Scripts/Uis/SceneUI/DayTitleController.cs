@@ -113,9 +113,11 @@ public class DayTitleController : MonoBehaviour
         day = DaySessionLoader.GetLoadedDayOrFallback(day);
         DayProgressSave.SetCurrentDay(day);
 
-        // Day 1 재시작은 즉시 시작하고, 다음 날 씬 전환만 페이드 완료 후 대기 시간을 둔다.
-        if (day > 1 && nextDayPhoneStartDelay > 0f)
-            yield return new WaitForSecondsRealtime(nextDayPhoneStartDelay);
+        // 타이틀을 건너뛰는 재시작에서도 전화가 즉시 울리지 않게 한다.
+        // Day 1은 일반 시작 지연, Day 2 이상은 일차 전환용 지연을 사용한다.
+        float delay = day > 1 ? nextDayPhoneStartDelay : phoneStartDelay;
+        if (delay > 0f)
+            yield return new WaitForSecondsRealtime(delay);
 
         dayFlowController?.BeginDayBriefing();
         IsBlockingWorldInteractions = false;

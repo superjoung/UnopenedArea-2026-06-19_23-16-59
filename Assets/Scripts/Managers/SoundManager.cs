@@ -158,8 +158,13 @@ public class SoundManager : MonoBehaviour
     {
         isFailBgmMode = true;
         isCctvBgmMode = false;
-        bgmSource?.Stop();
-        secondaryBgmSource?.Stop();
+        // UnityEngine.Object can represent a destroyed/unassigned serialized
+        // reference that is not CLR-null. Null-conditional calls bypass Unity's
+        // overloaded null check and can throw during a scene handoff.
+        if (bgmSource != null)
+            bgmSource.Stop();
+        if (secondaryBgmSource != null)
+            secondaryBgmSource.Stop();
         if (failBgm == null || secondaryBgmSource == null)
             return;
 
@@ -180,9 +185,12 @@ public class SoundManager : MonoBehaviour
         isFailBgmMode = false;
         useFirstFootstepClip = true;
 
-        secondaryBgmSource?.Stop();
-        sfxSource?.Stop();
-        dialogueTypingSource?.Stop();
+        if (secondaryBgmSource != null)
+            secondaryBgmSource.Stop();
+        if (sfxSource != null)
+            sfxSource.Stop();
+        if (dialogueTypingSource != null)
+            dialogueTypingSource.Stop();
         activeDialogueTypingSource = null;
 
         if (initialBgm != null)

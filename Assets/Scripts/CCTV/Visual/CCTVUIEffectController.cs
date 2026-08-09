@@ -3,7 +3,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-[ExecuteAlways]
 public class CCTVUIEffectController : MonoBehaviour
 {
     private static readonly int TintColorId = Shader.PropertyToID("_TintColor");

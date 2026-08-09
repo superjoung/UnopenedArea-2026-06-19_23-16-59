@@ -69,3 +69,6 @@ MonoBehaviour:
   - anomaly: {fileID: 11400000, guid: 2c10d472753e1cb478ff2c338e8213bb, type: 2}
     weight: 1
     allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: cbc1a377d1c282943968da7e370b4226, type: 2}
+    weight: 1
+    allowRepeat: 1
