@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -17,6 +16,7 @@ public class Day3RecordRecoveryController : MonoBehaviour
     [SerializeField] private Transform returnDoor;
     [SerializeField] private Day1FlowController dayFlowController;
     [SerializeField] private FieldModeController fieldModeController;
+    [SerializeField] private MainSceneUI mainSceneUI;
 
     [Header("Placement")]
     [SerializeField] private Vector3 playerStartLocalPosition = new Vector3(-12.5f, 0.129f, 0f);
@@ -29,7 +29,11 @@ public class Day3RecordRecoveryController : MonoBehaviour
     [SerializeField] private KeyCode interactionKey = KeyCode.E;
     [SerializeField] private string completionStoryFlag = DefaultCompletionFlag;
 
-    private readonly List<SpriteRenderer> serverRackRenderers = new List<SpriteRenderer>();
+    [Header("Recovery UI")]
+    [SerializeField] private Font interfaceFont;
+    [SerializeField] private Sprite progressBarBackgroundSprite;
+    [SerializeField] private Sprite progressBarFillSprite;
+
     private Transform serverRoomField;
     private Transform terminal;
     private SpriteRenderer terminalRenderer;
@@ -38,6 +42,7 @@ public class Day3RecordRecoveryController : MonoBehaviour
     private bool waitingForInitialRelease;
     private bool recoveryCompleted;
     private bool completionAcknowledged;
+    private bool objectiveUiSuppressed;
     private float heldSeconds;
     private float completionInputUnlockAt;
 
@@ -45,6 +50,11 @@ public class Day3RecordRecoveryController : MonoBehaviour
     private GUIStyle titleStyle;
     private GUIStyle bodyStyle;
     private GUIStyle promptStyle;
+    private GUIStyle progressStyle;
+
+    private static readonly Color PanelOuterColor = new Color(0.02f, 0.035f, 0.04f, 0.98f);
+    private static readonly Color PanelInnerColor = new Color(0.055f, 0.075f, 0.08f, 0.98f);
+    private static readonly Color AccentColor = new Color(0.55f, 1f, 0.9f, 1f);
 
     public bool IsRecoveryCompleted => recoveryCompleted;
     public float HoldProgress => requiredHoldSeconds > 0f ? Mathf.Clamp01(heldSeconds / requiredHoldSeconds) : 0f;
@@ -64,23 +74,39 @@ public class Day3RecordRecoveryController : MonoBehaviour
 
     private void Update()
     {
-        if (PausePanelController.IsPaused || fieldModeRoot == null || !fieldModeRoot.gameObject.activeInHierarchy)
+        if (PausePanelController.IsPaused)
             return;
+
+        if (fieldModeRoot == null || !fieldModeRoot.gameObject.activeInHierarchy)
+        {
+            SetObjectiveUiSuppressed(false);
+            return;
+        }
 
         if (terminal == null || playerMovement == null || dayFlowController == null)
         {
+            SetObjectiveUiSuppressed(false);
             ResolveReferences();
             return;
         }
 
+        float distance = Vector2.Distance(playerMovement.transform.position, terminal.position);
+        bool inRange = distance <= interactionRange;
+        bool shouldSuppressObjective = screenOpen ||
+                                       (!recoveryCompleted &&
+                                        dayFlowController.State == Day1FlowState.EmergencyDispatch &&
+                                        inRange);
+        SetObjectiveUiSuppressed(shouldSuppressObjective);
+
         if (recoveryCompleted)
         {
-            SetTerminalHighlight(true, true);
+            RestoreTerminalColor();
             if (!completionAcknowledged && Time.unscaledTime >= completionInputUnlockAt &&
                 (Input.GetKeyDown(interactionKey) || Input.GetKeyDown(KeyCode.Escape)))
             {
                 completionAcknowledged = true;
                 screenOpen = false;
+                SetObjectiveUiSuppressed(false);
                 SetPlayerInputEnabled(true);
             }
             return;
@@ -90,22 +116,19 @@ public class Day3RecordRecoveryController : MonoBehaviour
         {
             if (screenOpen)
                 CloseRecoveryScreen();
-            SetTerminalHighlight(false, false);
+            RestoreTerminalColor();
             return;
         }
 
-        float distance = Vector2.Distance(playerMovement.transform.position, terminal.position);
-        bool inRange = distance <= interactionRange;
-
         if (!screenOpen)
         {
-            SetTerminalHighlight(inRange, false);
+            RestoreTerminalColor();
             if (inRange && Input.GetKeyDown(interactionKey))
                 OpenRecoveryScreen();
             return;
         }
 
-        SetTerminalHighlight(true, false);
+        RestoreTerminalColor();
 
         if (Input.GetKeyDown(KeyCode.Escape))
         {
@@ -169,14 +192,12 @@ public class Day3RecordRecoveryController : MonoBehaviour
         if (terminalRenderer != null)
             terminalNormalColor = terminalRenderer.color;
 
-        CacheServerRackRenderers();
-
         if (playerMovement != null)
             playerMovement.transform.localPosition = playerStartLocalPosition;
         if (returnDoor != null)
             returnDoor.localPosition = returnDoorLocalPosition;
 
-        SetTerminalHighlight(false, false);
+        RestoreTerminalColor();
         Debug.Log("[Day3RecordRecoveryController] Day 3 server-room field configured.");
     }
 
@@ -226,7 +247,6 @@ public class Day3RecordRecoveryController : MonoBehaviour
         heldSeconds = requiredHoldSeconds;
         completionInputUnlockAt = Time.unscaledTime + 0.5f;
         StoryFlagStore.Set(completionStoryFlag);
-        SetServerRackRecoveredVisual();
         fieldModeController?.PlayPowerRestoreLightEffect();
         dayFlowController.CompleteEmergencyObjective();
         Debug.Log($"[Day3RecordRecoveryController] Observation record restored. flag={completionStoryFlag}");
@@ -238,37 +258,22 @@ public class Day3RecordRecoveryController : MonoBehaviour
             playerMovement.SetInputEnabled(inputEnabled);
     }
 
-    private void CacheServerRackRenderers()
+    private void RestoreTerminalColor()
     {
-        serverRackRenderers.Clear();
-        foreach (SpriteRenderer renderer in serverRoomField.GetComponentsInChildren<SpriteRenderer>(true))
-        {
-            if (renderer != null && renderer.name.StartsWith("Server_", StringComparison.OrdinalIgnoreCase))
-                serverRackRenderers.Add(renderer);
-        }
+        if (terminalRenderer != null)
+            terminalRenderer.color = terminalNormalColor;
     }
 
-    private void SetServerRackRecoveredVisual()
+    private void SetObjectiveUiSuppressed(bool suppressed)
     {
-        Color recoveredTint = new Color(0.65f, 1f, 0.72f, 1f);
-        foreach (SpriteRenderer renderer in serverRackRenderers)
-        {
-            if (renderer != null)
-                renderer.color = recoveredTint;
-        }
-        SetTerminalHighlight(true, true);
-    }
+        if (mainSceneUI == null)
+            mainSceneUI = FindFirstObjectByType<MainSceneUI>(FindObjectsInactive.Include);
 
-    private void SetTerminalHighlight(bool highlighted, bool completed)
-    {
-        if (terminalRenderer == null)
+        if (mainSceneUI == null || objectiveUiSuppressed == suppressed)
             return;
 
-        terminalRenderer.color = completed
-            ? new Color(0.45f, 1f, 0.58f, terminalNormalColor.a)
-            : highlighted
-                ? Color.Lerp(terminalNormalColor, new Color(0.2f, 1f, 1f, terminalNormalColor.a), 0.55f)
-                : terminalNormalColor;
+        objectiveUiSuppressed = suppressed;
+        mainSceneUI.SetTemporarilySuppressed(suppressed);
     }
 
     private void ResolveReferences()
@@ -277,6 +282,8 @@ public class Day3RecordRecoveryController : MonoBehaviour
             dayFlowController = FindFirstObjectByType<Day1FlowController>(FindObjectsInactive.Include);
         if (fieldModeController == null)
             fieldModeController = FindFirstObjectByType<FieldModeController>(FindObjectsInactive.Include);
+        if (mainSceneUI == null)
+            mainSceneUI = FindFirstObjectByType<MainSceneUI>(FindObjectsInactive.Include);
         if (playerMovement == null)
             playerMovement = FindFirstObjectByType<FieldPlayerMovementController>(FindObjectsInactive.Include);
 
@@ -329,7 +336,9 @@ public class Day3RecordRecoveryController : MonoBehaviour
             Vector2.Distance(playerMovement.transform.position, terminal.position) <= interactionRange)
         {
             Rect promptRect = new Rect(Screen.width * 0.5f - 240f, Screen.height - 110f, 480f, 52f);
-            GUI.Box(promptRect, "[E] 기록 단말 열기", promptStyle);
+            DrawSolidRect(promptRect, PanelOuterColor);
+            DrawOutline(promptRect, AccentColor, 2f);
+            GUI.Label(promptRect, "[E] 기록 단말 열기", promptStyle);
         }
 
         if (!screenOpen)
@@ -338,11 +347,19 @@ public class Day3RecordRecoveryController : MonoBehaviour
         float width = Mathf.Min(760f, Screen.width - 80f);
         float height = 390f;
         Rect panelRect = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
-        GUI.Box(panelRect, GUIContent.none, panelStyle);
+        DrawSolidRect(panelRect, PanelOuterColor);
+        DrawOutline(panelRect, new Color(0.2f, 0.28f, 0.28f, 1f), 3f);
+        Rect innerPanelRect = new Rect(panelRect.x + 8f, panelRect.y + 8f, panelRect.width - 16f, panelRect.height - 16f);
+        DrawSolidRect(innerPanelRect, PanelInnerColor);
+        DrawOutline(innerPanelRect, AccentColor, 1f);
 
         Rect contentRect = new Rect(panelRect.x + 42f, panelRect.y + 34f, panelRect.width - 84f, panelRect.height - 68f);
-        GUI.Label(new Rect(contentRect.x, contentRect.y, contentRect.width, 44f),
+        GUI.Label(new Rect(contentRect.x, contentRect.y - 4f, contentRect.width, 18f),
+            "OBSERVATION RECORD // O-06", progressStyle);
+        GUI.Label(new Rect(contentRect.x, contentRect.y + 16f, contentRect.width, 36f),
             recoveryCompleted ? "관측 기록 복구 완료" : "손상된 관측 기록", titleStyle);
+
+        DrawSolidRect(new Rect(contentRect.x, contentRect.y + 55f, contentRect.width, 2f), AccentColor);
 
         string body = recoveryCompleted
             ? "복구 데이터 일부:\nO-06 / 이전 관측자 연결 식별값 확인\n기록 복구 플래그가 저장되었습니다.\n\n[E] 확인 후 제어실로 복귀하십시오."
@@ -350,18 +367,15 @@ public class Day3RecordRecoveryController : MonoBehaviour
                 ? "복구 대상: 관측 기록 O-06\n데이터 블록이 손상되어 접근할 수 없습니다.\n\nE키를 놓은 뒤 다시 길게 눌러 복구하십시오."
                 : "복구 대상: 관측 기록 O-06\nE키를 길게 눌러 손상된 데이터 블록을 복구하십시오.\n키를 놓으면 진행도가 초기화됩니다.";
 
-        GUI.Label(new Rect(contentRect.x, contentRect.y + 62f, contentRect.width, 150f), body, bodyStyle);
+        GUI.Label(new Rect(contentRect.x, contentRect.y + 68f, contentRect.width, 145f), body, bodyStyle);
 
         if (!recoveryCompleted && !waitingForInitialRelease)
         {
-            Rect barBack = new Rect(contentRect.x, contentRect.y + 235f, contentRect.width, 28f);
-            GUI.Box(barBack, GUIContent.none);
-            Rect barFill = new Rect(barBack.x + 3f, barBack.y + 3f, (barBack.width - 6f) * HoldProgress, barBack.height - 6f);
-            Color previousColor = GUI.color;
-            GUI.color = new Color(0.25f, 0.95f, 0.82f, 1f);
-            GUI.DrawTexture(barFill, Texture2D.whiteTexture);
-            GUI.color = previousColor;
-            GUI.Label(new Rect(barBack.x, barBack.y + 34f, barBack.width, 32f), $"복구 진행도 {HoldProgress * 100f:0}%", bodyStyle);
+            float barWidth = Mathf.Min(480f, contentRect.width);
+            Rect barBack = new Rect(contentRect.center.x - barWidth * 0.5f, contentRect.y + 225f, barWidth, 60f);
+            DrawProgressBar(barBack, HoldProgress);
+            GUI.Label(new Rect(barBack.x, barBack.y + 64f, barBack.width, 28f),
+                $"RECOVERY {HoldProgress * 100f:0}%", progressStyle);
         }
 
         if (!recoveryCompleted)
@@ -373,31 +387,100 @@ public class Day3RecordRecoveryController : MonoBehaviour
         if (panelStyle != null)
             return;
 
-        panelStyle = new GUIStyle(GUI.skin.box);
-        panelStyle.normal.background = Texture2D.grayTexture;
-        panelStyle.padding = new RectOffset(24, 24, 24, 24);
+        panelStyle = new GUIStyle(GUI.skin.box) { font = interfaceFont };
 
         titleStyle = new GUIStyle(GUI.skin.label);
+        titleStyle.font = interfaceFont;
         titleStyle.fontSize = 28;
-        titleStyle.fontStyle = FontStyle.Bold;
         titleStyle.alignment = TextAnchor.MiddleCenter;
-        titleStyle.normal.textColor = new Color(0.55f, 1f, 0.9f);
+        titleStyle.normal.textColor = AccentColor;
 
         bodyStyle = new GUIStyle(GUI.skin.label);
+        bodyStyle.font = interfaceFont;
         bodyStyle.fontSize = 20;
         bodyStyle.wordWrap = true;
         bodyStyle.alignment = TextAnchor.UpperLeft;
-        bodyStyle.normal.textColor = Color.white;
+        bodyStyle.normal.textColor = new Color(0.9f, 0.95f, 0.93f, 1f);
 
-        promptStyle = new GUIStyle(GUI.skin.box);
+        promptStyle = new GUIStyle(GUI.skin.label);
+        promptStyle.font = interfaceFont;
         promptStyle.fontSize = 22;
-        promptStyle.fontStyle = FontStyle.Bold;
         promptStyle.alignment = TextAnchor.MiddleCenter;
         promptStyle.normal.textColor = Color.white;
+
+        progressStyle = new GUIStyle(GUI.skin.label);
+        progressStyle.font = interfaceFont;
+        progressStyle.fontSize = 16;
+        progressStyle.alignment = TextAnchor.MiddleCenter;
+        progressStyle.normal.textColor = AccentColor;
+    }
+
+    private void DrawProgressBar(Rect rect, float progress)
+    {
+        progress = Mathf.Clamp01(progress);
+
+        if (progressBarBackgroundSprite != null)
+        {
+            DrawSprite(rect, progressBarBackgroundSprite, Color.white, 1f);
+        }
+        else
+        {
+            DrawSolidRect(rect, new Color(0.15f, 0.19f, 0.19f, 1f));
+            DrawOutline(rect, new Color(0.65f, 0.7f, 0.68f, 1f), 2f);
+        }
+
+        Rect fillRect = new Rect(
+            rect.x + rect.width / 120f,
+            rect.y + rect.height / 15f,
+            rect.width * 118f / 120f,
+            rect.height * 13f / 15f);
+
+        if (progressBarFillSprite != null)
+            DrawSprite(fillRect, progressBarFillSprite, AccentColor, progress);
+        else
+            DrawSolidRect(new Rect(fillRect.x, fillRect.y, fillRect.width * progress, fillRect.height), AccentColor);
+    }
+
+    private static void DrawSprite(Rect rect, Sprite sprite, Color tint, float horizontalFill)
+    {
+        if (sprite == null || sprite.texture == null || horizontalFill <= 0f)
+            return;
+
+        horizontalFill = Mathf.Clamp01(horizontalFill);
+        Rect textureRect = sprite.textureRect;
+        Rect uv = new Rect(
+            textureRect.x / sprite.texture.width,
+            textureRect.y / sprite.texture.height,
+            textureRect.width / sprite.texture.width * horizontalFill,
+            textureRect.height / sprite.texture.height);
+        rect.width *= horizontalFill;
+
+        Color previousColor = GUI.color;
+        GUI.color = tint;
+        GUI.DrawTextureWithTexCoords(rect, sprite.texture, uv, true);
+        GUI.color = previousColor;
+    }
+
+    private static void DrawOutline(Rect rect, Color color, float thickness)
+    {
+        DrawSolidRect(new Rect(rect.x, rect.y, rect.width, thickness), color);
+        DrawSolidRect(new Rect(rect.x, rect.yMax - thickness, rect.width, thickness), color);
+        DrawSolidRect(new Rect(rect.x, rect.y, thickness, rect.height), color);
+        DrawSolidRect(new Rect(rect.xMax - thickness, rect.y, thickness, rect.height), color);
+    }
+
+    private static void DrawSolidRect(Rect rect, Color color)
+    {
+        Color previousColor = GUI.color;
+        GUI.color = color;
+        GUI.DrawTexture(rect, Texture2D.whiteTexture);
+        GUI.color = previousColor;
     }
 
     private void OnDisable()
     {
+        SetObjectiveUiSuppressed(false);
+
         if (screenOpen && !recoveryCompleted)
             SetPlayerInputEnabled(true);
     }
