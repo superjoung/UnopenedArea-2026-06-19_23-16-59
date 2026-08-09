@@ -3300,42 +3300,42 @@ PrefabInstance:
       propertyPath: phoneDialogue.Array.data[0].dialogue
       value: "\uB450 \uBC88\uC9F8 \uADFC\uBB34\uB97C \uC2DC\uC791\uD558\uACA0\uC2B5\uB2C8\uB2E4.\n\uC5B4\uC81C
         \uC81C\uCD9C\uD55C \uAD00\uCE21 \uAE30\uB85D\uACFC \uD604\uC7A5 \uBCF5\uAD6C
-        \uACB0\uACFC\uB294 \uBAA8\uB450 \uC815\uC0C1\uC801\uC73C\uB85C \uBC18\uC601\uB410\uC2B5\uB2C8\uB2E4."
+        \uACB0\uACFC\uB294 \n\uBAA8\uB450 \uC815\uC0C1\uC801\uC73C\uB85C \uBC18\uC601\uB410\uC2B5\uB2C8\uB2E4."
       objectReference: {fileID: 0}
     - target: {fileID: 2489251691472513186, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: phoneDialogue.Array.data[1].dialogue
       value: "\uD604\uC7A5\uC5D0\uC11C \uD655\uC778\uD55C \uD754\uC801\uC740 \uC774\uC804
-        \uC810\uAC80 \uC778\uC6D0\uC774 \uB0A8\uAE34 \uAC83\uC73C\uB85C \uBCF4\uC785\uB2C8\uB2E4.\n\uD604\uC7AC
+        \uC810\uAC80 \uC778\uC6D0\uC774 \n\uB0A8\uAE34 \uAC83\uC73C\uB85C \uBCF4\uC785\uB2C8\uB2E4.\n\uD604\uC7AC
         \uC2DC\uC124 \uB0B4\uBD80\uC5D0 \uC2B9\uC778\uB41C \uC778\uC6D0\uC740 \uC5C6\uC2B5\uB2C8\uB2E4."
       objectReference: {fileID: 0}
     - target: {fileID: 2489251691472513186, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: phoneDialogue.Array.data[2].dialogue
       value: "\uD3D0\uC1C4\uB41C \uC2DC\uC124\uC5D0\uC11C\uB294 \uC815\uB9AC\uB418\uC9C0
-        \uC54A\uC740 \uBB3C\uD488\uC774\uB098 \uC624\uB798\uB41C \uC0AC\uC6A9 \uD754\uC801\uC774
+        \uC54A\uC740 \uBB3C\uD488\uC774\uB098 \n\uC624\uB798\uB41C \uC0AC\uC6A9 \uD754\uC801\uC774
         \uBC1C\uACAC\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4.\n\uC5C5\uBB34\uC640 \uAD00\uB828
-        \uC5C6\uB294 \uC0AC\uD56D\uC740 \uAE30\uB85D\uD558\uC9C0 \uC54A\uC544\uB3C4
+        \uC5C6\uB294 \uC0AC\uD56D\uC740 \uAE30\uB85D\uD558\uC9C0 \n\uC54A\uC544\uB3C4
         \uB429\uB2C8\uB2E4."
       objectReference: {fileID: 0}
     - target: {fileID: 2489251691472513186, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: phoneDialogue.Array.data[3].dialogue
       value: "\uC624\uB298\uB3C4 \uD310\uB2E8 \uAE30\uC900\uC740 \uAC19\uC2B5\uB2C8\uB2E4.\n\uC815\uC0C1
         \uBC30\uCE58\uC640 \uD604\uC7AC \uD654\uBA74\uC744 \uBE44\uAD50\uD558\uACE0,
-        \uD655\uC778\uB41C \uBCC0\uD654\uB9CC \uBCF4\uACE0\uD558\uC138\uC694."
+        \uD655\uC778\uB41C \n\uBCC0\uD654\uB9CC \uBCF4\uACE0\uD558\uC138\uC694."
       objectReference: {fileID: 0}
     - target: {fileID: 2489251691472513186, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: phoneDialogue.Array.data[4].dialogue
       value: "\uD654\uBA74\uC5D0 \uC778\uBB3C \uD615\uD0DC\uAC00 \uB098\uD0C0\uB098\uB354\uB77C\uB3C4
-        \uBCC4\uB3C4\uC758 \uC2E0\uC6D0 \uD655\uC778\uC740 \uD544\uC694\uD558\uC9C0
+        \uBCC4\uB3C4\uC758 \n\uC2E0\uC6D0 \uD655\uC778\uC740 \uD544\uC694\uD558\uC9C0
         \uC54A\uC2B5\uB2C8\uB2E4.\n\uB4F1\uB85D\uB418\uC9C0 \uC54A\uC740 \uB300\uC0C1\uC740
-        \uC815\uD574\uC9C4 \uAE30\uC900\uC5D0 \uB530\uB77C \uCC98\uB9AC\uD558\uBA74
+        \uC815\uD574\uC9C4 \uAE30\uC900\uC5D0 \uB530\uB77C \n\uCC98\uB9AC\uD558\uBA74
         \uB429\uB2C8\uB2E4."
       objectReference: {fileID: 0}
     - target: {fileID: 2489251691472513186, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: phoneDialogue.Array.data[5].dialogue
       value: "\uC0AC\uB78C\uCC98\uB7FC \uBCF4\uC774\uB294\uC9C0, \uC5B4\uB5A4 \uC758\uB3C4\uAC00
-        \uC788\uC5B4 \uBCF4\uC774\uB294\uC9C0\uB294 \uD310\uC815\uACFC \uAD00\uACC4\uC5C6\uC2B5\uB2C8\uB2E4.\n\uCD94\uCE21\uD558\uC9C0
+        \uC788\uC5B4 \n\uBCF4\uC774\uB294\uC9C0\uB294 \uD310\uC815\uACFC \uAD00\uACC4\uC5C6\uC2B5\uB2C8\uB2E4.\n\uCD94\uCE21\uD558\uC9C0
         \uB9D0\uACE0 \uD654\uBA74\uC5D0\uC11C \uD655\uC778\uD55C \uC0AC\uC2E4\uB9CC
-        \uAE30\uB85D\uD558\uC138\uC694."
+        \n\uAE30\uB85D\uD558\uC138\uC694."
       objectReference: {fileID: 0}
     - target: {fileID: 2489251691472513186, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: phoneDialogue.Array.data[6].dialogue
@@ -3347,14 +3347,14 @@ PrefabInstance:
     - target: {fileID: 2489251691472513186, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: phoneDialogue.Array.data[7].dialogue
       value: "\uC624\uB798\uB41C \uC2DC\uC124 \uAE30\uB85D\uC744 \uBC1C\uACAC\uD558\uB354\uB77C\uB3C4
-        \uC784\uC758\uB85C \uBC18\uCD9C\uD558\uAC70\uB098 \uC218\uC815\uD558\uC9C0
+        \uC784\uC758\uB85C \n\uBC18\uCD9C\uD558\uAC70\uB098 \uC218\uC815\uD558\uC9C0
         \uB9C8\uC2ED\uC2DC\uC624.\n\uD544\uC694\uD55C \uC790\uB8CC\uB294 \uAD00\uB9AC
         \uCE21\uC5D0\uC11C \uD68C\uC218\uD558\uACA0\uC2B5\uB2C8\uB2E4."
       objectReference: {fileID: 0}
     - target: {fileID: 2489251691472513186, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: phoneDialogue.Array.data[8].dialogue
       value: "\uC624\uB298\uB3C4 \uB2F9\uC2E0\uC758 \uC5ED\uD560\uC740 \uC870\uC0AC\uD558\uB294
-        \uAC83\uC774 \uC544\uB2C8\uB77C \uAD00\uCE21\uD558\uACE0 \uAE30\uB85D\uD558\uB294
+        \uAC83\uC774 \uC544\uB2C8\uB77C \n\uAD00\uCE21\uD558\uACE0 \uAE30\uB85D\uD558\uB294
         \uAC83\uC785\uB2C8\uB2E4. \n\uADFC\uBB34\uB97C \uC2DC\uC791\uD558\uC2ED\uC2DC\uC624."
       objectReference: {fileID: 0}
     - target: {fileID: 2489251691472513186, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}

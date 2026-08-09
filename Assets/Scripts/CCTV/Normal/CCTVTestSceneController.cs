@@ -411,6 +411,10 @@ public class CCTVTestSceneController : MonoBehaviour
         currentChannelIndex = Mathf.Clamp(index, 0, channels.Count - 1);
         CCTVAreaDefinition area = channels[currentChannelIndex].Area;
 
+        CCTVScreenEffectController effectController = GetScreenEffectController();
+        if (effectController != null)
+            effectController.SetAreaBrightnessMultiplier(area != null ? area.CctvBrightnessMultiplier : 1f);
+
         if (areaView != null)
             areaView.ShowArea(area);
 

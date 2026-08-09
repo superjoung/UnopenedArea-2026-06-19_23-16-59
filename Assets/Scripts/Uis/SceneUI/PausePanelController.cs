@@ -38,7 +38,7 @@ public class PausePanelController : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(toggleKey))
+        if (Input.GetKeyDown(toggleKey) && !MainRoomCalendarController.IsAnyCalendarModeActive)
             TogglePause();
     }
 

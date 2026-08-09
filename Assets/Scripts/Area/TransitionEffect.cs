@@ -514,6 +514,59 @@ public class TransitionEffect : MonoBehaviour
         return true;
     }
 
+    /// <summary>메인룸 안의 오브젝트를 확대해 별도 상호작용 모드로 진입합니다.</summary>
+    public bool TryPlayMainRoomFocus(Transform focusTarget, float targetOrthographicSize, float duration, Action onCompleted = null)
+    {
+        ResolveReferences();
+        if (isPlaying || mainRoomCamera == null || focusTarget == null || !mainRoomCamera.orthographic)
+            return false;
+
+        CacheCameraDefaults();
+        SetPlaying(true);
+        activeSequence?.Kill();
+
+        Vector3 targetPosition = focusTarget.position;
+        targetPosition.z = defaultCameraPosition.z;
+        activeSequence = DOTween.Sequence().SetUpdate(true);
+        activeSequence.Append(mainRoomCamera.transform
+            .DOMove(targetPosition, Mathf.Max(0.05f, duration))
+            .SetEase(Ease.InOutQuad));
+        activeSequence.Join(mainRoomCamera
+            .DOOrthoSize(Mathf.Max(0.1f, targetOrthographicSize), Mathf.Max(0.05f, duration))
+            .SetEase(Ease.InOutQuad));
+        activeSequence.OnComplete(() =>
+        {
+            CompleteSequence();
+            onCompleted?.Invoke();
+        });
+        return true;
+    }
+
+    /// <summary>메인룸 오브젝트 확대 상태에서 원래 카메라 시야로 복귀합니다.</summary>
+    public bool TryPlayMainRoomFocusExit(float duration, Action onCompleted = null)
+    {
+        ResolveReferences();
+        if (isPlaying || mainRoomCamera == null || !mainRoomCamera.orthographic)
+            return false;
+
+        CacheCameraDefaults();
+        SetPlaying(true);
+        activeSequence?.Kill();
+        activeSequence = DOTween.Sequence().SetUpdate(true);
+        activeSequence.Append(mainRoomCamera.transform
+            .DOMove(defaultCameraPosition, Mathf.Max(0.05f, duration))
+            .SetEase(Ease.InOutQuad));
+        activeSequence.Join(mainRoomCamera
+            .DOOrthoSize(defaultOrthographicSize, Mathf.Max(0.05f, duration))
+            .SetEase(Ease.InOutQuad));
+        activeSequence.OnComplete(() =>
+        {
+            CompleteSequence();
+            onCompleted?.Invoke();
+        });
+        return true;
+    }
+
     /// <summary>
     /// 이상현상 적용을 가리기 위한 눈꺼풀 연출을 시작하고,
     /// 패널이 완전히 닫히는 시점까지의 시간을 반환합니다.

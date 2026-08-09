@@ -47,11 +47,22 @@ public class CCTVScreenEffectController : MonoBehaviour
     private CCTVNoiseProfile activeNoiseProfile;
     private float fallbackNoiseDurationOverride;
     private float noiseAmount;
+    private float areaBrightnessMultiplier = 1f;
 
     public RenderTexture CurrentRenderTexture => runtimeRenderTexture != null ? runtimeRenderTexture : renderTextureAsset;
     public Material RuntimeMaterial => runtimeMaterial;
     public Camera WorldCamera => worldCamera;
     public bool IsNoisePlaying => noiseCoroutine != null;
+
+    /// <summary>
+    /// 현재 CCTV 구역에만 적용할 밝기 배율을 지정합니다.
+    /// 공용 CCTV 프로필과 노이즈 연출 값은 그대로 유지됩니다.
+    /// </summary>
+    public void SetAreaBrightnessMultiplier(float multiplier)
+    {
+        areaBrightnessMultiplier = Mathf.Clamp(multiplier, 0.5f, 2f);
+        ApplyProfile(Time.unscaledTime);
+    }
 
     public void StopActiveNoise()
     {
@@ -409,7 +420,8 @@ public class CCTVScreenEffectController : MonoBehaviour
         runtimeMaterial.SetFloat(HorizontalTearStrengthId, Mathf.Lerp(0f, GetPeakHorizontalTearStrength(), amount));
         runtimeMaterial.SetColor(TintColorId, activeProfile != null ? activeProfile.TintColor : new Color(0.48f, 0.68f, 0.58f, 1f));
         runtimeMaterial.SetFloat(DesaturationId, activeProfile != null ? activeProfile.Desaturation : 0.25f);
-        runtimeMaterial.SetFloat(BrightnessId, Mathf.Lerp(baseBrightness, GetPeakBrightness(), amount));
+        float brightness = Mathf.Lerp(baseBrightness, GetPeakBrightness(), amount) * areaBrightnessMultiplier;
+        runtimeMaterial.SetFloat(BrightnessId, Mathf.Clamp(brightness, 0.25f, 2f));
         runtimeMaterial.SetFloat(ContrastId, Mathf.Lerp(baseContrast, GetPeakContrast(), amount));
         runtimeMaterial.SetFloat(VignetteStrengthId, activeProfile != null ? activeProfile.VignetteStrength : 0.35f);
         runtimeMaterial.SetFloat(VignetteSoftnessId, activeProfile != null ? activeProfile.VignetteSoftness : 0.55f);

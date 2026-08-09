@@ -2682,8 +2682,8 @@ Transform:
   m_GameObject: {fileID: 475732986}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 13.599976, y: 0, z: 0}
-  m_LocalScale: {x: 3.8999999, y: 3.5, z: 1}
+  m_LocalPosition: {x: 13.6238, y: 0, z: 0}
+  m_LocalScale: {x: 3.9373884, y: 3.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1113288992}
@@ -5351,7 +5351,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1098216298
 Transform:
   m_ObjectHideFlags: 0
@@ -5498,7 +5498,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1113288992
 Transform:
   m_ObjectHideFlags: 0
@@ -6977,8 +6977,8 @@ Transform:
   m_GameObject: {fileID: 1500558792}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 13.599976, y: 0, z: 0}
-  m_LocalScale: {x: 3.9, y: 3.5, z: 1}
+  m_LocalPosition: {x: 13.6654, y: 0, z: 0}
+  m_LocalScale: {x: 4.00218, y: 3.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1098216298}
@@ -8501,8 +8501,8 @@ Transform:
   m_GameObject: {fileID: 1827726609}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 13.599976, y: 0, z: 0}
-  m_LocalScale: {x: 3.8999999, y: 3.5, z: 1}
+  m_LocalPosition: {x: 13.6416, y: 0, z: 0}
+  m_LocalScale: {x: 3.9651299, y: 3.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 286552208}
@@ -9556,6 +9556,10 @@ PrefabInstance:
       propertyPath: phoneStartDelay
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1788069587094834800, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: nextDayPhoneStartDelay
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 1858483092920741674, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -9563,6 +9567,25 @@ PrefabInstance:
     - target: {fileID: 1858483092920741674, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_AnchorMin.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2489251691472513186, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: phoneDialogue.Array.data[3].dialogue
+      value: "\uC815\uD655\uD55C \uAE30\uB85D\uC774 \uC811\uC218\uB418\uBA74 \uC2DC\uC124\uC758
+        \uC790\uB3D9 \uAD50\uC815 \n\uC808\uCC28\uAC00 \uC2E4\uD589\uB429\uB2C8\uB2E4.\n\uCC98\uB9AC
+        \uC911 \uD654\uBA74\uC5D0 \uC7A1\uC74C\uC774 \uC0DD\uAE38 \uC218 \uC788\uC9C0\uB9CC
+        \uC815\uC0C1\uC785\uB2C8\uB2E4."
+      objectReference: {fileID: 0}
+    - target: {fileID: 2489251691472513186, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: phoneDialogue.Array.data[5].dialogue
+      value: "\uC804\uB825\uC774\uB098 \uC11C\uBC84 \uAC19\uC740 \uC124\uBE44 \uBB38\uC81C\uB294
+        \uC790\uB3D9\uC73C\uB85C \n\uCC98\uB9AC\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.\n\uD544\uC694\uD55C
+        \uACBD\uC6B0 \uBCC4\uB3C4\uC758 \uD604\uC7A5 \uC5C5\uBB34\uB97C \n\uC804\uB2EC\uD558\uACA0\uC2B5\uB2C8\uB2E4."
+      objectReference: {fileID: 0}
+    - target: {fileID: 2489251691472513186, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: phoneDialogue.Array.data[7].dialogue
+      value: "\uC9C0\uAE08\uC740 \uAC01 \uAD6C\uC5ED\uC758 \uC815\uC0C1 \uC0C1\uD0DC\uB97C
+        \uAE30\uC5B5\uD558\uB294 \uB370 \n\uC9D1\uC911\uD558\uC138\uC694. \n\uC900\uBE44\uAC00
+        \uB05D\uB098\uBA74 \uCCAB \uAD00\uCE21\uC744 \uC2DC\uC791\uD558\uACA0\uC2B5\uB2C8\uB2E4."
       objectReference: {fileID: 0}
     - target: {fileID: 2768960275528349169, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_AnchorMax.y
@@ -9744,6 +9767,10 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8406387145211914471, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 2100000, guid: 70aec3d4bb40f0e45a626e7226679ed0, type: 2}
     - target: {fileID: 8434193301515147197, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_Material
       value: 

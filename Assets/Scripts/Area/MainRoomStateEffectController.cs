@@ -417,6 +417,31 @@ public class MainRoomStateEffectController : MonoBehaviour
             : null;
     }
 
+    /// <summary>달력 탐색 중 선택한 날짜 한 장만 표시합니다.</summary>
+    public void ShowCalendarDayVisual(int day)
+    {
+        for (int i = 0; i < calendarDaySprites.Length; i++)
+        {
+            GameObject visual = calendarDaySprites[i];
+            bool visible = i == day - 1;
+            SetActive(visual, visible);
+            if (!visible || visual == null)
+                continue;
+
+            foreach (SpriteRenderer renderer in visual.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                Color color = renderer.color;
+                color.a = 1f;
+                renderer.color = color;
+            }
+        }
+    }
+
+    public void RestoreCurrentDayCalendarVisual()
+    {
+        RefreshCalendar();
+    }
+
     private void ApplyPhoneGlowPulse()
     {
         float cycle = Mathf.PingPong(Time.unscaledTime / phoneGlowFadeDuration, 1f);
@@ -525,7 +550,13 @@ public class MainRoomStateEffectController : MonoBehaviour
         {
             for (int i = 0; i < calendarDaySprites.Length; i++)
             {
-                if (calendarDaySprites[i] == null && i < calendar.childCount)
+                if (calendarDaySprites[i] != null)
+                    continue;
+
+                Transform namedDay = calendar.Find($"Callender{i + 1}");
+                if (namedDay != null)
+                    calendarDaySprites[i] = namedDay.gameObject;
+                else if (i < calendar.childCount)
                     calendarDaySprites[i] = calendar.GetChild(i).gameObject;
             }
         }

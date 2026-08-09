@@ -7,6 +7,7 @@ public enum MainRoomInteractionType
     CCTV = 1,
     Door = 2,
     Report = 3,
+    Calendar = 4,
 }
 
 [RequireComponent(typeof(Collider2D))]

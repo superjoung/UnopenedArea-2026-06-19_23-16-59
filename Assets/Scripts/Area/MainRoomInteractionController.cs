@@ -9,8 +9,10 @@ public class MainRoomInteractionController : MonoBehaviour
     [SerializeField] private MainRoomInteractionTarget cctvTarget;
     [SerializeField] private MainRoomInteractionTarget doorTarget;
     [SerializeField] private MainRoomInteractionTarget reportTarget;
+    [SerializeField] private MainRoomInteractionTarget calendarTarget;
     [SerializeField] private TransitionEffect transitionEffect;
     [SerializeField] private FoundAnomalyPanelController foundAnomalyPanelController;
+    [SerializeField] private MainRoomCalendarController calendarController;
     private Day1FlowController subscribedFlowController;
     private bool inputLocked;
     private bool reportPanelInputLocked;
@@ -34,6 +36,12 @@ public class MainRoomInteractionController : MonoBehaviour
             else
                 Debug.LogWarning("[MainRoomInteractionController] FoundAnomalyPanelController가 없습니다.", this);
 
+            return;
+        }
+
+        if (interactionType == MainRoomInteractionType.Calendar)
+        {
+            calendarController?.EnterCalendarMode();
             return;
         }
 
@@ -83,6 +91,9 @@ public class MainRoomInteractionController : MonoBehaviour
         if (reportTarget != null) reportTarget.SetAvailable(state != Day1FlowState.None &&
                                                             state != Day1FlowState.Completed &&
                                                             state != Day1FlowState.Failed);
+        if (calendarTarget != null) calendarTarget.SetAvailable(state != Day1FlowState.None &&
+                                                                state != Day1FlowState.Completed &&
+                                                                state != Day1FlowState.Failed);
     }
 
     private void Subscribe()
@@ -106,6 +117,8 @@ public class MainRoomInteractionController : MonoBehaviour
         if (transitionEffect == null) transitionEffect = FindFirstObjectByType<TransitionEffect>();
         if (foundAnomalyPanelController == null)
             foundAnomalyPanelController = FindFirstObjectByType<FoundAnomalyPanelController>(FindObjectsInactive.Include);
+        if (calendarController == null)
+            calendarController = GetComponent<MainRoomCalendarController>();
 
         foreach (MainRoomInteractionTarget target in GetComponentsInChildren<MainRoomInteractionTarget>(true))
         {
@@ -114,6 +127,7 @@ public class MainRoomInteractionController : MonoBehaviour
             if (target.InteractionType == MainRoomInteractionType.CCTV && cctvTarget == null) cctvTarget = target;
             if (target.InteractionType == MainRoomInteractionType.Door && doorTarget == null) doorTarget = target;
             if (target.InteractionType == MainRoomInteractionType.Report && reportTarget == null) reportTarget = target;
+            if (target.InteractionType == MainRoomInteractionType.Calendar && calendarTarget == null) calendarTarget = target;
         }
     }
 
@@ -123,5 +137,6 @@ public class MainRoomInteractionController : MonoBehaviour
         if (cctvTarget != null) cctvTarget.ForceHideOutline();
         if (doorTarget != null) doorTarget.ForceHideOutline();
         if (reportTarget != null) reportTarget.ForceHideOutline();
+        if (calendarTarget != null) calendarTarget.ForceHideOutline();
     }
 }

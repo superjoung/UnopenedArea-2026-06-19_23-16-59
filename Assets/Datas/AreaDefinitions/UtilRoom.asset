@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: "\uB2E4\uC6A9\uB3C4\uC2E4"
   areaPrefab: {fileID: 1636892523527193590, guid: 4b29feb69a30c02429ab8ab8e5a13970, type: 3}
   backgroundSprite: {fileID: 5733133023345054274, guid: 8608409c2e50afa49ac1d710ddb7bbb7, type: 3}
+  cctvBrightnessMultiplier: 1.7
   imageSizePixels: {x: 4934, y: 500}
   pixelsPerUnit: 100
   areaCenter: {x: 0, y: 0}
