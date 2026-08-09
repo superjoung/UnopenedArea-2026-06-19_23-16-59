@@ -7,9 +7,18 @@ using UnityEngine;
 public static class DayProgressSave
 {
     private const string CurrentDayKey = "UnopenedArea.CurrentDay";
+    // 이전 버전에서 재시작용 1회성 값을 PlayerPrefs에 저장할 때 사용한 키입니다.
+    // 이제는 비정상 종료 뒤에도 타이틀 생략 상태가 남지 않도록 읽지 않고 정리만 합니다.
     private const string SkipTitleOnNextSceneLoadKey = "UnopenedArea.SkipTitleOnNextSceneLoad";
-    // 앱을 다시 실행하면 사라지는 1회성 플래그다. 재시작에서만 타이틀 입력 대기를 건너뛴다.
+    // 같은 실행 세션 안에서 씬을 다시 불러올 때만 유지되는 1회성 플래그입니다.
     private static bool skipTitleOnNextSceneLoad;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetTransientState()
+    {
+        skipTitleOnNextSceneLoad = false;
+        ClearLegacyPersistedSkipTitleFlag();
+    }
 
     public static int CurrentDay => Mathf.Max(1, PlayerPrefs.GetInt(CurrentDayKey, 1));
 
@@ -32,22 +41,28 @@ public static class DayProgressSave
     public static void RequestSkipTitleOnNextSceneLoad()
     {
         skipTitleOnNextSceneLoad = true;
-        PlayerPrefs.SetInt(SkipTitleOnNextSceneLoadKey, 1);
-        PlayerPrefs.Save();
+        ClearLegacyPersistedSkipTitleFlag();
     }
 
     public static bool ConsumeSkipTitleOnNextSceneLoad()
     {
-        bool shouldSkip = skipTitleOnNextSceneLoad || PlayerPrefs.GetInt(SkipTitleOnNextSceneLoadKey, 0) == 1;
+        bool shouldSkip = skipTitleOnNextSceneLoad;
         skipTitleOnNextSceneLoad = false;
-        PlayerPrefs.DeleteKey(SkipTitleOnNextSceneLoadKey);
-        PlayerPrefs.Save();
+        ClearLegacyPersistedSkipTitleFlag();
         return shouldSkip;
     }
 
     public static void ClearSkipTitleOnNextSceneLoad()
     {
         skipTitleOnNextSceneLoad = false;
+        ClearLegacyPersistedSkipTitleFlag();
+    }
+
+    private static void ClearLegacyPersistedSkipTitleFlag()
+    {
+        if (!PlayerPrefs.HasKey(SkipTitleOnNextSceneLoadKey))
+            return;
+
         PlayerPrefs.DeleteKey(SkipTitleOnNextSceneLoadKey);
         PlayerPrefs.Save();
     }

@@ -2135,7 +2135,7 @@ MonoBehaviour:
   targetId: 111
   displayName: "\uD3EC\uC2A4\uD130"
   canBeAnomalyTarget: 1
-  includeInBaseline: 0
+  includeInBaseline: 1
 --- !u!1 &2667181028622731625
 GameObject:
   m_ObjectHideFlags: 0
