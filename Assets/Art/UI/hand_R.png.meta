@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: a15a2f94ef8c3e6488dc9b68601cde28
+guid: 4922795aa4060174b8c7d23d06b6ff6f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3255818523354727115
-    second: postit5_0
+      213: -1324007218834974229
+    second: hand_R_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,12 +46,12 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 150
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -75,7 +75,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -113,23 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: postit5_0
+      name: hand_R_0
       rect:
         serializedVersion: 2
-        x: 1
-        y: 1
-        width: 41
-        height: 17
+        x: 0
+        y: 0
+        width: 112
+        height: 128
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 53dfd469d4201d2d0800000000000000
-      internalID: -3255818523354727115
+      spriteID: be9d949037e20ade0800000000000000
+      internalID: -1324007218834974229
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 347118e42991ad74a85dfb4ae04be1d7
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      postit5_0: -3255818523354727115
+      hand_R_0: -1324007218834974229
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

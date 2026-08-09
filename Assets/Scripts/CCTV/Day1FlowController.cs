@@ -31,6 +31,7 @@ public class Day1FlowController : MonoBehaviour
     [SerializeField] private CCTVSceneUI cctvSceneUI;
     [SerializeField] private StoryDialogueController storyDialogueController;
     [SerializeField] private MainRoomStateEffectController mainRoomStateEffectController;
+    [SerializeField] private Day2BlackoutForeshadowController day2BlackoutForeshadowController;
 
     [Header("Tutorial Presentation")]
     [SerializeField, Min(0f)] private float tutorialChannelActivationDelay = 0.5f;
@@ -529,6 +530,12 @@ public class Day1FlowController : MonoBehaviour
 
         PauseForEmergencyDispatch();
 
+        if (day2BlackoutForeshadowController == null)
+            day2BlackoutForeshadowController = FindFirstObjectByType<Day2BlackoutForeshadowController>(FindObjectsInactive.Include);
+
+        if (day2BlackoutForeshadowController != null && day2BlackoutForeshadowController.CanPlay())
+            yield return day2BlackoutForeshadowController.Play();
+
         if (transitionEffect == null)
             transitionEffect = FindFirstObjectByType<TransitionEffect>();
 
@@ -824,6 +831,9 @@ public class Day1FlowController : MonoBehaviour
 
         if (mainRoomStateEffectController == null)
             mainRoomStateEffectController = FindFirstObjectByType<MainRoomStateEffectController>();
+
+        if (day2BlackoutForeshadowController == null)
+            day2BlackoutForeshadowController = FindFirstObjectByType<Day2BlackoutForeshadowController>(FindObjectsInactive.Include);
     }
 
     /// <summary>

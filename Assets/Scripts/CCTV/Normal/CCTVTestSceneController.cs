@@ -147,6 +147,45 @@ public class CCTVTestSceneController : MonoBehaviour
         StartCoroutine(SwitchChannelRoutine(index));
     }
 
+    /// <summary>
+    /// 연출에서 특정 구역 CCTV로 즉시 이동합니다. 채널 전환 노이즈는 재생하지 않습니다.
+    /// </summary>
+    public bool TrySelectChannelImmediate(AreaId areaId)
+    {
+        int index = channels.FindIndex(channel => channel != null && channel.Area != null && channel.Area.AreaId == areaId);
+        if (index < 0)
+            return false;
+
+        SelectChannelImmediate(index);
+        return true;
+    }
+
+    /// <summary>
+    /// 연출에서 평소 채널 전환과 동일한 노이즈와 효과음을 재생하며 특정 구역으로 이동합니다.
+    /// 반환된 코루틴이 끝난 뒤에는 화면 전환 노이즈도 모두 종료된 상태입니다.
+    /// </summary>
+    public IEnumerator SwitchToAreaWithNoise(AreaId areaId)
+    {
+        int index = channels.FindIndex(channel => channel != null && channel.Area != null && channel.Area.AreaId == areaId);
+        if (index < 0)
+            yield break;
+
+        yield return SwitchChannelRoutine(index);
+    }
+
+    public bool TryGetChannelArea(AreaId areaId, out CCTVAreaDefinition area)
+    {
+        int index = channels.FindIndex(channel => channel != null && channel.Area != null && channel.Area.AreaId == areaId);
+        if (index >= 0)
+        {
+            area = channels[index].Area;
+            return true;
+        }
+
+        area = null;
+        return false;
+    }
+
     public void SetCCTVInputEnabled(bool enabled)
     {
         cctvInputEnabled = enabled;
