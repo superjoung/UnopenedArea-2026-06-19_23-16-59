@@ -862,6 +862,8 @@ MonoBehaviour:
   spriteFrames: []
   spriteFrameDuration: 0.12
   loopSpriteFrames: 1
+  stepRotationDegrees: 30
+  stepRotationInterval: 0.15
 --- !u!114 &5232015545474357911
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -888,6 +890,8 @@ MonoBehaviour:
   spriteFrames: []
   spriteFrameDuration: 0.12
   loopSpriteFrames: 1
+  stepRotationDegrees: 30
+  stepRotationInterval: 0.15
 --- !u!114 &8966065176311930780
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -935,6 +939,8 @@ MonoBehaviour:
   - {fileID: 0}
   spriteFrameDuration: 0.16
   loopSpriteFrames: 1
+  stepRotationDegrees: 30
+  stepRotationInterval: 0.15
 --- !u!1 &1636892523527193590
 GameObject:
   m_ObjectHideFlags: 0
@@ -1303,6 +1309,8 @@ MonoBehaviour:
   spriteFrames: []
   spriteFrameDuration: 0.12
   loopSpriteFrames: 1
+  stepRotationDegrees: 30
+  stepRotationInterval: 0.15
 --- !u!95 &3298628723939382212
 Animator:
   serializedVersion: 7
@@ -1719,6 +1727,8 @@ MonoBehaviour:
   spriteFrames: []
   spriteFrameDuration: 0.12
   loopSpriteFrames: 1
+  stepRotationDegrees: 30
+  stepRotationInterval: 0.15
 --- !u!95 &7880111777438020505
 Animator:
   serializedVersion: 7
@@ -1897,6 +1907,8 @@ MonoBehaviour:
   spriteFrames: []
   spriteFrameDuration: 0.12
   loopSpriteFrames: 1
+  stepRotationDegrees: 30
+  stepRotationInterval: 0.15
 --- !u!114 &8104826475321106611
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1923,6 +1935,8 @@ MonoBehaviour:
   spriteFrames: []
   spriteFrameDuration: 0.12
   loopSpriteFrames: 1
+  stepRotationDegrees: 30
+  stepRotationInterval: 0.15
 --- !u!1 &4314966885184101669
 GameObject:
   m_ObjectHideFlags: 0
@@ -2647,7 +2661,7 @@ Transform:
   m_GameObject: {fileID: 5955237004220619575}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.2, z: 0}
+  m_LocalPosition: {x: 10, y: 0.69, z: 0}
   m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -2697,12 +2711,12 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 10
-  m_Sprite: {fileID: -4791186027735397949, guid: 14c3768cc0db96e47809556f22bbd6ed, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 407e609b1cd1db34aa0cdba75367162f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.41, y: 0.13}
+  m_Size: {x: 7.16, y: 1.28}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -2749,12 +2763,15 @@ MonoBehaviour:
   animatorCrossFadeDuration: 0
   targetSpriteRenderer: {fileID: 6180528164857696626}
   spriteFrames:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 21300000, guid: d0b3f50266ab38448a285e1da9d8e184, type: 3}
+  - {fileID: 21300000, guid: daae7f7c44998bb46ab66ec0421e9445, type: 3}
+  - {fileID: 21300000, guid: 91d63e26b9160cc44a5cf690a551b8b4, type: 3}
+  - {fileID: 21300000, guid: ab8b4455a3cd72649942a2f1a702c80a, type: 3}
+  - {fileID: 21300000, guid: 8deb81fdf3e59c9489f885a88342fa20, type: 3}
   spriteFrameDuration: 0.15
   loopSpriteFrames: 1
+  stepRotationDegrees: 30
+  stepRotationInterval: 0.15
 --- !u!1 &6054130351531611941
 GameObject:
   m_ObjectHideFlags: 0
