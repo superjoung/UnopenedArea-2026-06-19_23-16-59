@@ -1,10 +1,19 @@
 fileFormatVersion: 2
-guid: d43a6b1629f241c4bb572082670e3cd3
+guid: af13aaf8a13a1204faff208cf74bf430
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 9087207327684497215
-    second: door_open_0
+      213: -5374424138294719847
+    second: ceiling_staff-Sheet_0
+  - first:
+      213: -4902575091346270205
+    second: ceiling_staff-Sheet_1
+  - first:
+      213: -3649012883325709004
+    second: ceiling_staff-Sheet_2
+  - first:
+      213: -3497126290187406219
+    second: ceiling_staff-Sheet_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +46,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,7 +55,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -113,13 +122,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: door_open_0
+      name: ceiling_staff-Sheet_0
       rect:
         serializedVersion: 2
-        x: 43
-        y: 4
-        width: 59
-        height: 97
+        x: 27
+        y: 89
+        width: 69
+        height: 35
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +137,74 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f3f06fe1bee3c1e70800000000000000
-      internalID: 9087207327684497215
+      spriteID: 99a88ac98b53a65b0800000000000000
+      internalID: -5374424138294719847
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ceiling_staff-Sheet_1
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 89
+        width: 64
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30890abeded86fbb0800000000000000
+      internalID: -4902575091346270205
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ceiling_staff-Sheet_2
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 89
+        width: 72
+        height: 35
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4351c8cad1a1c5dc0800000000000000
+      internalID: -3649012883325709004
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ceiling_staff-Sheet_3
+      rect:
+        serializedVersion: 2
+        x: 413
+        y: 89
+        width: 67
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 57433baea26b77fc0800000000000000
+      internalID: -3497126290187406219
       vertices: []
       indices: 
       edges: []
@@ -138,7 +213,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -147,8 +222,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      door_open_0: 9087207327684497215
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
