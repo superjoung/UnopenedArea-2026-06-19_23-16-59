@@ -20,10 +20,6 @@ public class Day1FlowStatusUI : MonoBehaviour
     [Header("Objective / Guidance")]
     [SerializeField] private TMP_Text objectiveText;
 
-    [Header("Field Objective / Guidance")]
-    [SerializeField] private TMP_Text fieldStatusText;
-    [SerializeField] private TMP_Text fieldObjectiveText;
-
     [Header("Report Feedback")]
     [SerializeField] private TMP_Text feedbackText;
     [SerializeField, Min(0.1f)] private float feedbackDuration = 2f;
@@ -101,16 +97,8 @@ public class Day1FlowStatusUI : MonoBehaviour
 
     private void HandleFlowMessageChanged(string message)
     {
-        bool useFieldGuidance = ShouldUseFieldGuidance();
-        SetGuidanceVisibility(useFieldGuidance);
-
-        TMP_Text targetObjectiveText = useFieldGuidance ? fieldObjectiveText : objectiveText;
-        if (targetObjectiveText != null)
-            targetObjectiveText.text = message;
-
-        TMP_Text targetStatusText = useFieldGuidance ? fieldStatusText : statusText;
-        if (targetStatusText != null && flowController != null)
-            targetStatusText.text = GetStatusLabel(flowController.State);
+        if (objectiveText != null)
+            objectiveText.text = message;
     }
 
     private void HandleCorrectReport(AnomalyRuntime runtime)
@@ -166,12 +154,8 @@ public class Day1FlowStatusUI : MonoBehaviour
 
     private void Refresh(Day1FlowState state)
     {
-        bool useFieldGuidance = ShouldUseFieldGuidance();
-        SetGuidanceVisibility(useFieldGuidance);
-
-        TMP_Text targetStatusText = useFieldGuidance ? fieldStatusText : statusText;
-        if (targetStatusText != null)
-            targetStatusText.text = GetStatusLabel(state);
+        if (statusText != null)
+            statusText.text = GetStatusLabel(state);
 
         bool isEmergency = state == Day1FlowState.EmergencyDispatch ||
                            state == Day1FlowState.EmergencyRecovery;
@@ -203,15 +187,47 @@ public class Day1FlowStatusUI : MonoBehaviour
             case Day1FlowState.Monitoring:
                 return $"DAY {day} · 감시 중";
             case Day1FlowState.EmergencyDispatch:
-                return $"DAY {day} · 정전 발생";
+                return $"DAY {day} · {GetEmergencyDispatchStatusLabel()}";
             case Day1FlowState.EmergencyRecovery:
-                return $"DAY {day} · 전력 복구 중";
+                return $"DAY {day} · {GetEmergencyRecoveryStatusLabel()}";
             case Day1FlowState.Completed:
                 return $"DAY {day} · 근무 종료";
             case Day1FlowState.Failed:
                 return $"DAY {day} · 근무 실패";
             default:
                 return string.Empty;
+        }
+    }
+
+    private string GetEmergencyDispatchStatusLabel()
+    {
+        if (flowController == null)
+            return "긴급 상황";
+
+        switch (flowController.CurrentEmergencyObjectiveType)
+        {
+            case EmergencyObjectiveType.StoryRecordInspection:
+                return "현장 조사";
+            case EmergencyObjectiveType.ServerReboot:
+                return "기록 시스템 손상";
+            default:
+                return "정전 발생";
+        }
+    }
+
+    private string GetEmergencyRecoveryStatusLabel()
+    {
+        if (flowController == null)
+            return "복구 중";
+
+        switch (flowController.CurrentEmergencyObjectiveType)
+        {
+            case EmergencyObjectiveType.StoryRecordInspection:
+                return "현장 조사 완료";
+            case EmergencyObjectiveType.ServerReboot:
+                return "기록 복구 완료";
+            default:
+                return "전력 복구 중";
         }
     }
 
@@ -279,24 +295,5 @@ public class Day1FlowStatusUI : MonoBehaviour
     {
         if (flowController == null)
             flowController = FindObjectOfType<Day1FlowController>();
-    }
-
-    private bool ShouldUseFieldGuidance()
-    {
-        return flowController != null && flowController.IsEmergencyFieldModeStarted;
-    }
-
-    private void SetGuidanceVisibility(bool useFieldGuidance)
-    {
-        SetTextActive(statusText, !useFieldGuidance);
-        SetTextActive(objectiveText, !useFieldGuidance);
-        SetTextActive(fieldStatusText, useFieldGuidance);
-        SetTextActive(fieldObjectiveText, useFieldGuidance);
-    }
-
-    private static void SetTextActive(TMP_Text text, bool active)
-    {
-        if (text != null && text.gameObject.activeSelf != active)
-            text.gameObject.SetActive(active);
     }
 }

@@ -16,6 +16,8 @@ public class MainSceneUI : MonoBehaviour
     [Header("Text")]
     [SerializeField] private TMP_Text situationText;
     [SerializeField] private TMP_Text objectiveText;
+    [SerializeField] private TMP_Text fieldSituationText;
+    [SerializeField] private TMP_Text fieldObjectiveText;
 
     [Header("Visibility")]
     [SerializeField] private bool hideWhileViewingCctv = true;
@@ -213,12 +215,25 @@ public class MainSceneUI : MonoBehaviour
                 return;
 
             case Day1FlowState.EmergencyDispatch:
-                if (day1FlowController != null && day1FlowController.DayNumber == 3)
+                if (day1FlowController != null &&
+                    day1FlowController.CurrentEmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection)
                 {
-                    situation = "\uAE30\uB85D \uC2DC\uC2A4\uD15C\uC774 \uC190\uC0C1\uB418\uC5C8\uB2E4.";
+                    situation = areaMode == Day1AreaMode.Field
+                        ? "바닥에 수상한 기록물이 떨어져 있다."
+                        : "통신과 전력이 불안정하다.";
                     objective = areaMode == Day1AreaMode.Field
-                        ? "\uC11C\uBC84\uC2E4\uC758 \uAE30\uB85D \uB2E8\uB9D0\uC744 \uCC3E\uC544 \uC190\uC0C1\uB41C \uAD00\uCE21 \uAE30\uB85D\uC744 \uBCF5\uAD6C\uD558\uC2ED\uC2DC\uC624."
-                        : "\uBA54\uC778\uB8F8\uC758 \uBB38\uC744 \uD1B5\uD574 \uC11C\uBC84\uC2E4\uB85C \uC774\uB3D9\uD558\uC2ED\uC2DC\uC624.";
+                        ? "가까이 다가가 E 키로 조사하십시오."
+                        : "메인룸의 문을 통해 제어실 외부를 확인하십시오.";
+                    return;
+                }
+
+                if (day1FlowController != null &&
+                    day1FlowController.CurrentEmergencyObjectiveType == EmergencyObjectiveType.ServerReboot)
+                {
+                    situation = "기록 시스템이 손상되었다.";
+                    objective = areaMode == Day1AreaMode.Field
+                        ? "서버실의 기록 단말을 찾아 손상된 관측 기록을 복구하십시오."
+                        : "메인룸의 문을 통해 서버실로 이동하십시오.";
                     return;
                 }
 
@@ -229,12 +244,30 @@ public class MainSceneUI : MonoBehaviour
                 return;
 
             case Day1FlowState.EmergencyRecovery:
-                if (day1FlowController != null && day1FlowController.DayNumber == 3)
+                if (day1FlowController != null &&
+                    day1FlowController.CurrentEmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection)
                 {
-                    situation = "\uAD00\uCE21 \uAE30\uB85D \uBCF5\uAD6C\uAC00 \uC644\uB8CC\uB418\uC5C8\uB2E4.";
+                    if (areaMode == Day1AreaMode.Field)
+                    {
+                        situation = "시스템이 자동으로 복구되고 있다.";
+                        objective = "제어실로 돌아가 감시를 재개하십시오.";
+                    }
+                    else
+                    {
+                        situation = "메인룸에 복귀했다.";
+                        objective = "CCTV를 다시 확인하십시오.";
+                    }
+
+                    return;
+                }
+
+                if (day1FlowController != null &&
+                    day1FlowController.CurrentEmergencyObjectiveType == EmergencyObjectiveType.ServerReboot)
+                {
+                    situation = "관측 기록 복구가 완료되었다.";
                     objective = areaMode == Day1AreaMode.Field
-                        ? "\uC81C\uC5B4\uC2E4\uB85C \uB3CC\uC544\uAC00 CCTV \uAC10\uC2DC\uB97C \uC7AC\uAC1C\uD558\uC2ED\uC2DC\uC624."
-                        : "CCTV\uB97C \uB2E4\uC2DC \uD655\uC778\uD558\uC2ED\uC2DC\uC624.";
+                        ? "제어실로 돌아가 CCTV 감시를 재개하십시오."
+                        : "CCTV를 다시 확인하십시오.";
                     return;
                 }
 
@@ -344,11 +377,19 @@ public class MainSceneUI : MonoBehaviour
 
     private void ApplyMessage(string situation, string objective)
     {
-        if (situationText != null)
-            situationText.text = situation;
+        bool useFieldTexts = IsViewingField();
+        TMP_Text targetSituationText = useFieldTexts && fieldSituationText != null
+            ? fieldSituationText
+            : situationText;
+        TMP_Text targetObjectiveText = useFieldTexts && fieldObjectiveText != null
+            ? fieldObjectiveText
+            : objectiveText;
 
-        if (objectiveText != null)
-            objectiveText.text = objective;
+        if (targetSituationText != null)
+            targetSituationText.text = situation;
+
+        if (targetObjectiveText != null)
+            targetObjectiveText.text = objective;
     }
 
     private void ScheduleMessageDisplay(float delay)
@@ -387,15 +428,27 @@ public class MainSceneUI : MonoBehaviour
     private void SetVisible(bool visible)
     {
         if (textContentRoot != null)
-        {
             textContentRoot.SetActive(visible);
-            return;
-        }
 
-        if (situationText != null)
-            situationText.gameObject.SetActive(visible);
+        bool useFieldTexts = IsViewingField();
+        bool useFieldSituation = useFieldTexts && fieldSituationText != null;
+        bool useFieldObjective = useFieldTexts && fieldObjectiveText != null;
 
-        if (objectiveText != null)
-            objectiveText.gameObject.SetActive(visible);
+        SetTextActive(situationText, visible && !useFieldSituation);
+        SetTextActive(objectiveText, visible && !useFieldObjective);
+        SetTextActive(fieldSituationText, visible && useFieldSituation);
+        SetTextActive(fieldObjectiveText, visible && useFieldObjective);
+    }
+
+    private bool IsViewingField()
+    {
+        return areaTransitionController != null &&
+               areaTransitionController.CurrentMode == Day1AreaMode.Field;
+    }
+
+    private static void SetTextActive(TMP_Text text, bool active)
+    {
+        if (text != null && text.gameObject.activeSelf != active)
+            text.gameObject.SetActive(active);
     }
 }

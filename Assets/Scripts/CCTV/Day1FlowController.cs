@@ -89,7 +89,6 @@ public class Day1FlowController : MonoBehaviour
     public bool IsEmergencyPresentationLocked => presentationLockMode == PresentationLockMode.Emergency;
     public bool IsTerminalFailurePresentationActive { get; private set; }
     public bool IsAwaitingTitleStart { get; private set; }
-    public bool IsEmergencyFieldModeStarted => emergencyFieldModeStarted;
     public int DayNumber => dayDefinition != null ? dayDefinition.Day : 0;
     /// <summary>
     /// 시간 만료로 하루를 끝내도 되는지 나타냅니다. 현장이동이 설정된 일차는

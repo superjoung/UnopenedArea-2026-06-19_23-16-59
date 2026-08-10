@@ -12,16 +12,18 @@ public class Day2MissedPresentationController : MonoBehaviour
     [System.Serializable]
     private sealed class ViewportIntrusion
     {
+        [Tooltip("이 횟수의 미보고가 누적된 뒤부터 연출을 대기합니다. NR01=1, NR03=3")]
+        [Min(1)] public int requiredMissedCount = 1;
         public AreaId areaId = AreaId.TreatmentRoom;
         [Tooltip("치료실 프리팹 안 CCTVSceneObject의 Object Id입니다. NR01=OBJ_TREAT_CURTAIN_HAND_01, NR03=OBJ_TREAT_UNDERBED_PERSON_01")]
         public string effectObjectId;
         [Tooltip("화면 가로 중앙 판정 범위입니다. CCTV는 좌우로만 이동하므로 Y 위치는 판정하지 않습니다.")]
         [Range(0.01f, 0.5f)] public float centerTolerance = 0.1f;
         [Min(0.1f)] public float presentationDuration = 2f;
-        [Range(0f, 1f)] public float probability = 0.1f;
+        [Range(0f, 1f)] public float probability = 0.7f;
 
         [System.NonSerialized] public bool played;
-        [System.NonSerialized] public bool triggerWasEligible;
+        [System.NonSerialized] public int lastAttemptedMissedCount;
     }
 
     [Header("References")]
@@ -43,15 +45,12 @@ public class Day2MissedPresentationController : MonoBehaviour
     [SerializeField, Min(0f)] private float faceFlashHoldDuration = 3f;
     [Tooltip("얼굴 Image들의 알파를 직접 낮춰 사라지는 시간입니다.")]
     [SerializeField, Min(0.05f)] private float faceFlashFadeDuration = 0.5f;
-    [Tooltip("채널에 진입할 때 D2_NR02가 발생할 확률입니다.")]
-    [SerializeField, Range(0f, 1f)] private float faceFlashProbability = 0.1f;
+    [Tooltip("이 횟수의 미보고가 등록되는 순간 D2_NR02 얼굴 연출을 재생합니다.")]
+    [SerializeField, Min(1)] private int faceFlashRequiredMissedCount = 2;
 
     private DayRuntimeController subscribedRuntime;
     private Coroutine activePresentationRoutine;
     private bool faceFlashPlayed;
-    private AreaId lastFaceFlashArea = AreaId.None;
-    private AreaId cycleInitialAreaId = AreaId.None;
-    private bool changedChannelSinceCycleStart;
 
     private GameObject faceFlashRoot;
     private Image faceFlashSourceImage;
@@ -90,14 +89,8 @@ public class Day2MissedPresentationController : MonoBehaviour
     private void Update()
     {
         if (activePresentationRoutine != null || dayRuntimeController == null ||
-            dayRuntimeController.State != DayRuntimeState.Running || areaView == null)
-            return;
-
-        if (!HasChangedChannelSinceCycleStart())
-            return;
-
-        TryStartFaceFlashOnChannelEntry();
-        if (activePresentationRoutine != null)
+            dayRuntimeController.State != DayRuntimeState.Running ||
+            dayRuntimeController.MissedAnomalyCount <= 0 || areaView == null)
             return;
 
         if (viewportIntrusions == null)
@@ -109,20 +102,15 @@ public class Day2MissedPresentationController : MonoBehaviour
             if (intrusion == null)
                 continue;
 
-            bool isInTriggerArea = areaView.CurrentArea != null &&
-                                   areaView.CurrentArea.AreaId == intrusion.areaId;
-            if (!isInTriggerArea)
-            {
-                intrusion.triggerWasEligible = false;
-                continue;
-            }
-
-            if (intrusion.played || intrusion.triggerWasEligible ||
+            if (intrusion.played ||
+                intrusion.lastAttemptedMissedCount >= dayRuntimeController.MissedAnomalyCount ||
+                dayRuntimeController.MissedAnomalyCount < intrusion.requiredMissedCount ||
+                areaView.CurrentArea == null || areaView.CurrentArea.AreaId != intrusion.areaId ||
                 !TryGetCurrentEffectRoot(intrusion, out GameObject effectRoot) ||
                 !IsEffectAtViewportCenter(effectRoot.transform, intrusion.centerTolerance))
                 continue;
 
-            intrusion.triggerWasEligible = true;
+            intrusion.lastAttemptedMissedCount = dayRuntimeController.MissedAnomalyCount;
             bool success = Random.value <= intrusion.probability;
             Debug.Log($"[Day2MissedPresentationController] chance event={intrusion.effectObjectId}, probability={intrusion.probability:0.00}, success={success}", this);
             if (!success)
@@ -133,19 +121,10 @@ public class Day2MissedPresentationController : MonoBehaviour
         }
     }
 
-    private void TryStartFaceFlashOnChannelEntry()
+    private void HandleMissedAnomaly(AnomalyRuntime runtime)
     {
-        AreaId currentArea = areaView.CurrentArea != null ? areaView.CurrentArea.AreaId : AreaId.None;
-        if (currentArea == lastFaceFlashArea)
-            return;
-
-        lastFaceFlashArea = currentArea;
-        if (currentArea == AreaId.None || faceFlashPlayed)
-            return;
-
-        bool success = Random.value <= faceFlashProbability;
-        Debug.Log($"[Day2MissedPresentationController] chance event=D2_NR02, probability={faceFlashProbability:0.00}, success={success}", this);
-        if (!success)
+        if (dayRuntimeController == null || faceFlashPlayed ||
+            dayRuntimeController.MissedAnomalyCount < faceFlashRequiredMissedCount)
             return;
 
         faceFlashPlayed = true;
@@ -155,34 +134,9 @@ public class Day2MissedPresentationController : MonoBehaviour
     private void HandleDayStarted()
     {
         faceFlashPlayed = false;
-        lastFaceFlashArea = AreaId.None;
-        ResetInitialChannelGuard();
         SetActive(faceFlashRoot, false);
         SetFaceFeedActive(false);
         ResetViewportIntrusions();
-    }
-
-    private bool HasChangedChannelSinceCycleStart()
-    {
-        AreaId currentAreaId = areaView?.CurrentArea != null ? areaView.CurrentArea.AreaId : AreaId.None;
-        if (currentAreaId == AreaId.None)
-            return false;
-
-        if (cycleInitialAreaId == AreaId.None)
-        {
-            cycleInitialAreaId = currentAreaId;
-            return false;
-        }
-
-        if (currentAreaId != cycleInitialAreaId)
-            changedChannelSinceCycleStart = true;
-        return changedChannelSinceCycleStart;
-    }
-
-    private void ResetInitialChannelGuard()
-    {
-        cycleInitialAreaId = areaView?.CurrentArea != null ? areaView.CurrentArea.AreaId : AreaId.None;
-        changedChannelSinceCycleStart = false;
     }
 
     private IEnumerator PlayFaceFlash()
@@ -282,7 +236,7 @@ public class Day2MissedPresentationController : MonoBehaviour
                 continue;
 
             intrusion.played = false;
-            intrusion.triggerWasEligible = false;
+            intrusion.lastAttemptedMissedCount = 0;
             if (TryGetEffectRootInAnyPreparedArea(intrusion, out GameObject effectRoot))
             {
                 Animator animator = effectRoot.GetComponentInChildren<Animator>(true);
@@ -300,6 +254,7 @@ public class Day2MissedPresentationController : MonoBehaviour
 
         Unsubscribe();
         subscribedRuntime = dayRuntimeController;
+        subscribedRuntime.MissedAnomalyRegistered += HandleMissedAnomaly;
         subscribedRuntime.DayStarted += HandleDayStarted;
     }
 
@@ -308,6 +263,7 @@ public class Day2MissedPresentationController : MonoBehaviour
         if (subscribedRuntime == null)
             return;
 
+        subscribedRuntime.MissedAnomalyRegistered -= HandleMissedAnomaly;
         subscribedRuntime.DayStarted -= HandleDayStarted;
         subscribedRuntime = null;
     }
@@ -335,19 +291,21 @@ public class Day2MissedPresentationController : MonoBehaviour
         {
             new ViewportIntrusion
             {
+                requiredMissedCount = 1,
                 areaId = AreaId.TreatmentRoom,
                 effectObjectId = "OBJ_TREAT_CURTAIN_HAND_01",
                 centerTolerance = 0.1f,
                 presentationDuration = 2f,
-                probability = 0.1f,
+                probability = 0.7f,
             },
             new ViewportIntrusion
             {
+                requiredMissedCount = 3,
                 areaId = AreaId.TreatmentRoom,
                 effectObjectId = "OBJ_TREAT_UNDERBED_PERSON_01",
                 centerTolerance = 0.1f,
                 presentationDuration = 2f,
-                probability = 0.1f,
+                probability = 0.7f,
             },
         };
     }

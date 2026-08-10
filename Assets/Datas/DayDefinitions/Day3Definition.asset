@@ -27,7 +27,7 @@ MonoBehaviour:
   emergencyRequiredCorrectReports: 3
   emergencyTriggerProgress: 0.65
   emergencyRequiresBothConditions: 0
-  emergencyObjectiveType: 1
+  emergencyObjectiveType: 2
   emergencyDispatchText: "\uAE30\uB85D \uC2DC\uC2A4\uD15C\uC774 \uC190\uC0C1\uB418\uC5C8\uB2E4.
     \uBA54\uC778\uB8F8\uC758 \uBB38\uC744 \uD1B5\uD574 \uC11C\uBC84\uC2E4\uB85C \uC774\uB3D9\uD558\uC2ED\uC2DC\uC624."
   emergencyFieldObjectiveText: "\uC11C\uBC84\uC2E4\uC758 \uAE30\uB85D \uB2E8\uB9D0\uC744

@@ -31,5 +31,5 @@ MonoBehaviour:
     targetLocalPosition: {x: 0, y: 0, z: 0}
     localPositionOffset: {x: 0, y: 0, z: 0}
     targetLocalEulerAngles: {x: 0, y: 0, z: 0}
-    targetSprite: {fileID: -8776127589316091963, guid: a1b45bdc0ce70a64e8317c9e2977e255, type: 3}
+    targetSprite: {fileID: -7986921476836220228, guid: f012e194146644841a8b0855db0c503d, type: 3}
     targetColor: {r: 0, g: 0, b: 0, a: 0}

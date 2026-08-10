@@ -5581,8 +5581,6 @@ MonoBehaviour:
   flowController: {fileID: 8693137798863627260}
   statusText: {fileID: 7109263541205515071}
   objectiveText: {fileID: 3142695662147961253}
-  fieldStatusText: {fileID: 956257847837644852}
-  fieldObjectiveText: {fileID: 3415422316735972980}
   feedbackText: {fileID: 4423938354910054439}
   feedbackDuration: 2
   emergencyOverlay: {fileID: 4149490884054998775}
@@ -6762,6 +6760,8 @@ MonoBehaviour:
   transitionEffect: {fileID: 0}
   situationText: {fileID: 8171335417152669799}
   objectiveText: {fileID: 865557258692174514}
+  fieldSituationText: {fileID: 956257847837644852}
+  fieldObjectiveText: {fileID: 3415422316735972980}
   hideWhileViewingCctv: 1
   textContentRoot: {fileID: 0}
   phoneRingingMessageDelay: 1
