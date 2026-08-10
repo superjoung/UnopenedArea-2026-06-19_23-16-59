@@ -13,6 +13,7 @@
 .utmp/
 /[Ll]ibrary/
 /[Tt]emp/
+/tmp/
 /[Oo]bj/
 /[Bb]uild/
 /[Bb]uilds/
