@@ -6923,6 +6923,7 @@ MonoBehaviour:
   presentationId: LookBack
   presentationMode: 2
   startTiming: 1
+  requiredVisibleDuration: 2
   replayWhenAreaIsShown: 0
   glideEndLocalPosition: {x: 0, y: 0, z: 0}
   glideUnitsPerSecond: 2

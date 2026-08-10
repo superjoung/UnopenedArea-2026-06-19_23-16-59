@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: TestDayDefinition
   m_EditorClassIdentifier: 
   day: 1
-  durationSec: 200
+  durationSec: 180
   maxMissed: 3
   activeAreas:
   - {fileID: 11400000, guid: 9d13d1b21e63abb4594f360b587d5f4e, type: 2}
   - {fileID: 11400000, guid: fc8ee4399cd0c2443a7ca9013befb3db, type: 2}
   - {fileID: 11400000, guid: 626dfe864efcc494f84bfe42dc893136, type: 2}
-  tutorialAnomaly: {fileID: 11400000, guid: 2929c5f3ddd306c46b9a707aff5a91fa, type: 2}
+  tutorialAnomaly: {fileID: 0}
   tutorialRequiredChannelSwitches: 3
   tutorialFallbackElapsedSec: 60
   enableEmergencyDispatch: 1
@@ -38,16 +38,16 @@ MonoBehaviour:
   randomMaxIntervalSec: 15
   randomPool:
   - anomaly: {fileID: 11400000, guid: 2929c5f3ddd306c46b9a707aff5a91fa, type: 2}
-    weight: 1
+    weight: 2
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 7a2328bfa9ca1e648b317f62bcc5dfba, type: 2}
-    weight: 1
+    weight: 2
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: fd240f65b0a9fed4aa548a6e5626b358, type: 2}
     weight: 1
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: f90ec369eb033c641b77afda9cc566c8, type: 2}
-    weight: 1
+    weight: 2
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 85ec6dcc30697084297305fd4264abf6, type: 2}
     weight: 1
@@ -59,7 +59,7 @@ MonoBehaviour:
     weight: 1
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: cafe0e04e5342bb4abfda38f2429e670, type: 2}
-    weight: 1
+    weight: 2
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: c6160a2618bac0445ab3e550bd9f8c84, type: 2}
     weight: 1

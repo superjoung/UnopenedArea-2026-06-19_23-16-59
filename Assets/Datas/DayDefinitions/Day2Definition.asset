@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Day2Definition
   m_EditorClassIdentifier: 
   day: 2
-  durationSec: 250
+  durationSec: 200
   maxMissed: 4
   activeAreas:
   - {fileID: 11400000, guid: 9d13d1b21e63abb4594f360b587d5f4e, type: 2}
@@ -35,12 +35,9 @@ MonoBehaviour:
     \uC788\uB2E4. \uC81C\uC5B4\uC2E4\uB85C \uB3CC\uC544\uAC00 \uAC10\uC2DC\uB97C
     \uC7AC\uAC1C\uD558\uC2ED\uC2DC\uC624."
   enableMissedEscalationChannels: 0
-  fixedSchedule:
-  - triggerElapsedSec: 20
-    anomaly: {fileID: 11400000, guid: db23b601a70a21a4fafe4d8bd2fa23cb, type: 2}
-    triggerOnce: 1
+  fixedSchedule: []
   enableRandomSchedule: 1
-  waitForFirstFixedAnomalyBeforeRandom: 1
+  waitForFirstFixedAnomalyBeforeRandom: 0
   randomMinIntervalSec: 15
   randomMaxIntervalSec: 25
   randomPool:

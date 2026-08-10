@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// Day 1의 별도 미보고 공포 연출(D1_NR01, D1_NR02)을 확률적으로 재생합니다.
-/// 필수 진행 요소인 미보고 배경 단계 및 채널 해금과는 독립적으로 동작합니다.
+/// 오보고/미보고 횟수와 무관하며, 각 연출은 한 게임 사이클에 한 번만 성공할 수 있습니다.
 /// </summary>
 public sealed class Day1MissedPresentationController : MonoBehaviour
 {
@@ -12,12 +12,12 @@ public sealed class Day1MissedPresentationController : MonoBehaviour
     {
         public string eventId;
         public AreaId areaId;
-        [Range(0f, 1f)] public float probability = 0.7f;
+        [Range(0f, 1f)] public float probability = 0.1f;
         [Min(0.05f)] public float duration = 0.5f;
         public Sprite sprite;
 
         [System.NonSerialized] public bool played;
-        [System.NonSerialized] public int lastAttemptedMissedCount;
+        [System.NonSerialized] public bool triggerWasEligible;
     }
 
     [Header("References")]
@@ -34,7 +34,7 @@ public sealed class Day1MissedPresentationController : MonoBehaviour
     {
         eventId = "D1_NR01",
         areaId = AreaId.LabCorridor,
-        probability = 0.7f,
+        probability = 0.1f,
         duration = 0.7f,
     };
     [SerializeField] private Vector2 edgeStartViewport = new Vector2(1.12f, 0.45f);
@@ -46,13 +46,15 @@ public sealed class Day1MissedPresentationController : MonoBehaviour
     {
         eventId = "D1_NR02",
         areaId = AreaId.TreatmentRoom,
-        probability = 0.7f,
+        probability = 0.1f,
         duration = 0.5f,
     };
 
     private DayRuntimeController subscribedRuntime;
     private Coroutine activeRoutine;
     private SpriteRenderer feedRenderer;
+    private AreaId cycleInitialAreaId = AreaId.None;
+    private bool changedChannelSinceCycleStart;
 
     private void Awake()
     {
@@ -77,28 +79,29 @@ public sealed class Day1MissedPresentationController : MonoBehaviour
 
     private void Update()
     {
-        if (!CanPreparePresentation() || activeRoutine != null)
-            return;
-
-        int missedCount = dayRuntimeController.MissedAnomalyCount;
-        if (missedCount <= 0 || areaView.CurrentArea == null)
-            return;
-
-        AreaId currentAreaId = areaView.CurrentArea.AreaId;
-        if (currentAreaId == edgePerson.areaId)
-            TryStart(edgePerson, missedCount, PlayEdgePerson);
-        else if (currentAreaId == treatmentFace.areaId)
-            TryStart(treatmentFace, missedCount, PlayTreatmentFace);
+        bool canAttempt = CanPreparePresentation() && HasChangedChannelSinceCycleStart() &&
+                          activeRoutine == null && areaView.CurrentArea != null;
+        AreaId currentAreaId = areaView.CurrentArea != null ? areaView.CurrentArea.AreaId : AreaId.None;
+        TryStart(edgePerson, currentAreaId == edgePerson.areaId, canAttempt, PlayEdgePerson);
+        TryStart(treatmentFace, currentAreaId == treatmentFace.areaId, canAttempt, PlayTreatmentFace);
     }
 
-    private void TryStart(MissedPresentation presentation, int missedCount,
+    private void TryStart(MissedPresentation presentation, bool isInTriggerArea, bool canAttempt,
         System.Func<MissedPresentation, IEnumerator> routineFactory)
     {
-        if (presentation == null || presentation.played ||
-            presentation.lastAttemptedMissedCount >= missedCount)
+        if (presentation == null || presentation.played)
             return;
 
-        presentation.lastAttemptedMissedCount = missedCount;
+        if (!isInTriggerArea)
+        {
+            presentation.triggerWasEligible = false;
+            return;
+        }
+
+        if (!canAttempt || presentation.triggerWasEligible)
+            return;
+
+        presentation.triggerWasEligible = true;
         bool success = Random.value <= presentation.probability;
         Debug.Log($"[Day1MissedPresentationController] chance event={presentation.eventId}, probability={presentation.probability:0.00}, success={success}", this);
         if (success)
@@ -198,6 +201,8 @@ public sealed class Day1MissedPresentationController : MonoBehaviour
     {
         if (dayRuntimeController == null || areaView == null || cctvCamera == null)
             return false;
+        if (dayRuntimeController.State != DayRuntimeState.Running)
+            return false;
         if (fieldModeController != null && fieldModeController.IsFieldModeActive)
             return false;
         if (sceneController != null && !sceneController.CCTVInputEnabled)
@@ -214,7 +219,31 @@ public sealed class Day1MissedPresentationController : MonoBehaviour
     private void HandleDayStarted()
     {
         ResetPresentations();
+        ResetInitialChannelGuard();
         SetFeedActive(false);
+    }
+
+    private bool HasChangedChannelSinceCycleStart()
+    {
+        AreaId currentAreaId = areaView?.CurrentArea != null ? areaView.CurrentArea.AreaId : AreaId.None;
+        if (currentAreaId == AreaId.None)
+            return false;
+
+        if (cycleInitialAreaId == AreaId.None)
+        {
+            cycleInitialAreaId = currentAreaId;
+            return false;
+        }
+
+        if (currentAreaId != cycleInitialAreaId)
+            changedChannelSinceCycleStart = true;
+        return changedChannelSinceCycleStart;
+    }
+
+    private void ResetInitialChannelGuard()
+    {
+        cycleInitialAreaId = areaView?.CurrentArea != null ? areaView.CurrentArea.AreaId : AreaId.None;
+        changedChannelSinceCycleStart = false;
     }
 
     private void ResetPresentations()
@@ -228,7 +257,7 @@ public sealed class Day1MissedPresentationController : MonoBehaviour
         if (presentation == null)
             return;
         presentation.played = false;
-        presentation.lastAttemptedMissedCount = 0;
+        presentation.triggerWasEligible = false;
     }
 
     private void Subscribe()

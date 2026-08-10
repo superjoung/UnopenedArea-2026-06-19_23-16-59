@@ -27,6 +27,8 @@ public class AnomalyPresentationController : MonoBehaviour
     [SerializeField] private string presentationId;
     [SerializeField] private PresentationMode presentationMode = PresentationMode.None;
     [SerializeField] private StartTiming startTiming = StartTiming.Immediately;
+    [Tooltip("대상이 CCTV 화면 안에 연속으로 노출되어야 하는 시간입니다. 0이면 즉시 재생합니다.")]
+    [SerializeField, Min(0f)] private float requiredVisibleDuration;
     [Tooltip("CCTV 채널을 다시 볼 때마다 처음부터 재생합니다.")]
     [SerializeField] private bool replayWhenAreaIsShown;
 
@@ -60,6 +62,7 @@ public class AnomalyPresentationController : MonoBehaviour
     private TransitionEffect transitionEffect;
     private bool playRequested;
     private bool isPlaying;
+    private float visibleObservationElapsed;
     private Vector3 glideStartLocalPosition;
     private float glideElapsed;
     private float stepRotationElapsed;
@@ -95,7 +98,7 @@ public class AnomalyPresentationController : MonoBehaviour
         // AreaShown은 채널이 선택된 순간 발생하므로, 긴 맵의 화면 밖 대상은
         // 카메라가 실제로 도달할 때까지 프레젠테이션 시작을 보류한다.
         if (playRequested && !isPlaying && startTiming == StartTiming.WhenCctvAreaIsShown)
-            TryStartForCurrentArea();
+            TryStartForCurrentArea(Time.deltaTime);
 
         if (!isPlaying)
             return;
@@ -145,6 +148,7 @@ public class AnomalyPresentationController : MonoBehaviour
         stepRotationElapsed = 0f;
         spriteFrameElapsed = 0f;
         spriteFrameIndex = 0;
+        visibleObservationElapsed = 0f;
 
         if (originalLocalRotationCached)
             transform.localRotation = originalLocalRotation;
@@ -167,15 +171,29 @@ public class AnomalyPresentationController : MonoBehaviour
             TryStartForCurrentArea();
     }
 
-    private void TryStartForCurrentArea()
+    private void TryStartForCurrentArea(float observationDeltaTime = 0f)
     {
         if (!playRequested || startTiming != StartTiming.WhenCctvAreaIsShown)
             return;
 
-        if (areaView != null &&
-            areaView.CurrentInstance == ownerArea &&
-            !IsAppearanceMaskActive() &&
-            IsTargetVisibleInCctv())
+        bool isContinuouslyVisible = areaView != null &&
+                                     areaView.CurrentInstance == ownerArea &&
+                                     !IsAppearanceMaskActive() &&
+                                     IsTargetVisibleInCctv();
+        if (!isContinuouslyVisible)
+        {
+            visibleObservationElapsed = 0f;
+            return;
+        }
+
+        if (requiredVisibleDuration <= 0f)
+        {
+            StartNow();
+            return;
+        }
+
+        visibleObservationElapsed += Mathf.Max(0f, observationDeltaTime);
+        if (visibleObservationElapsed >= requiredVisibleDuration)
             StartNow();
     }
 
@@ -212,6 +230,7 @@ public class AnomalyPresentationController : MonoBehaviour
     private void StartNow()
     {
         isPlaying = true;
+        visibleObservationElapsed = 0f;
 
         switch (presentationMode)
         {

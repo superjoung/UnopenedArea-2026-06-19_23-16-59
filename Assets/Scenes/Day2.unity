@@ -3798,25 +3798,21 @@ MonoBehaviour:
   sceneController: {fileID: 695006758}
   cctvCamera: {fileID: 695006757}
   viewportIntrusions:
-  - requiredMissedCount: 1
-    areaId: 200
+  - areaId: 200
     effectObjectId: OBJ_TREAT_CURTAIN_HAND_01
     centerTolerance: 0.1
     presentationDuration: 2
-    probability: 0.7
-    played: 0
-  - requiredMissedCount: 3
-    areaId: 200
+    probability: 0.1
+  - areaId: 200
     effectObjectId: OBJ_TREAT_UNDERBED_PERSON_01
     centerTolerance: 0.1
     presentationDuration: 2
-    probability: 0.7
-    played: 0
+    probability: 0.1
   faceFlashObjectName: FaceImg
   cctvRawImageName: RawImage_CCTVScreen
   faceFlashHoldDuration: 3
   faceFlashFadeDuration: 0.5
-  faceFlashRequiredMissedCount: 2
+  faceFlashProbability: 0.1
 --- !u!114 &709629009
 MonoBehaviour:
   m_ObjectHideFlags: 0

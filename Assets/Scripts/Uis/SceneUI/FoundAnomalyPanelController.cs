@@ -9,6 +9,7 @@ public sealed class FoundAnomalyPanelController : MonoBehaviour
     [Header("Panel")]
     [SerializeField] private GameObject panelRoot;
     [SerializeField] private bool hideOnStart = true;
+    [SerializeField] private bool closeWhenClickingOutside = true;
     [SerializeField] private MainRoomInteractionController mainRoomInteractionController;
 
     [Header("Scroll View")]
@@ -25,6 +26,7 @@ public sealed class FoundAnomalyPanelController : MonoBehaviour
     private Coroutine scrollRoutine;
     private int nextNumber = 1;
     private bool scrollToBottomPending;
+    private int openedFrame = -1;
 
     public bool IsOpen => panelRoot != null && panelRoot.activeSelf;
 
@@ -52,6 +54,27 @@ public sealed class FoundAnomalyPanelController : MonoBehaviour
             ScheduleScrollToBottom();
     }
 
+    private void Update()
+    {
+        if (!closeWhenClickingOutside || !IsOpen || Time.frameCount == openedFrame)
+            return;
+
+        if (!Input.GetMouseButtonDown(0))
+            return;
+
+        RectTransform panelRect = panelRoot.transform as RectTransform;
+        if (panelRect == null)
+            return;
+
+        Canvas parentCanvas = panelRoot.GetComponentInParent<Canvas>();
+        Camera eventCamera = parentCanvas != null && parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? parentCanvas.worldCamera
+            : null;
+
+        if (!RectTransformUtility.RectangleContainsScreenPoint(panelRect, Input.mousePosition, eventCamera))
+            ClosePanel();
+    }
+
     private void OnDestroy()
     {
         SetMainRoomInputBlocked(false);
@@ -71,6 +94,7 @@ public sealed class FoundAnomalyPanelController : MonoBehaviour
 
         SetMainRoomInputBlocked(true);
         panelRoot.SetActive(true);
+        openedFrame = Time.frameCount;
         SoundManager.Instance?.PlayFoundAnomalyPanelOpenSfx();
         ScheduleScrollToBottom();
     }
@@ -80,6 +104,7 @@ public sealed class FoundAnomalyPanelController : MonoBehaviour
         if (panelRoot != null)
             panelRoot.SetActive(false);
 
+        openedFrame = -1;
         SetMainRoomInputBlocked(false);
     }
 

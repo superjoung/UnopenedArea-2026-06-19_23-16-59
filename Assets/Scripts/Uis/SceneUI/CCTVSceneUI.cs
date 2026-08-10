@@ -143,6 +143,15 @@ public class CCTVSceneUI : BaseUI
         GetButton((int)Buttons.ObjectReportButton).gameObject.BindEvent(OnClickObjectSelectButton);
         GetButton((int)Buttons.TypeReportButton).gameObject.BindEvent(OnClickTypeSelectButton);
 
+        GameObject reportBoundary = GetObject((int)Objects.ReportBoundary);
+        if (reportBoundary != null)
+        {
+            Image boundaryImage = reportBoundary.GetComponent<Image>();
+            if (boundaryImage != null)
+                boundaryImage.raycastTarget = true;
+            reportBoundary.BindEvent(OnClickReportBoundary);
+        }
+
         EffectSetting();
         ReportHeightSetting();
         ReportContentSetting();
@@ -499,6 +508,21 @@ public class CCTVSceneUI : BaseUI
             .DOAnchorPosY(-_reportFullHeight, 0.2f)
             .SetEase(Ease.OutQuint);
         _isReport = false;
+    }
+
+    private void OnClickReportBoundary(PointerEventData eventData)
+    {
+        if (!_isReport || eventData == null)
+            return;
+
+        RectTransform panel = GetObject((int)Objects.ReportBackGround)?.GetComponent<RectTransform>();
+        if (panel != null && RectTransformUtility.RectangleContainsScreenPoint(
+                panel,
+                eventData.position,
+                eventData.pressEventCamera))
+            return;
+
+        CloseReportPanel();
     }
 
     /// <summary>
@@ -1071,7 +1095,7 @@ public class CCTVSceneUI : BaseUI
 
     // 미보고 단계에서만 표시되는 제어실 외부/내부 채널은 분위기와 실패 연출용 영상이다.
     // 실제 이상현상 보고 장소 후보에는 넣지 않는다.
-    private static bool IsReportSelectableArea(CCTVAreaDefinition area)
+    private bool IsReportSelectableArea(CCTVAreaDefinition area)
     {
         if (area == null || area.AreaId == AreaId.None)
             return false;
@@ -1200,8 +1224,6 @@ public class CCTVSceneUI : BaseUI
         GameManager.Instance?.SetReportInputEnabled(true);
     }
 }
-
-
 
 
 
