@@ -26,6 +26,23 @@ public class CCTVPanController : MonoBehaviour
 
     public CCTVAreaDefinition CurrentArea => currentArea;
     public bool InputLocked => inputLocked;
+    public bool CanPanHorizontally => currentArea != null && GetMaxCameraX() - GetMinCameraX() > 0.001f;
+    public float CurrentNormalizedX
+    {
+        get
+        {
+            if (currentArea == null)
+                return 0.5f;
+
+            float minX = GetMinCameraX();
+            float maxX = GetMaxCameraX();
+            if (maxX - minX <= 0.001f)
+                return 0.5f;
+
+            float currentX = targetCamera != null ? targetCamera.transform.position.x : targetX;
+            return Mathf.InverseLerp(minX, maxX, currentX);
+        }
+    }
 
     private void Awake()
     {

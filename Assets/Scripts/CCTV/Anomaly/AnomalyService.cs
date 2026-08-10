@@ -22,6 +22,7 @@ public class AnomalyService : MonoBehaviour
     private readonly HashSet<AnomalyRuntime> urgencyNotifiedAnomalies = new HashSet<AnomalyRuntime>();
 
     public System.Action<AnomalyRuntime> AnomalyUrgencyStarted;
+    public System.Action<AnomalyRuntime> AnomalyActivated;
     public System.Action<AnomalyRuntime> AnomalyMissed;
     public System.Action<AnomalyRuntime> AnomalyResolved;
     public IReadOnlyList<AnomalyRuntime> ActiveAnomalies => activeAnomalies;
@@ -266,6 +267,7 @@ public class AnomalyService : MonoBehaviour
 
             day1FlowController?.ShowAnomalyAppearedMessage(runtime);
             runtime.ActivateTimer();
+            AnomalyActivated?.Invoke(runtime);
             Debug.Log($"[AnomalyService] Activated anomaly={runtime.Definition.AnomalyId}, area={runtime.Definition.AreaId}, duration={runtime.RemainingActiveTimeSec}");
             yield break;
         }
@@ -283,6 +285,7 @@ public class AnomalyService : MonoBehaviour
         }
 
         runtime.ActivateTimer();
+        AnomalyActivated?.Invoke(runtime);
         Debug.Log($"[AnomalyService] Activated anomaly={runtime.Definition.AnomalyId}, area={runtime.Definition.AreaId}, duration={runtime.RemainingActiveTimeSec}");
     }
 

@@ -6923,8 +6923,14 @@ MonoBehaviour:
   presentationId: LookBack
   presentationMode: 2
   startTiming: 1
-  requiredVisibleDuration: 2
+  requiredVisibleDuration: 0
   replayWhenAreaIsShown: 0
+  requireHorizontalCenter: 1
+  horizontalCenterTolerance: 0.1
+  lockCctvInputDuringPresentation: 1
+  focusedPresentationDuration: 2.05
+  holdAnimatorLastFrame: 0
+  hideObjectAfterPresentation: 1
   glideEndLocalPosition: {x: 0, y: 0, z: 0}
   glideUnitsPerSecond: 2
   targetAnimator: {fileID: 2876623222381604973}

@@ -35,9 +35,12 @@ MonoBehaviour:
     \uC788\uB2E4. \uC81C\uC5B4\uC2E4\uB85C \uB3CC\uC544\uAC00 \uAC10\uC2DC\uB97C
     \uC7AC\uAC1C\uD558\uC2ED\uC2DC\uC624."
   enableMissedEscalationChannels: 0
-  fixedSchedule: []
+  fixedSchedule:
+  - triggerElapsedSec: 20
+    anomaly: {fileID: 11400000, guid: db23b601a70a21a4fafe4d8bd2fa23cb, type: 2}
+    triggerOnce: 1
   enableRandomSchedule: 1
-  waitForFirstFixedAnomalyBeforeRandom: 0
+  waitForFirstFixedAnomalyBeforeRandom: 1
   randomMinIntervalSec: 15
   randomMaxIntervalSec: 25
   randomPool:
@@ -45,32 +48,32 @@ MonoBehaviour:
     weight: 1
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: a5c9fa07ed6916b4ea7a53edf56ff305, type: 2}
-    weight: 1
+    weight: 4
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 437014a6f73d4ef4db56adf58590645a, type: 2}
     weight: 1
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 09597b2a82d92d24da75db40c0589e1a, type: 2}
-    weight: 1
+    weight: 4
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: a9ccae8896cd6a148b8dfdd0e25e9708, type: 2}
-    weight: 1
+    weight: 2
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 670f7c52655730544bb631a81293116b, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 540f2a97e9399714f9ff02149695f359, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 4a36cafd548835240b0ff0163842ee84, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 53c43ee040bc843429b6ec89373826bc, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 2c10d472753e1cb478ff2c338e8213bb, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: cbc1a377d1c282943968da7e370b4226, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1

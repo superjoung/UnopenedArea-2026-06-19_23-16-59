@@ -104,6 +104,34 @@ public class AnomalyScheduler : MonoBehaviour
         generationPaused = paused;
     }
 
+    /// <summary>
+    /// 현재 랜덤 풀의 규칙(가중치, 연속 중복 방지, 단일 활성 제한)을 그대로 사용해
+    /// 첫 이상현상을 즉시 시작합니다. Day 1 조작 안내 완료 시점에 사용합니다.
+    /// </summary>
+    public bool TryTriggerRandomAnomalyNow()
+    {
+        ResolveReferences();
+
+        if (dayRuntimeController == null || anomalyService == null ||
+            dayRuntimeController.State != DayRuntimeState.Running)
+            return false;
+
+        if (currentDayDefinition == null)
+            ResetSchedule(dayRuntimeController.CurrentDayDefinition);
+
+        if (currentDayDefinition == null || !currentDayDefinition.EnableRandomSchedule ||
+            awaitingObservationCycleResult || HasActiveAnomalies())
+            return false;
+
+        AnomalyDefinition selectedAnomaly = SelectRandomAnomaly();
+        if (selectedAnomaly == null || !TryActivateScheduledAnomaly(selectedAnomaly))
+            return false;
+
+        MarkRandomAnomalyUsed(selectedAnomaly);
+        lastRandomAnomaly = selectedAnomaly;
+        return true;
+    }
+
     private void ResetSchedule(DayDefinition dayDefinition)
     {
         currentDayDefinition = dayDefinition;

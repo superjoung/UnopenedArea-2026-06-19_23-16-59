@@ -50,6 +50,8 @@ public class DayRuntimeController : MonoBehaviour
     public System.Action<AnomalyRuntime> MissedAnomalyRegistered;
 
     private bool terminalFailureStarted;
+    private bool loggedEmergencyCompletionHold;
+    private Day1FlowController dayFlowController;
     private int MaxMissed => dayDefinition != null ? Mathf.Max(0, dayDefinition.MaxMissed) : 3;
     public int MaxWrongReports => Mathf.Max(1, maxWrongReports);
 
@@ -75,7 +77,17 @@ public class DayRuntimeController : MonoBehaviour
         NotifyTimeChanged();
 
         if (ElapsedSec >= DurationSec)
-            ClearDay();
+        {
+            if (CanCompleteTimedDay())
+            {
+                ClearDay();
+            }
+            else if (!loggedEmergencyCompletionHold)
+            {
+                loggedEmergencyCompletionHold = true;
+                Debug.Log("[DayRuntimeController] Day completion is waiting for the required field event.");
+            }
+        }
     }
 
     private void OnDestroy()
@@ -95,6 +107,7 @@ public class DayRuntimeController : MonoBehaviour
         MissedAnomalyCount = 0;
         FailureReason = DayFailureReason.None;
         terminalFailureStarted = false;
+        loggedEmergencyCompletionHold = false;
         State = DayRuntimeState.Running;
 
         if (anomalyService != null)
@@ -253,12 +266,27 @@ public class DayRuntimeController : MonoBehaviour
         if (anomalyService == null)
             anomalyService = FindObjectOfType<AnomalyService>();
 
+        if (dayFlowController == null)
+            dayFlowController = FindFirstObjectByType<Day1FlowController>(FindObjectsInactive.Include);
+
         if (dayDefinition == null)
         {
             CCTVTestSceneController sceneController = FindObjectOfType<CCTVTestSceneController>();
             if (sceneController != null)
                 dayDefinition = sceneController.CurrentDayDefinition;
         }
+    }
+
+    private bool CanCompleteTimedDay()
+    {
+        if (dayDefinition == null || !dayDefinition.EnableEmergencyDispatch)
+            return true;
+
+        if (dayFlowController == null)
+            dayFlowController = FindFirstObjectByType<Day1FlowController>(FindObjectsInactive.Include);
+
+        // 기존 단독 테스트 씬처럼 FlowController가 없는 환경은 이전 종료 동작을 유지한다.
+        return dayFlowController == null || dayFlowController.CanCompleteTimedDay;
     }
 
     private int GetDayNumber()

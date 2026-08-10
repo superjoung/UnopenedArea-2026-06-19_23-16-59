@@ -66,5 +66,5 @@
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj"
     },
-    "dotnet.defaultSolution": "UnopenedArea.sln"
+    "dotnet.defaultSolution": "UnopenedArea-2026-06-19_23-16-59.sln"
 }

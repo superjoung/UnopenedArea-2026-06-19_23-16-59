@@ -8,6 +8,8 @@ using UnityEngine.EventSystems;
 
 public class CCTVSceneUI : BaseUI
 {
+    public System.Action<bool> ReportPanelVisibilityChanged;
+
     [Header("Sound Events")]
     [SerializeField] private UnityEngine.Events.UnityEvent onReportPanelToggled;
 
@@ -273,9 +275,14 @@ public class CCTVSceneUI : BaseUI
             yield return new WaitForSecondsRealtime(initialMonitoringIntroDelay);
 
         SetInitialMonitoringHudVisible(true);
-        sceneController?.SetCCTVInputEnabled(true);
+        bool restoredByKeyTutorial = day1FlowController != null &&
+                                     day1FlowController.RestoreCctvKeyTutorialInputStateAfterIntro();
+        if (!restoredByKeyTutorial)
+        {
+            sceneController?.SetCCTVInputEnabled(true);
+            GameManager.Instance?.SetReportInputEnabled(true);
+        }
         panController?.SetInputLocked(false);
-        GameManager.Instance?.SetReportInputEnabled(true);
         SetReportSendInteractable(CanSubmitReport());
         initialMonitoringIntroCoroutine = null;
     }
@@ -390,6 +397,7 @@ public class CCTVSceneUI : BaseUI
                 .SetEase(Ease.OutQuint);
         }
         _isReport = !_isReport;
+        ReportPanelVisibilityChanged?.Invoke(_isReport);
     }
 
     private void PlayFalseReportNoise()
@@ -507,7 +515,10 @@ public class CCTVSceneUI : BaseUI
         _slideTween = panel
             .DOAnchorPosY(-_reportFullHeight, 0.2f)
             .SetEase(Ease.OutQuint);
+        bool wasOpen = _isReport;
         _isReport = false;
+        if (wasOpen)
+            ReportPanelVisibilityChanged?.Invoke(false);
     }
 
     private void OnClickReportBoundary(PointerEventData eventData)
@@ -537,7 +548,10 @@ public class CCTVSceneUI : BaseUI
 
         _slideTween?.Kill();
         panel.anchoredPosition = new Vector2(panel.anchoredPosition.x, -_reportFullHeight);
+        bool wasOpen = _isReport;
         _isReport = false;
+        if (wasOpen)
+            ReportPanelVisibilityChanged?.Invoke(false);
         SetReportSendInteractable(false);
     }
 

@@ -32,6 +32,19 @@ public class AnomalyPresentationController : MonoBehaviour
     [Tooltip("CCTV 채널을 다시 볼 때마다 처음부터 재생합니다.")]
     [SerializeField] private bool replayWhenAreaIsShown;
 
+    [Header("CCTV Focus")]
+    [Tooltip("대상이 CCTV 화면 가로 중앙에 들어와야 연출을 시작합니다.")]
+    [SerializeField] private bool requireHorizontalCenter;
+    [SerializeField, Range(0.01f, 0.5f)] private float horizontalCenterTolerance = 0.1f;
+    [Tooltip("연출 중 Q/E 채널 전환과 카메라 이동을 잠급니다.")]
+    [SerializeField] private bool lockCctvInputDuringPresentation;
+    [Tooltip("0보다 크면 해당 시간 뒤 포커스 잠금을 해제하고 연출을 완료합니다.")]
+    [SerializeField, Min(0f)] private float focusedPresentationDuration;
+    [Tooltip("Animator 연출 완료 시 마지막 프레임을 유지합니다. 보고 처리 시 원래 모습으로 복구됩니다.")]
+    [SerializeField] private bool holdAnimatorLastFrame;
+    [Tooltip("포커스 연출을 끝낸 직후 대상 오브젝트를 숨깁니다.")]
+    [SerializeField] private bool hideObjectAfterPresentation;
+
     [Header("Glide Horizontal")]
     [Tooltip("재생을 시작한 현재 위치에서 이 로컬 위치까지 좌우로 왕복합니다.")]
     [SerializeField] private Vector3 glideEndLocalPosition;
@@ -60,6 +73,8 @@ public class AnomalyPresentationController : MonoBehaviour
     private CCTVAreaInstance ownerArea;
     private Camera visibilityCamera;
     private TransitionEffect transitionEffect;
+    private CCTVTestSceneController sceneController;
+    private CCTVPanController panController;
     private bool playRequested;
     private bool isPlaying;
     private float visibleObservationElapsed;
@@ -72,6 +87,12 @@ public class AnomalyPresentationController : MonoBehaviour
     private int spriteFrameIndex;
     private Sprite originalSprite;
     private bool originalSpriteCached;
+    private float focusedPresentationElapsed;
+    private bool inputStateCaptured;
+    private bool previousCctvInputEnabled;
+    private bool previousPanInputLocked;
+    private bool animatorEnabledBeforePresentation;
+    private bool animatorStateCaptured;
 
     public string PresentationId => presentationId;
 
@@ -102,6 +123,16 @@ public class AnomalyPresentationController : MonoBehaviour
 
         if (!isPlaying)
             return;
+
+        if (focusedPresentationDuration > 0f)
+        {
+            focusedPresentationElapsed += Time.deltaTime;
+            if (focusedPresentationElapsed >= focusedPresentationDuration)
+            {
+                CompleteFocusedPresentation();
+                return;
+            }
+        }
 
         if (presentationMode == PresentationMode.GlideHorizontal)
         {
@@ -149,12 +180,25 @@ public class AnomalyPresentationController : MonoBehaviour
         spriteFrameElapsed = 0f;
         spriteFrameIndex = 0;
         visibleObservationElapsed = 0f;
+        focusedPresentationElapsed = 0f;
+
+        RestoreInputState();
 
         if (originalLocalRotationCached)
             transform.localRotation = originalLocalRotation;
 
         if (targetAnimator != null)
+        {
+            bool restoreAnimatorEnabled = animatorStateCaptured
+                ? animatorEnabledBeforePresentation
+                : targetAnimator.enabled;
+            targetAnimator.enabled = true;
+            targetAnimator.speed = 1f;
             targetAnimator.Rebind();
+            targetAnimator.Update(0f);
+            targetAnimator.enabled = restoreAnimatorEnabled;
+            animatorStateCaptured = false;
+        }
 
         // Sprite 키가 없는 Idle 상태는 Rebind만으로 마지막 애니메이션 프레임을
         // 되돌리지 못한다. Animator 초기화 뒤 활성화 당시의 정상 스프라이트를 복원한다.
@@ -222,15 +266,22 @@ public class AnomalyPresentationController : MonoBehaviour
             return false;
 
         Vector3 viewport = visibilityCamera.WorldToViewportPoint(targetSpriteRenderer.bounds.center);
-        return viewport.z > 0f &&
-               viewport.x >= 0f && viewport.x <= 1f &&
-               viewport.y >= 0f && viewport.y <= 1f;
+        bool insideViewport = viewport.z > 0f &&
+                              viewport.x >= 0f && viewport.x <= 1f &&
+                              viewport.y >= 0f && viewport.y <= 1f;
+        if (!insideViewport)
+            return false;
+
+        return !requireHorizontalCenter ||
+               Mathf.Abs(viewport.x - 0.5f) <= horizontalCenterTolerance;
     }
 
     private void StartNow()
     {
         isPlaying = true;
         visibleObservationElapsed = 0f;
+        focusedPresentationElapsed = 0f;
+        CaptureAndLockInputState();
 
         switch (presentationMode)
         {
@@ -254,8 +305,16 @@ public class AnomalyPresentationController : MonoBehaviour
                 if (targetAnimator == null || string.IsNullOrWhiteSpace(animatorStateName))
                 {
                     Debug.LogWarning($"[AnomalyPresentationController] Animator State mode needs Animator and state name. object={name}");
+                    isPlaying = false;
+                    playRequested = false;
+                    RestoreInputState();
                     return;
                 }
+
+                animatorEnabledBeforePresentation = targetAnimator.enabled;
+                animatorStateCaptured = true;
+                targetAnimator.enabled = true;
+                targetAnimator.speed = 1f;
 
                 if (animatorCrossFadeDuration > 0f)
                     targetAnimator.CrossFade(animatorStateName, animatorCrossFadeDuration, animatorLayer, 0f);
@@ -285,6 +344,53 @@ public class AnomalyPresentationController : MonoBehaviour
                 ApplySpriteFrame(spriteFrameIndex);
                 break;
         }
+    }
+
+    private void CompleteFocusedPresentation()
+    {
+        if (presentationMode == PresentationMode.AnimatorState && targetAnimator != null && holdAnimatorLastFrame)
+        {
+            targetAnimator.enabled = true;
+            targetAnimator.Play(animatorStateName, animatorLayer, 1f);
+            targetAnimator.Update(0f);
+            targetAnimator.enabled = false;
+        }
+
+        isPlaying = false;
+        playRequested = false;
+        focusedPresentationElapsed = 0f;
+        RestoreInputState();
+
+        if (hideObjectAfterPresentation)
+            gameObject.SetActive(false);
+    }
+
+    private void CaptureAndLockInputState()
+    {
+        if (!lockCctvInputDuringPresentation || inputStateCaptured)
+            return;
+
+        if (sceneController == null)
+            sceneController = FindFirstObjectByType<CCTVTestSceneController>();
+        if (panController == null)
+            panController = FindFirstObjectByType<CCTVPanController>();
+
+        previousCctvInputEnabled = sceneController == null || sceneController.CCTVInputEnabled;
+        previousPanInputLocked = panController != null && panController.InputLocked;
+        inputStateCaptured = true;
+
+        sceneController?.SetCCTVInputEnabled(false);
+        panController?.SetInputLocked(true);
+    }
+
+    private void RestoreInputState()
+    {
+        if (!inputStateCaptured)
+            return;
+
+        sceneController?.SetCCTVInputEnabled(previousCctvInputEnabled);
+        panController?.SetInputLocked(previousPanInputLocked);
+        inputStateCaptured = false;
     }
 
     private void UpdateStepRotation()
@@ -350,6 +456,12 @@ public class AnomalyPresentationController : MonoBehaviour
 
         if (areaView == null)
             areaView = FindFirstObjectByType<CCTVAreaView>();
+
+        if (sceneController == null)
+            sceneController = FindFirstObjectByType<CCTVTestSceneController>();
+
+        if (panController == null)
+            panController = FindFirstObjectByType<CCTVPanController>();
     }
 
     private void SubscribeAreaView()

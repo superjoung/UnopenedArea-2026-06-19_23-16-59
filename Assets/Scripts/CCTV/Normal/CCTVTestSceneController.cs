@@ -40,6 +40,7 @@ public class CCTVTestSceneController : MonoBehaviour
     private int currentChannelIndex;
     private bool isSwitchingChannel;
     private bool cctvInputEnabled = true;
+    private bool channelSwitchInputEnabled = true;
     private bool controlRoomExteriorUnlocked;
     private bool cctvRoomTakenOver;
     private Coroutine controlRoomExteriorNoiseRoutine;
@@ -48,6 +49,7 @@ public class CCTVTestSceneController : MonoBehaviour
     public IReadOnlyList<CCTVChannelRuntime> Channels => channels;
     public DayDefinition CurrentDayDefinition => dayDefinition;
     public bool CCTVInputEnabled => cctvInputEnabled;
+    public bool ChannelSwitchInputEnabled => channelSwitchInputEnabled;
     public bool IsCCTVRoomTakenOver => cctvRoomTakenOver;
     public CCTVChannelRuntime CurrentChannel =>
         channels.Count == 0 ? null : channels[currentChannelIndex];
@@ -120,10 +122,10 @@ public class CCTVTestSceneController : MonoBehaviour
         if (!cctvInputEnabled)
             return;
 
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (channelSwitchInputEnabled && Input.GetKeyDown(KeyCode.Q))
             SelectPreviousChannel();
 
-        if (Input.GetKeyDown(KeyCode.E))
+        if (channelSwitchInputEnabled && Input.GetKeyDown(KeyCode.E))
             SelectNextChannel();
 
         // 유니티 에디터용 테스트 환경
@@ -197,6 +199,15 @@ public class CCTVTestSceneController : MonoBehaviour
     public void SetCCTVInputEnabled(bool enabled)
     {
         cctvInputEnabled = enabled;
+    }
+
+    /// <summary>
+    /// A/D 카메라 이동은 유지한 채 Q/E 채널 전환만 잠급니다.
+    /// Day 1 첫 CCTV 조작 안내처럼 입력을 단계적으로 해금할 때 사용합니다.
+    /// </summary>
+    public void SetChannelSwitchInputEnabled(bool enabled)
+    {
+        channelSwitchInputEnabled = enabled;
     }
 
     /// <summary>

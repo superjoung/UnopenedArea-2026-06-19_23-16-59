@@ -15,6 +15,7 @@ public class PausePanelController : MonoBehaviour
     [SerializeField] private DayTitleController dayTitleController;
     [SerializeField] private DayRuntimeController dayRuntimeController;
     [SerializeField] private FoundAnomalyPanelController foundAnomalyPanelController;
+    [SerializeField] private TutorialPanelController tutorialPanelController;
 
     [Header("Sound Sliders")]
     [SerializeField] private Slider bgmVolumeSlider;
@@ -44,6 +45,9 @@ public class PausePanelController : MonoBehaviour
 
     public void TogglePause()
     {
+        if (TryCloseTutorialPanel())
+            return;
+
         if (TryCloseFoundAnomalyPanel())
             return;
 
@@ -132,6 +136,20 @@ public class PausePanelController : MonoBehaviour
             dayRuntimeController = FindFirstObjectByType<DayRuntimeController>();
         if (foundAnomalyPanelController == null)
             foundAnomalyPanelController = FindFirstObjectByType<FoundAnomalyPanelController>(FindObjectsInactive.Include);
+        if (tutorialPanelController == null)
+            tutorialPanelController = FindFirstObjectByType<TutorialPanelController>(FindObjectsInactive.Include);
+    }
+
+    private bool TryCloseTutorialPanel()
+    {
+        if (tutorialPanelController == null)
+            tutorialPanelController = FindFirstObjectByType<TutorialPanelController>(FindObjectsInactive.Include);
+
+        if (tutorialPanelController == null || !tutorialPanelController.IsOpen)
+            return false;
+
+        tutorialPanelController.ClosePanel();
+        return true;
     }
 
     private bool TryCloseFoundAnomalyPanel()
