@@ -17,7 +17,7 @@ MonoBehaviour:
   reportTargetId: 106
   reportType: 100
   warningDurationSec: 0
-  activeDurationSec: 30
+  activeDurationSec: 40
   canEscalate: 0
   nextStage: {fileID: 0}
   isEmergency: 0

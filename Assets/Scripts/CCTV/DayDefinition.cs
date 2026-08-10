@@ -68,6 +68,10 @@ public class DayDefinition : ScriptableObject
     [Tooltip("비워두면 목표 유형에 맞는 기본 완료 문구를 사용합니다.")]
     [SerializeField, TextArea(2, 3)] private string emergencyRecoveryText;
 
+    [Header("Phone Dialogue")]
+    [Tooltip("비워두면 CommonRoot의 기본 대사를 사용합니다. 일차 전용 대사는 이 에셋에 저장합니다.")]
+    [SerializeField] private StoryDialogueLine[] phoneDialogue;
+
     [Header("Missed Escalation Channels")]
     [Tooltip("미보고 누적 시 제어실 외부 해금 및 CCTVRoom 탈취를 사용합니다. Day 1 기존 설정은 호환을 위해 항상 켜집니다.")]
     [SerializeField] private bool enableMissedEscalationChannels;
@@ -98,6 +102,7 @@ public class DayDefinition : ScriptableObject
     public string EmergencyDispatchText => emergencyDispatchText;
     public string EmergencyFieldObjectiveText => emergencyFieldObjectiveText;
     public string EmergencyRecoveryText => emergencyRecoveryText;
+    public IReadOnlyList<StoryDialogueLine> PhoneDialogue => phoneDialogue;
     public bool EnableMissedEscalationChannels => day == 1 || enableMissedEscalationChannels;
     public IReadOnlyList<FixedAnomalyScheduleEntry> FixedSchedule => fixedSchedule;
     public IReadOnlyList<RandomAnomalyPoolEntry> RandomPool => randomPool;

@@ -113,7 +113,20 @@ public class Day1FlowStatusUI : MonoBehaviour
 
     private void HandleMissedAnomaly(AnomalyRuntime runtime)
     {
-        ShowFeedback("미보고 · 실패 +1", new Color(1f, 0.72f, 0.36f));
+        string correctedAnomaly = GetCorrectedAnomalyLabel(runtime);
+        ShowFeedback($"미보고 +1\n{correctedAnomaly}", new Color(1f, 0.72f, 0.36f));
+    }
+
+    private static string GetCorrectedAnomalyLabel(AnomalyRuntime runtime)
+    {
+        AnomalyDefinition definition = runtime != null ? runtime.Definition : null;
+        if (definition == null)
+            return "이상현상이 수정되었습니다.";
+
+        string area = CCTVReportLabelProvider.GetAreaLabel(definition.AreaId);
+        string target = CCTVReportLabelProvider.GetTargetLabel(definition.ReportTargetId);
+        string type = CCTVReportLabelProvider.GetReportTypeLabel(definition.ReportType);
+        return $"수정: {area} · {target} · {type}";
     }
 
     private void ShowFeedback(string message, Color color)

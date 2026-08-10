@@ -442,6 +442,14 @@ public class Day1FlowController : MonoBehaviour
         if (channelSwitchCount < dayDefinition.TutorialRequiredChannelSwitches)
             return;
 
+        if (cctvKeyTutorialActive)
+        {
+            // 세 번째 채널 전환 직후 Q/E 안내를 먼저 치운 뒤
+            // 대기 시간과 눈 감는 이상현상 등장 연출을 시작한다.
+            sceneController?.SetChannelSwitchInputEnabled(false);
+            cctvKeyTutorialController?.HideGuide();
+        }
+
         tutorialActivationRequested = true;
         tutorialChannelActivationRoutine = StartCoroutine(ActivateTutorialAfterChannelDelay());
     }
