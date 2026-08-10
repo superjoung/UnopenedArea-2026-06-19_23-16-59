@@ -23,6 +23,10 @@ public class ReportContentFrame : BaseUI, IPointerEnterHandler, IPointerExitHand
     private Action<ReportSelectOption> _onSelected;
     private bool _isInitialized;
 
+    // 현재 선택된 옵션에 따라 이미지 변경
+    [SerializeField]
+    private Sprite[] postits = new Sprite[3];
+
     [Header("Label Layout")]
     [Tooltip("이 글자 수를 초과한 선택지는 한 줄 유지를 위해 글자 크기를 줄입니다.")]
     [SerializeField, Min(1)] private int shrinkAfterCharacterCount = 5;
@@ -67,9 +71,41 @@ public class ReportContentFrame : BaseUI, IPointerEnterHandler, IPointerExitHand
         _option = option;
         _onSelected = onSelected;
 
+        ApplyPostitBackground(option.Kind);
+
         TMP_Text displayText = GetText((int)Texts.DisplayText);
         if (displayText != null)
             ApplyLabel(displayText, option.Label);
+    }
+
+    private void ApplyPostitBackground(ReportSelectKind kind)
+    {
+        int postitIndex = (int)kind;
+        if (postits == null || postitIndex < 0 || postitIndex >= postits.Length)
+        {
+            Debug.LogWarning($"[WARN] ReportContentFrame::ApplyPostitBackground - {kind}에 대응하는 포스트잇 인덱스가 없습니다.", this);
+            return;
+        }
+
+        Sprite postit = postits[postitIndex];
+        if (postit == null)
+        {
+            Debug.LogWarning($"[WARN] ReportContentFrame::ApplyPostitBackground - postits[{postitIndex}]에 스프라이트가 등록되지 않았습니다.", this);
+            return;
+        }
+
+        Button reportContentButton = GetButton((int)Buttons.ReportContentFrame);
+        Image backgroundImage = reportContentButton != null
+            ? reportContentButton.targetGraphic as Image
+            : null;
+
+        if (backgroundImage == null)
+        {
+            Debug.LogWarning("[WARN] ReportContentFrame::ApplyPostitBackground - 버튼 배경 Image를 찾을 수 없습니다.", this);
+            return;
+        }
+
+        backgroundImage.sprite = postit;
     }
 
     private void ApplyLabel(TMP_Text displayText, string label)
@@ -142,6 +178,7 @@ public class ReportContentFrame : BaseUI, IPointerEnterHandler, IPointerExitHand
             anomalyTooltipFontSize);
     }
 }
+
 
 /// <summary>
 /// 현상 선택지들이 공유하는 단일 호버 패널입니다.
@@ -299,4 +336,3 @@ internal static class ReportTypeHoverTooltip
         _root.SetActive(false);
     }
 }
-

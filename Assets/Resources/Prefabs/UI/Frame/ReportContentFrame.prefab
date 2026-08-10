@@ -134,6 +134,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 930c726af25301b478c063d4c6c015af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  postits:
+  - {fileID: -1968341736203375746, guid: ea94f9693c5bebe408b5263d6f4122de, type: 3}
+  - {fileID: 3103802003055923781, guid: 50ddb8c8d1d4844468c3cf4581e94809, type: 3}
+  - {fileID: -7566276026530845455, guid: c6af196a0a27c0849b0adda5bff0c0dc, type: 3}
   shrinkAfterCharacterCount: 5
   shortLabelFontSize: 32
   longLabelFontSizeMultiplier: 0.9
