@@ -3983,8 +3983,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d8a47d2ed8be42dcb4b2db55763f52a1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   dayRuntimeController: {fileID: 0}
   areaView: {fileID: 0}
   sceneController: {fileID: 0}
