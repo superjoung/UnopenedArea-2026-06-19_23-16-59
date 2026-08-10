@@ -3995,7 +3995,7 @@ MonoBehaviour:
   edgePerson:
     eventId: D1_NR01
     areaId: 100
-    probability: 0.7
+    probability: 0.1
     duration: 0.7
     sprite: {fileID: 1640325418590000183, guid: afd70b7096ad796499cf42e83361e988, type: 3}
   edgeStartViewport: {x: 1.12, y: 0.45}
@@ -4004,7 +4004,7 @@ MonoBehaviour:
   treatmentFace:
     eventId: D1_NR02
     areaId: 200
-    probability: 0.7
+    probability: 0.1
     duration: 0.5
     sprite: {fileID: 7278465062702371622, guid: c0c24ce9c6f93734e8ae87a6f40bf967, type: 3}
 --- !u!1 &726485948

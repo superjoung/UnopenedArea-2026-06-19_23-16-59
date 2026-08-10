@@ -25,6 +25,10 @@ public class CCTVTestSceneController : MonoBehaviour
     [SerializeField] private CCTVAreaDefinition controlRoomExteriorArea;
     [SerializeField, Min(1)] private int controlRoomExteriorUnlockMissedCount = 2;
     [SerializeField] private bool selectControlRoomExteriorOnUnlock = true;
+    [Tooltip("???? 채널에 머무는 동안 반복 노이즈가 발생하는 간격입니다.")]
+    [SerializeField, Min(0.1f)] private float controlRoomExteriorNoiseIntervalSec = 1.25f;
+    [Tooltip("???? 채널의 반복 노이즈가 한 번 유지되는 시간입니다.")]
+    [SerializeField, Min(0.01f)] private float controlRoomExteriorNoiseDurationSec = 0.25f;
     [Tooltip("미보고 3회 침입 시 다른 채널을 대체할 제어실 내부 CCTV 구역입니다.")]
     [SerializeField] private CCTVAreaDefinition cctvRoomArea;
     [SerializeField, Min(1)] private int cctvRoomTakeoverMissedCount = 3;
@@ -38,6 +42,7 @@ public class CCTVTestSceneController : MonoBehaviour
     private bool cctvInputEnabled = true;
     private bool controlRoomExteriorUnlocked;
     private bool cctvRoomTakenOver;
+    private Coroutine controlRoomExteriorNoiseRoutine;
 
     public System.Action<CCTVChannelRuntime> ChannelSelected;
     public IReadOnlyList<CCTVChannelRuntime> Channels => channels;
@@ -81,6 +86,9 @@ public class CCTVTestSceneController : MonoBehaviour
     {
         if (dayRuntimeController != null)
             dayRuntimeController.MissedAnomalyRegistered -= HandleMissedAnomalyRegistered;
+
+        StopControlRoomExteriorNoise();
+
     }
 
     private void Start()
@@ -427,6 +435,7 @@ public class CCTVTestSceneController : MonoBehaviour
         }
 
         NotifyCCTVAreaChanged(area);
+        UpdateControlRoomExteriorNoise(area);
         ChannelSelected?.Invoke(channels[currentChannelIndex]);
         Debug.Log($"[CCTV] Selected {channels[currentChannelIndex].ChannelLabel} - {area.DisplayName} ({area.AreaId})");
     }
@@ -517,6 +526,43 @@ public class CCTVTestSceneController : MonoBehaviour
             : fallbackChannelTransitionNoiseDuration;
     }
 
+    private void UpdateControlRoomExteriorNoise(CCTVAreaDefinition area)
+    {
+        StopControlRoomExteriorNoise();
+        if (!Application.isPlaying || !IsControlRoomExteriorArea(area))
+            return;
+
+        controlRoomExteriorNoiseRoutine = StartCoroutine(PlayControlRoomExteriorNoiseRoutine(area));
+    }
+
+    private IEnumerator PlayControlRoomExteriorNoiseRoutine(CCTVAreaDefinition exteriorArea)
+    {
+        var interval = new WaitForSecondsRealtime(Mathf.Max(0.1f, controlRoomExteriorNoiseIntervalSec));
+        while (CurrentChannel?.Area == exteriorArea)
+        {
+            yield return interval;
+            if (CurrentChannel?.Area != exteriorArea)
+                break;
+
+            CCTVScreenEffectController effectController = GetScreenEffectController();
+            if (effectController == null || effectController.IsNoisePlaying)
+                continue;
+
+            effectController.PlayTransitionNoise(Mathf.Max(0.01f, controlRoomExteriorNoiseDurationSec));
+        }
+
+        controlRoomExteriorNoiseRoutine = null;
+    }
+
+    private void StopControlRoomExteriorNoise()
+    {
+        if (controlRoomExteriorNoiseRoutine == null)
+            return;
+
+        StopCoroutine(controlRoomExteriorNoiseRoutine);
+        controlRoomExteriorNoiseRoutine = null;
+    }
+
     private void ActivateTestAnomaly(int index)
     {
         if (anomalyService == null || testAnomalies == null || index < 0 || index >= testAnomalies.Length)
@@ -534,7 +580,3 @@ public class CCTVTestSceneController : MonoBehaviour
         return screenEffectController;
     }
 }
-
-
-
-

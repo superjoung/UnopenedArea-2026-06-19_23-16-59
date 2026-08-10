@@ -178,15 +178,10 @@ public class CCTVPanController : MonoBehaviour
 
     private float GetHorizontalInput()
     {
-        if (blockInputOverUI &&
-            EventSystem.current != null &&
-            EventSystem.current.IsPointerOverGameObject())
-        {
-            return 0f;
-        }
-
         float input = 0f;
 
+        // 키보드 이동은 마우스 포인터의 UI 위치와 무관하게 처리한다.
+        // 전체 화면 ReportBoundary가 레이캐스트를 받더라도 A/D 입력은 유지되어야 한다.
         if (useKeyboard)
         {
             if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
@@ -196,7 +191,12 @@ public class CCTVPanController : MonoBehaviour
                 input += 1f;
         }
 
-        if (useMouseEdge)
+        bool isPointerOverUi = blockInputOverUI &&
+                               EventSystem.current != null &&
+                               EventSystem.current.IsPointerOverGameObject();
+
+        // UI 위에서는 마우스 가장자리 이동만 차단한다.
+        if (useMouseEdge && !isPointerOverUi)
         {
             Vector3 mousePosition = Input.mousePosition;
 

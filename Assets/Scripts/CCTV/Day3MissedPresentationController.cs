@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// Day 3의 보고 불가 미보고 공포(D3_NR01~03)를 담당합니다.
-/// 일반 이상현상 정의/보고 판정과 분리하며, 미보고가 등록된 뒤 각 연출 조건에서 확률을 판정합니다.
+/// 일반 이상현상 및 오보고/미보고 판정과 분리해 상시 확률로 동작합니다.
 /// </summary>
 public sealed class Day3MissedPresentationController : MonoBehaviour
 {
@@ -13,7 +13,7 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
         public string eventId;
         public AreaId areaId;
         public string effectObjectId;
-        [Range(0f, 1f)] public float probability = 0.7f;
+        [Range(0f, 1f)] public float probability = 0.1f;
         [Min(0.05f)] public float duration = 0.5f;
         [Min(0f)] public float triggerDelay;
         [Tooltip("세로 방향으로 화면 밖을 허용할 여유입니다.")]
@@ -28,7 +28,7 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
         public AudioClip sfx;
 
         [System.NonSerialized] public bool played;
-        [System.NonSerialized] public int lastAttemptedMissedCount;
+        [System.NonSerialized] public bool triggerWasEligible;
     }
 
     [Header("References")]
@@ -47,7 +47,7 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
     {
         eventId = "D3_NR01",
         areaId = AreaId.ServerRoom,
-        probability = 0.7f,
+        probability = 0.1f,
         duration = 0.5f,
         triggerDelay = 0.35f,
     };
@@ -58,7 +58,7 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
         eventId = "D3_NR02",
         areaId = AreaId.LabCorridor,
         effectObjectId = "OBJ_DORM_CEILING_PERSON_01",
-        probability = 0.7f,
+        probability = 0.1f,
         duration = 0.8f,
         viewportMargin = 0.05f,
         horizontalCenterTolerance = 0.2f,
@@ -74,7 +74,7 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
         eventId = "D3_NR03",
         areaId = AreaId.TreatmentRoom,
         effectObjectId = "OBJ_TREAT_REFLECTION_01",
-        probability = 0.7f,
+        probability = 0.1f,
         duration = 2f,
         viewportMargin = 0.05f,
         horizontalCenterTolerance = 0.2f,
@@ -94,6 +94,8 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
     private Coroutine activeRoutine;
     private Coroutine pendingTimedRoutine;
     private SpriteRenderer serverFaceRenderer;
+    private AreaId cycleInitialAreaId = AreaId.None;
+    private bool changedChannelSinceCycleStart;
 
     private void Awake()
     {
@@ -117,36 +119,24 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
 
     private void Update()
     {
-        if (!CanPreparePresentation() || activeRoutine != null || pendingTimedRoutine != null)
+        if (activeRoutine != null || pendingTimedRoutine != null)
             return;
 
-        int missedCount = dayRuntimeController.MissedAnomalyCount;
-        if (missedCount <= 0 || areaView.CurrentArea == null)
+        if (!HasChangedChannelSinceCycleStart())
             return;
 
-        AreaId currentAreaId = areaView.CurrentArea.AreaId;
-        if (currentAreaId == serverFace.areaId)
-        {
-            TryScheduleTimedPresentation(serverFace, missedCount);
-            return;
-        }
-
-        if (currentAreaId == ceilingPerson.areaId)
-        {
-            TryStartViewportPresentation(ceilingPerson, missedCount);
-            return;
-        }
-
-        if (currentAreaId == reflectionPerson.areaId)
-            TryStartViewportPresentation(reflectionPerson, missedCount);
+        bool canPrepare = CanPreparePresentation() && areaView.CurrentArea != null;
+        AreaId currentAreaId = areaView.CurrentArea != null ? areaView.CurrentArea.AreaId : AreaId.None;
+        TryScheduleTimedPresentation(serverFace, currentAreaId == serverFace.areaId, canPrepare);
+        TryStartViewportPresentation(ceilingPerson, currentAreaId == ceilingPerson.areaId, canPrepare);
+        TryStartViewportPresentation(reflectionPerson, currentAreaId == reflectionPerson.areaId, canPrepare);
     }
 
-    private void TryScheduleTimedPresentation(MissedPresentation presentation, int missedCount)
+    private void TryScheduleTimedPresentation(MissedPresentation presentation, bool isInTriggerArea, bool canPrepare)
     {
-        if (!CanAttempt(presentation, missedCount))
+        if (!CanAttempt(presentation, isInTriggerArea, canPrepare))
             return;
 
-        presentation.lastAttemptedMissedCount = missedCount;
         pendingTimedRoutine = StartCoroutine(TryPlayTimedPresentation(presentation));
     }
 
@@ -163,17 +153,18 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
         activeRoutine = StartCoroutine(PlayServerFace(presentation));
     }
 
-    private void TryStartViewportPresentation(MissedPresentation presentation, int missedCount)
+    private void TryStartViewportPresentation(MissedPresentation presentation, bool isCurrentArea, bool canPrepare)
     {
-        if (!CanAttempt(presentation, missedCount) ||
-            !TryGetCurrentEffectRoot(presentation, out GameObject effectRoot) ||
-            !IsInsideCenterTriggerZone(
-                effectRoot.transform,
-                presentation.viewportMargin,
-                presentation.horizontalCenterTolerance))
+        GameObject effectRoot = null;
+        bool isAtTriggerPoint = isCurrentArea &&
+                                TryGetCurrentEffectRoot(presentation, out effectRoot) &&
+                                IsInsideCenterTriggerZone(
+                                    effectRoot.transform,
+                                    presentation.viewportMargin,
+                                    presentation.horizontalCenterTolerance);
+        if (!CanAttempt(presentation, isCurrentArea, canPrepare && isAtTriggerPoint))
             return;
 
-        presentation.lastAttemptedMissedCount = missedCount;
         if (!Roll(presentation))
             return;
 
@@ -282,6 +273,8 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
     {
         if (dayRuntimeController == null || areaView == null || cctvCamera == null)
             return false;
+        if (dayRuntimeController.State != DayRuntimeState.Running)
+            return false;
         if (fieldModeController != null && fieldModeController.IsFieldModeActive)
             return false;
         if (sceneController != null && !sceneController.CCTVInputEnabled)
@@ -295,10 +288,22 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
         return true;
     }
 
-    private static bool CanAttempt(MissedPresentation presentation, int missedCount)
+    private static bool CanAttempt(MissedPresentation presentation, bool isInTriggerArea, bool canPrepare)
     {
-        return presentation != null && !presentation.played &&
-               presentation.lastAttemptedMissedCount < missedCount;
+        if (presentation == null || presentation.played)
+            return false;
+
+        if (!isInTriggerArea)
+        {
+            presentation.triggerWasEligible = false;
+            return false;
+        }
+
+        if (!canPrepare || presentation.triggerWasEligible)
+            return false;
+
+        presentation.triggerWasEligible = true;
+        return true;
     }
 
     private bool Roll(MissedPresentation presentation)
@@ -389,14 +394,33 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
             AudioSource.PlayClipAtPoint(clip, cctvCamera != null ? cctvCamera.transform.position : Vector3.zero);
     }
 
-    private void HandleMissedAnomaly(AnomalyRuntime runtime)
-    {
-        // Update가 해당 미보고 횟수를 보고 각 구역/viewport 조건에서 한 번씩 판정합니다.
-    }
-
     private void HandleDayStarted()
     {
         ResetPresentations();
+        ResetInitialChannelGuard();
+    }
+
+    private bool HasChangedChannelSinceCycleStart()
+    {
+        AreaId currentAreaId = areaView?.CurrentArea != null ? areaView.CurrentArea.AreaId : AreaId.None;
+        if (currentAreaId == AreaId.None)
+            return false;
+
+        if (cycleInitialAreaId == AreaId.None)
+        {
+            cycleInitialAreaId = currentAreaId;
+            return false;
+        }
+
+        if (currentAreaId != cycleInitialAreaId)
+            changedChannelSinceCycleStart = true;
+        return changedChannelSinceCycleStart;
+    }
+
+    private void ResetInitialChannelGuard()
+    {
+        cycleInitialAreaId = areaView?.CurrentArea != null ? areaView.CurrentArea.AreaId : AreaId.None;
+        changedChannelSinceCycleStart = false;
     }
 
     private void ResetPresentations()
@@ -414,7 +438,7 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
         if (presentation == null)
             return;
         presentation.played = false;
-        presentation.lastAttemptedMissedCount = 0;
+        presentation.triggerWasEligible = false;
     }
 
     private void RestoreAllEffectRoots()
@@ -468,7 +492,6 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
             return;
         Unsubscribe();
         subscribedRuntime = dayRuntimeController;
-        subscribedRuntime.MissedAnomalyRegistered += HandleMissedAnomaly;
         subscribedRuntime.DayStarted += HandleDayStarted;
     }
 
@@ -476,7 +499,6 @@ public sealed class Day3MissedPresentationController : MonoBehaviour
     {
         if (subscribedRuntime == null)
             return;
-        subscribedRuntime.MissedAnomalyRegistered -= HandleMissedAnomaly;
         subscribedRuntime.DayStarted -= HandleDayStarted;
         subscribedRuntime = null;
     }

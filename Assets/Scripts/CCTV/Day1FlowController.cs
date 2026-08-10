@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum Day1FlowState
@@ -50,6 +51,8 @@ public class Day1FlowController : MonoBehaviour
 
     private DayDefinition dayDefinition;
     private int channelSwitchCount;
+    private readonly HashSet<AreaId> baselineObservedAreaIds = new HashSet<AreaId>();
+    private bool initialBaselineReviewFinished;
     private bool tutorialActivationRequested;
     private bool tutorialFinished;
     private bool emergencyDispatchStarted;
@@ -137,7 +140,7 @@ public class Day1FlowController : MonoBehaviour
                 BeginMonitoring();
         }
 
-        if (State == Day1FlowState.Monitoring)
+        if (State == Day1FlowState.Monitoring && initialBaselineReviewFinished)
         {
             if (RequiresTutorial && !tutorialActivationRequested)
                 TryStartTutorialAnomaly();
@@ -322,17 +325,28 @@ public class Day1FlowController : MonoBehaviour
             return;
 
         channelSwitchCount = 0;
+        baselineObservedAreaIds.Clear();
         tutorialActivationRequested = false;
         tutorialFinished = !RequiresTutorial;
         emergencyDispatchStarted = false;
         emergencyFieldModeStarted = false;
 
-        if (dayRuntimeController != null)
-            dayRuntimeController.StartDay();
+        if (RequiresInitialBaselineReview && sceneController?.CurrentChannel?.Area != null)
+            baselineObservedAreaIds.Add(sceneController.CurrentChannel.Area.AreaId);
 
-        // 첫 튜토리얼 이상현상이 끝날 때까지 랜덤 이벤트는 시작하지 않는다.
+        initialBaselineReviewFinished = !RequiresInitialBaselineReview ||
+                                        HasObservedEveryBaselineArea();
+
+        if (dayRuntimeController != null)
+        {
+            dayRuntimeController.StartDay();
+            if (!initialBaselineReviewFinished)
+                dayRuntimeController.PauseDay();
+        }
+
+        // DAY1 기준 화면 확인 또는 첫 튜토리얼 이상현상이 끝날 때까지 랜덤 이벤트는 시작하지 않는다.
         if (anomalyScheduler != null)
-            anomalyScheduler.SetGenerationPaused(RequiresTutorial);
+            anomalyScheduler.SetGenerationPaused(RequiresTutorial || !initialBaselineReviewFinished);
 
         ChangeState(Day1FlowState.Monitoring, "감시를 시작합니다. CCTV 채널을 전환해 정상 배치를 확인하십시오.");
     }
@@ -354,7 +368,25 @@ public class Day1FlowController : MonoBehaviour
 
     private void HandleChannelSelected(CCTVChannelRuntime channel)
     {
-        if (!RequiresTutorial || State != Day1FlowState.Monitoring || tutorialActivationRequested)
+        if (State != Day1FlowState.Monitoring)
+            return;
+
+        if (!initialBaselineReviewFinished && RequiresInitialBaselineReview)
+        {
+            bool hadObservedEveryArea = HasObservedEveryBaselineArea();
+            channelSwitchCount++;
+            if (channel?.Area != null)
+                baselineObservedAreaIds.Add(channel.Area.AreaId);
+
+            Debug.Log($"[Day1FlowController] Baseline review progress {baselineObservedAreaIds.Count}/{GetBaselineAreaCount()}. channel={channel?.ChannelLabel}");
+            // 세 번째 고유 방에 들어온 순간에는 아직 시작하지 않는다.
+            // 세 방을 모두 확인한 뒤 다음 채널로 한 번 더 이동했을 때 감시 시간을 시작한다.
+            if (hadObservedEveryArea)
+                CompleteInitialBaselineReview();
+            return;
+        }
+
+        if (!RequiresTutorial || tutorialActivationRequested)
             return;
 
         channelSwitchCount++;
@@ -378,6 +410,29 @@ public class Day1FlowController : MonoBehaviour
             tutorialActivationRequested = false;
 
         tutorialChannelActivationRoutine = null;
+    }
+
+    private void CompleteInitialBaselineReview()
+    {
+        if (initialBaselineReviewFinished)
+            return;
+
+        initialBaselineReviewFinished = true;
+        dayRuntimeController?.ResumeDay();
+        anomalyScheduler?.SetGenerationPaused(RequiresTutorial);
+        FlowMessageChanged?.Invoke("모든 CCTV의 정상 상태를 확인했습니다. 이상현상 감시를 시작합니다.");
+        Debug.Log($"[Day1FlowController] Baseline review finished. observedAreas={baselineObservedAreaIds.Count}, elapsed={dayRuntimeController?.ElapsedSec ?? 0f:F1}");
+    }
+
+    private bool HasObservedEveryBaselineArea()
+    {
+        int requiredAreaCount = GetBaselineAreaCount();
+        return requiredAreaCount > 0 && baselineObservedAreaIds.Count >= requiredAreaCount;
+    }
+
+    private int GetBaselineAreaCount()
+    {
+        return sceneController?.Channels?.Count ?? 0;
     }
 
     private void ActivateTutorialAnomaly()
@@ -857,4 +912,11 @@ public class Day1FlowController : MonoBehaviour
     /// Day 2 이후처럼 TutorialAnomaly가 비어 있으면 일반 랜덤 풀을 즉시 시작합니다.
     /// </summary>
     protected virtual bool RequiresTutorial => dayDefinition != null && dayDefinition.TutorialAnomaly != null;
+
+    /// <summary>
+    /// DAY1은 세 CCTV의 정상 상태를 모두 확인하고 다음 채널로 한 번 더 이동한 뒤에만
+    /// 시간과 랜덤 이상현상을 시작합니다.
+    /// </summary>
+    private bool RequiresInitialBaselineReview =>
+        dayDefinition != null && dayDefinition.Day == 1 && !RequiresTutorial;
 }
