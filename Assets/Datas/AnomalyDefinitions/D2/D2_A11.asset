@@ -14,11 +14,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   anomalyId: D2_A11
   areaId: 200
-  reportTargetId: 200
-  reportType: 105
+  reportTargetId: 102
+  reportType: 104
   warningDurationSec: 0
-  activeDurationSec: 20
+  activeDurationSec: 40
   canEscalate: 0
   nextStage: {fileID: 0}
   isEmergency: 0
-  actions: []
+  actions:
+  - actionType: 3
+    targetObjectId: OBJ_TREAT_DOOR_02
+    delaySec: 0
+    presentationId: 
+    activeValue: 0
+    animatorEnabledValue: 1
+    targetLocalPosition: {x: 0, y: 0, z: 0}
+    localPositionOffset: {x: 0, y: 0, z: 0}
+    targetLocalEulerAngles: {x: 0, y: 0, z: 0}
+    targetSprite: {fileID: -7188733785020885134, guid: 3cb677b5785ad0a47b9828dcf830a852, type: 3}
+    targetColor: {r: 1, g: 1, b: 1, a: 1}

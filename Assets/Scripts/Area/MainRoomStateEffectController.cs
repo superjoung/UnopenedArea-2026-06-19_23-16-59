@@ -17,6 +17,12 @@ public class MainRoomStateEffectController : MonoBehaviour
     [SerializeField] private GameObject cctvGlitch;
     [SerializeField] private GameObject cctvBlack;
 
+    [Header("Terminal Failure")]
+    [Tooltip("오보고 또는 미보고 최종 실패 후 메인룸 배경 위에 표시할 이펙트입니다.")]
+    [SerializeField] private GameObject terminalFailureEffect;
+    [Tooltip("실패 이펙트 아래에서 메인룸을 완전히 가릴 검은 배경입니다.")]
+    [SerializeField] private GameObject terminalFailureBackground;
+
     [Header("Blackout Main Room")]
     [SerializeField] private GameObject normalBackground;
     [SerializeField] private GameObject darkBackground;
@@ -83,6 +89,8 @@ public class MainRoomStateEffectController : MonoBehaviour
         CacheControlSignColors();
         CacheBlackoutDimColors();
         RefreshCalendar();
+        SetActive(terminalFailureEffect, false);
+        SetActive(terminalFailureBackground, false);
         ApplyState(day1FlowController != null ? day1FlowController.State : Day1FlowState.None);
     }
 
@@ -117,20 +125,35 @@ public class MainRoomStateEffectController : MonoBehaviour
 
     private void OnDisable()
     {
-        Unsubscribe();
         SetPhoneRinging(false);
         isPhoneGlowPulsing = false;
         SetActive(cctvGlitch, true);
         SetActive(cctvBlack, false);
         SetActive(normalBackground, true);
         SetActive(darkBackground, false);
+        SetActive(terminalFailureEffect, false);
+        SetActive(terminalFailureBackground, false);
         ApplyControlSignBrightness(1f);
         ApplyBlackoutDimBrightness(1f);
+    }
+
+    private void OnDestroy()
+    {
+        Unsubscribe();
     }
 
     private void HandleStateChanged(Day1FlowState state)
     {
         ApplyState(state);
+    }
+
+    /// <summary>
+    /// 전화 수신 순간에만 호출합니다. 대사 진행 중에는 아직 Briefing 상태를 유지하므로,
+    /// 상태 전환을 기다리지 않고 전화 Glow/진동을 즉시 종료해야 합니다.
+    /// </summary>
+    public void StopPhoneRingingImmediately()
+    {
+        SetPhoneRinging(false);
     }
 
     private void ApplyState(Day1FlowState state)
@@ -165,6 +188,9 @@ public class MainRoomStateEffectController : MonoBehaviour
             phoneCallTransform.localPosition = phoneCallDefaultLocalPosition;
         }
 
+        if (ringing)
+            SoundManager.Instance?.PlayPhoneRingSfx();
+
         RefreshPhoneGlow();
     }
 
@@ -176,6 +202,9 @@ public class MainRoomStateEffectController : MonoBehaviour
         isPhoneVibrationActive = !isPhoneVibrationActive;
         phoneVibrationPhaseEndTime = Time.unscaledTime +
             (isPhoneVibrationActive ? phoneVibrationOnDuration : phoneVibrationOffDuration);
+
+        if (isPhoneVibrationActive)
+            SoundManager.Instance?.PlayPhoneRingSfx();
 
         if (!isPhoneVibrationActive && phoneCallTransform != null)
         {
@@ -195,8 +224,22 @@ public class MainRoomStateEffectController : MonoBehaviour
     private void HandleDayStarted()
     {
         missedAnomalyCount = 0;
+        SetActive(terminalFailureEffect, false);
+        SetActive(terminalFailureBackground, false);
         RefreshMissedApproachVisuals();
         RefreshCalendar();
+    }
+
+    private void HandleTerminalFailureStarted(DayFailureReason reason)
+    {
+        SetActive(terminalFailureEffect, false);
+        SetActive(terminalFailureBackground, false);
+    }
+
+    public void RevealTerminalFailureEffect()
+    {
+        SetActive(terminalFailureBackground, true);
+        SetActive(terminalFailureEffect, true);
     }
 
     private void RefreshMissedApproachVisuals()
@@ -219,11 +262,22 @@ public class MainRoomStateEffectController : MonoBehaviour
 
     private void RefreshPhoneGlow()
     {
-        isPhoneGlowPulsing = isPhoneRinging || missedAnomalyCount > 0;
+        // 미보고 접근 Glow는 정전 중 켜져 있으면 전화기만 홀로 빛나는 것처럼 보이므로 끈다.
+        isPhoneGlowPulsing = isPhoneRinging || (missedAnomalyCount > 0 && !IsBlackoutVisualActive());
         SetActive(phoneGlow, isPhoneGlowPulsing);
 
         if (!isPhoneGlowPulsing)
             RestorePhoneGlowColors();
+    }
+
+    private bool IsBlackoutVisualActive()
+    {
+        if (day1FlowController == null)
+            return false;
+
+        return day1FlowController.State == Day1FlowState.EmergencyDispatch ||
+               (day1FlowController.State == Day1FlowState.Monitoring &&
+                day1FlowController.IsEmergencyPresentationLocked);
     }
 
     private static string GetMissedApproachMessage(int count)
@@ -354,6 +408,40 @@ public class MainRoomStateEffectController : MonoBehaviour
             SetActive(calendarDaySprites[i], i == day - 1);
     }
 
+    /// <summary>Returns the calendar visual for the requested 1-based day.</summary>
+    public GameObject GetCalendarDayVisual(int day)
+    {
+        int index = day - 1;
+        return calendarDaySprites != null && index >= 0 && index < calendarDaySprites.Length
+            ? calendarDaySprites[index]
+            : null;
+    }
+
+    /// <summary>달력 탐색 중 선택한 날짜 한 장만 표시합니다.</summary>
+    public void ShowCalendarDayVisual(int day)
+    {
+        for (int i = 0; i < calendarDaySprites.Length; i++)
+        {
+            GameObject visual = calendarDaySprites[i];
+            bool visible = i == day - 1;
+            SetActive(visual, visible);
+            if (!visible || visual == null)
+                continue;
+
+            foreach (SpriteRenderer renderer in visual.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                Color color = renderer.color;
+                color.a = 1f;
+                renderer.color = color;
+            }
+        }
+    }
+
+    public void RestoreCurrentDayCalendarVisual()
+    {
+        RefreshCalendar();
+    }
+
     private void ApplyPhoneGlowPulse()
     {
         float cycle = Mathf.PingPong(Time.unscaledTime / phoneGlowFadeDuration, 1f);
@@ -394,6 +482,8 @@ public class MainRoomStateEffectController : MonoBehaviour
             dayRuntimeController.MissedAnomalyRegistered += HandleMissedAnomalyRegistered;
             dayRuntimeController.DayStarted -= HandleDayStarted;
             dayRuntimeController.DayStarted += HandleDayStarted;
+            dayRuntimeController.TerminalFailureStarted -= HandleTerminalFailureStarted;
+            dayRuntimeController.TerminalFailureStarted += HandleTerminalFailureStarted;
         }
     }
 
@@ -405,6 +495,7 @@ public class MainRoomStateEffectController : MonoBehaviour
         {
             dayRuntimeController.MissedAnomalyRegistered -= HandleMissedAnomalyRegistered;
             dayRuntimeController.DayStarted -= HandleDayStarted;
+            dayRuntimeController.TerminalFailureStarted -= HandleTerminalFailureStarted;
         }
     }
 
@@ -442,6 +533,8 @@ public class MainRoomStateEffectController : MonoBehaviour
             normalBackground = FindChildObject("BackGround");
         if (darkBackground == null)
             darkBackground = FindChildObject("DarkBackGround");
+        if (terminalFailureBackground == null)
+            terminalFailureBackground = FindChildObject("TerminalFailureBackground");
         if (controlSign == null)
             controlSign = FindChildObject("Controll");
 
@@ -457,7 +550,13 @@ public class MainRoomStateEffectController : MonoBehaviour
         {
             for (int i = 0; i < calendarDaySprites.Length; i++)
             {
-                if (calendarDaySprites[i] == null && i < calendar.childCount)
+                if (calendarDaySprites[i] != null)
+                    continue;
+
+                Transform namedDay = calendar.Find($"Callender{i + 1}");
+                if (namedDay != null)
+                    calendarDaySprites[i] = namedDay.gameObject;
+                else if (i < calendar.childCount)
                     calendarDaySprites[i] = calendar.GetChild(i).gameObject;
             }
         }

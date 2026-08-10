@@ -28,6 +28,10 @@ public class Day1AreaTransitionController : MonoBehaviour
     [SerializeField] private Camera cctvCamera;
     [SerializeField] private bool keepDisplayCameraActiveDuringCctv = true;
 
+    [Header("Sound Events")]
+    [SerializeField] private UnityEngine.Events.UnityEvent onEnteredCctv;
+    [SerializeField] private UnityEngine.Events.UnityEvent onReturnedToMainRoom;
+
     public Day1AreaMode CurrentMode { get; private set; } = Day1AreaMode.None;
     public System.Action<Day1AreaMode> ModeChanged;
 
@@ -63,6 +67,8 @@ public class Day1AreaTransitionController : MonoBehaviour
         SetActive(mainRoomRoot, true);
         SetMainRoomCameraMode(true);
         SetCameraEnabled(cctvCamera, false);
+        SoundManager.Instance?.ExitCctvBgmMode();
+        onReturnedToMainRoom?.Invoke();
         ChangeMode(Day1AreaMode.MainRoom);
     }
 
@@ -82,6 +88,8 @@ public class Day1AreaTransitionController : MonoBehaviour
         SetMainRoomCameraMode(false);
         SetCctvPresentationActive(true);
         SetCameraEnabled(cctvCamera, true);
+        SoundManager.Instance?.EnterCctvBgmMode();
+        onEnteredCctv?.Invoke();
         ChangeMode(Day1AreaMode.CCTV);
         return true;
     }

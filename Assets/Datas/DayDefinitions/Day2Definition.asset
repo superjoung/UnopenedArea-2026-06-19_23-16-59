@@ -13,23 +13,86 @@ MonoBehaviour:
   m_Name: Day2Definition
   m_EditorClassIdentifier: 
   day: 2
-  durationSec: 600
-  maxMissed: 3
+  durationSec: 200
+  maxMissed: 4
   activeAreas:
   - {fileID: 11400000, guid: 9d13d1b21e63abb4594f360b587d5f4e, type: 2}
   - {fileID: 11400000, guid: fc8ee4399cd0c2443a7ca9013befb3db, type: 2}
   - {fileID: 11400000, guid: 626dfe864efcc494f84bfe42dc893136, type: 2}
-  - {fileID: 11400000, guid: 5dffb5832f8d91640811ae7834b71080, type: 2}
-  - {fileID: 11400000, guid: 4fb5f58ae177fd444a4a7b8c818b9b30, type: 2}
   tutorialAnomaly: {fileID: 0}
   tutorialRequiredChannelSwitches: 3
   tutorialFallbackElapsedSec: 60
   enableEmergencyDispatch: 1
-  emergencyRequiredCorrectReports: 3
-  emergencyTriggerProgress: 0.7
+  emergencyRequiredCorrectReports: 4
+  emergencyTriggerProgress: 0.72
+  emergencyRequiresBothConditions: 0
+  emergencyObjectiveType: 1
+  emergencyDispatchText: 
+  emergencyFieldObjectiveText: "\uBC14\uB2E5\uC5D0 \uC218\uC0C1\uD55C \uAE30\uB85D\uBB3C\uC774
+    \uB5A8\uC5B4\uC838 \uC788\uB2E4. \uAC00\uAE4C\uC774 \uB2E4\uAC00\uAC00 E \uD0A4\uB85C
+    \uC870\uC0AC\uD558\uC2ED\uC2DC\uC624."
+  emergencyRecoveryText: "\uC2DC\uC2A4\uD15C\uC774 \uC790\uB3D9\uC73C\uB85C \uBCF5\uAD6C\uB418\uACE0
+    \uC788\uB2E4. \uC81C\uC5B4\uC2E4\uB85C \uB3CC\uC544\uAC00 \uAC10\uC2DC\uB97C
+    \uC7AC\uAC1C\uD558\uC2ED\uC2DC\uC624."
+  phoneDialogue:
+  - speakerName: "관리관"
+    dialogue: "두 번째 근무를 시작하겠습니다.\n어제 제출한 관측 기록과 현장 복구 결과는 \n모두 정상적으로 반영됐습니다."
+  - speakerName: "관리관"
+    dialogue: "현장에서 확인한 흔적은 이전 점검 인원이 \n남긴 것으로 보입니다.\n현재 시설 내부에 승인된 인원은 없습니다."
+  - speakerName: "관리관"
+    dialogue: "폐쇄된 시설에서는 정리되지 않은 물품이나 \n오래된 사용 흔적이 발견될 수 있습니다.\n업무와 관련 없는 사항은 기록하지 \n않아도 됩니다."
+  - speakerName: "관리관"
+    dialogue: "오늘도 판단 기준은 같습니다.\n정상 배치와 현재 화면을 비교하고, 확인된 \n변화만 보고하세요."
+  - speakerName: "관리관"
+    dialogue: "화면에 인물 형태가 나타나더라도 별도의 \n신원 확인은 필요하지 않습니다.\n등록되지 않은 대상은 정해진 기준에 따라 \n처리하면 됩니다."
+  - speakerName: "관리관"
+    dialogue: "사람처럼 보이는지, 어떤 의도가 있어 \n보이는지는 판정과 관계없습니다.\n추측하지 말고 화면에서 확인한 사실만 \n기록하세요."
+  - speakerName: "관리관"
+    dialogue: "추가 설비 문제가 발생하면 어제와 마찬가지로 현장 업무가 전달될 수 있습니다.\n지정된 목적 외의 구역은 확인하지 마세요."
+  - speakerName: "관리관"
+    dialogue: "오래된 시설 기록을 발견하더라도 임의로 \n반출하거나 수정하지 마십시오.\n필요한 자료는 관리 측에서 회수하겠습니다."
+  - speakerName: "관리관"
+    dialogue: "오늘도 당신의 역할은 조사하는 것이 아니라 \n관측하고 기록하는 것입니다. \n근무를 시작하십시오."
   enableMissedEscalationChannels: 0
-  fixedSchedule: []
+  fixedSchedule:
+  - triggerElapsedSec: 20
+    anomaly: {fileID: 11400000, guid: db23b601a70a21a4fafe4d8bd2fa23cb, type: 2}
+    triggerOnce: 1
   enableRandomSchedule: 1
-  randomMinIntervalSec: 30
-  randomMaxIntervalSec: 60
-  randomPool: []
+  waitForFirstFixedAnomalyBeforeRandom: 1
+  randomMinIntervalSec: 15
+  randomMaxIntervalSec: 25
+  randomPool:
+  - anomaly: {fileID: 11400000, guid: db23b601a70a21a4fafe4d8bd2fa23cb, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: a5c9fa07ed6916b4ea7a53edf56ff305, type: 2}
+    weight: 4
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 437014a6f73d4ef4db56adf58590645a, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 09597b2a82d92d24da75db40c0589e1a, type: 2}
+    weight: 4
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: a9ccae8896cd6a148b8dfdd0e25e9708, type: 2}
+    weight: 2
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 670f7c52655730544bb631a81293116b, type: 2}
+    weight: 3
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 540f2a97e9399714f9ff02149695f359, type: 2}
+    weight: 3
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 4a36cafd548835240b0ff0163842ee84, type: 2}
+    weight: 3
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 53c43ee040bc843429b6ec89373826bc, type: 2}
+    weight: 3
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 2c10d472753e1cb478ff2c338e8213bb, type: 2}
+    weight: 3
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: cbc1a377d1c282943968da7e370b4226, type: 2}
+    weight: 3
+    allowRepeat: 1

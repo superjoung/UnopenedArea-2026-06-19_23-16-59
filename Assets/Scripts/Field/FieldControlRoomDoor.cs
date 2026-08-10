@@ -54,10 +54,12 @@ public class FieldControlRoomDoor : MonoBehaviour
         if (!IsDoorOpen)
         {
             SetDoorOpen(true);
+            SoundManager.Instance?.PlayDoorOpenSfx();
             Debug.Log("[FieldControlRoomDoor] Door opened. Press E again to return to the control room.");
             return;
         }
 
+        SoundManager.Instance?.PlayDoorCloseSfx();
         Debug.Log("[FieldControlRoomDoor] Returning to control room.");
         day1FlowController.ReturnToControlRoom();
     }

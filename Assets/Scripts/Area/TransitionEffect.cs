@@ -18,6 +18,7 @@ public class TransitionEffect : MonoBehaviour
     [SerializeField] private Day1FlowController day1FlowController;
     [SerializeField] private Camera mainRoomCamera;
     [SerializeField] private Transform cctvFocusTarget;
+    [SerializeField] private CCTVSceneUI cctvSceneUI;
 
     [Header("Enter CCTV")]
     [SerializeField] private CctvTransitionStyle cctvTransitionStyle = CctvTransitionStyle.ZoomAndFade;
@@ -83,6 +84,32 @@ public class TransitionEffect : MonoBehaviour
     [SerializeField] private Ease anomalySlowCloseEase = Ease.InQuad;
     [SerializeField] private Ease anomalySnapOpenEase = Ease.OutQuad;
 
+    [Header("Terminal Failure Hand Cover")]
+    [SerializeField] private GameObject failureHandEffectRoot;
+    [SerializeField] private RectTransform failureLeftHand;
+    [SerializeField] private RectTransform failureRightHand;
+    [SerializeField] private Image failureHandBlackoutImage;
+    [SerializeField, Min(0.05f)] private float failureHandCloseDuration = 0.85f;
+    [SerializeField, Min(1f)] private float failureHandZoomScale = 1.18f;
+    [SerializeField, Min(0.02f)] private float failureHandZoomDuration = 0.22f;
+    [Tooltip("손이 도착한 뒤 확대되는 구간 중 암전이 시작될 비율입니다. 0=확대 시작, 1=확대 완료.")]
+    [SerializeField, Range(0f, 1f)] private float failureHandBlackoutStartNormalized = 0.72f;
+    [SerializeField, Min(0f)] private float failureHandClosedHoldDuration = 0.18f;
+    [Tooltip("손이 닫히는 전체 시간 중 임팩트 효과음을 재생할 비율입니다. 0=시작, 1=완전히 닫힌 뒤.")]
+    [SerializeField, Range(0f, 1f)] private float failureHandImpactTimingNormalized = 0.62f;
+    [SerializeField, Min(0.05f)] private float failureBackgroundRevealDuration = 0.55f;
+    [SerializeField, Min(0f)] private float failureBackgroundHoldDuration = 0.5f;
+    [SerializeField, Min(0.1f)] private float failureHandOffscreenDistanceMultiplier = 0.65f;
+    [SerializeField] private Ease failureHandCloseEase = Ease.OutCubic;
+    [SerializeField] private Ease failureHandZoomEase = Ease.InQuad;
+    [SerializeField] private Ease failureBackgroundRevealEase = Ease.OutQuad;
+
+    [Header("Result Restart Fade")]
+    [SerializeField, Min(0.05f)] private float resultRestartFadeOutDuration = 0.5f;
+    [SerializeField, Min(0f)] private float resultRestartBlackHoldDuration = 0.15f;
+    [SerializeField, Min(0.05f)] private float resultRestartFadeInDuration = 0.65f;
+    [SerializeField, Min(0f)] private float resultRestartFadeInDelay = 0.1f;
+
     private Sequence activeSequence;
     private Vector3 defaultCameraPosition;
     private float defaultOrthographicSize;
@@ -92,8 +119,23 @@ public class TransitionEffect : MonoBehaviour
     private Vector2 anomalyEye1OpenOffsetMin;
     private Vector2 anomalyEye2OpenOffsetMax;
     private bool anomalyBlinkOffsetsCached;
+    private Vector2 failureLeftHandCoveredPosition;
+    private Vector2 failureRightHandCoveredPosition;
+    private Vector3 failureLeftHandDefaultScale;
+    private Vector3 failureRightHandDefaultScale;
+    private bool failureHandPositionsCached;
+    private bool playResultRestartFadeIn;
+    private static bool resultRestartFadeInRequested;
 
     public bool IsPlaying => isPlaying;
+    public Camera MainRoomCamera
+    {
+        get
+        {
+            ResolveReferences();
+            return mainRoomCamera;
+        }
+    }
     public bool IsAnomalyBlinkPlaying => anomalyBlinkSequence != null && anomalyBlinkSequence.IsActive();
     public float AnomalyBlinkTotalDuration => GetAnomalyBlinkCloseDuration() + anomalyClosedHoldAfterChange + anomalySnapOpenDuration;
     public event Action<bool> PlaybackChanged;
@@ -104,10 +146,32 @@ public class TransitionEffect : MonoBehaviour
         CacheCameraDefaults();
         SetImageAlpha(cctvEnterPanelImage, 0f);
         SetImageAlpha(toCctvPanel2, 0f);
-        SetImageAlpha(blackoutPanelImage, 0f);
+        playResultRestartFadeIn = resultRestartFadeInRequested;
+        resultRestartFadeInRequested = false;
+        SetImageAlpha(blackoutPanelImage, playResultRestartFadeIn ? 1f : 0f);
         SetImageAlpha(blackoutFlashPanelImage, 0f);
+        if (playResultRestartFadeIn && blackoutPanelImage != null)
+        {
+            blackoutPanelImage.gameObject.SetActive(true);
+            blackoutPanelImage.transform.SetAsLastSibling();
+        }
         CacheAnomalyBlinkOpenOffsets();
         SetAnomalyBlinkOpenImmediate();
+        CacheFailureHandCoveredPositions();
+        ResetFailureHandCoverImmediate();
+    }
+
+    private void Start()
+    {
+        if (!playResultRestartFadeIn || blackoutPanelImage == null)
+            return;
+
+        SetPlaying(true);
+        activeSequence?.Kill();
+        activeSequence = DOTween.Sequence().SetUpdate(true);
+        activeSequence.AppendInterval(resultRestartFadeInDelay);
+        activeSequence.Append(blackoutPanelImage.DOFade(0f, resultRestartFadeInDuration).SetEase(Ease.OutQuad));
+        activeSequence.OnComplete(CompleteSequence);
     }
 
     private void OnDisable()
@@ -122,6 +186,7 @@ public class TransitionEffect : MonoBehaviour
         anomalyBlinkSequence?.Kill();
         anomalyBlinkSequence = null;
         SetAnomalyBlinkOpenImmediate();
+        ResetFailureHandCoverImmediate();
     }
 
     public bool TryPlayCctvEntry()
@@ -147,6 +212,7 @@ public class TransitionEffect : MonoBehaviour
 
         CacheCameraDefaults();
         SetPlaying(true);
+        SoundManager.Instance?.PlayCctvEntryTransitionSfx();
         activeSequence?.Kill();
         cctvEnterPanelImage.gameObject.SetActive(true);
         SetImageAlpha(cctvEnterPanelImage, 0f);
@@ -171,6 +237,7 @@ public class TransitionEffect : MonoBehaviour
             return false;
 
         CacheCameraDefaults();
+        ForceCloseReportPanel();
         SetPlaying(true);
         activeSequence?.Kill();
         blackoutPanelImage.gameObject.SetActive(true);
@@ -182,6 +249,7 @@ public class TransitionEffect : MonoBehaviour
 
         for (int i = 0; i < blackoutFlickerCount; i++)
         {
+            activeSequence.AppendCallback(() => SoundManager.Instance?.PlayBlackoutFlickerSfx());
             activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, blackoutFlickerFadeDuration));
             activeSequence.Append(blackoutPanelImage.DOFade(0f, blackoutFlickerFadeDuration));
         }
@@ -190,12 +258,14 @@ public class TransitionEffect : MonoBehaviour
 
         if (blackoutFlashPanelImage != null)
         {
+            activeSequence.AppendCallback(() => SoundManager.Instance?.PlayBlackoutImpactSfx());
             activeSequence.Append(blackoutFlashPanelImage.DOFade(blackoutFlashPeakAlpha, blackoutFlashInDuration));
             activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, finalBlackoutFadeDuration));
             activeSequence.Join(blackoutFlashPanelImage.DOFade(0f, finalBlackoutFadeDuration));
         }
         else
         {
+            activeSequence.AppendCallback(() => SoundManager.Instance?.PlayBlackoutImpactSfx());
             activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, finalBlackoutFadeDuration));
         }
         activeSequence.AppendInterval(blackoutHoldDuration);
@@ -234,7 +304,7 @@ public class TransitionEffect : MonoBehaviour
     /// 일반 감시 중 제어실을 확인하기 위해 CCTV를 나갈 때 사용합니다.
     /// 정전과 달리 깜빡임 없이 검은 패널로 전환만 가립니다.
     /// </summary>
-    public bool TryPlayCctvExit(Action onOpaque)
+    public bool TryPlayCctvExit(Action onOpaque, float totalDuration = -1f)
     {
         ResolveReferences();
         if (isPlaying)
@@ -252,25 +322,34 @@ public class TransitionEffect : MonoBehaviour
         blackoutPanelImage.gameObject.SetActive(true);
         SetImageAlpha(blackoutPanelImage, 0f);
 
+        float durationScale = 1f;
+        float baseDuration = cctvExitFadeInDuration + cctvExitBlackoutHoldDuration + cctvExitFadeOutDuration;
+        if (totalDuration > 0f && baseDuration > 0f)
+            durationScale = totalDuration / baseDuration;
+
+        float fadeInDuration = cctvExitFadeInDuration * durationScale;
+        float blackoutHoldDuration = cctvExitBlackoutHoldDuration * durationScale;
+        float fadeOutDuration = cctvExitFadeOutDuration * durationScale;
+
         activeSequence = DOTween.Sequence();
-        activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, cctvExitFadeInDuration));
-        activeSequence.AppendInterval(cctvExitBlackoutHoldDuration);
+        activeSequence.Append(blackoutPanelImage.DOFade(blackoutOpaqueAlpha, fadeInDuration));
+        activeSequence.AppendInterval(blackoutHoldDuration);
         activeSequence.AppendCallback(() => onOpaque?.Invoke());
         if (mainRoomCamera != null)
         {
             activeSequence.Append(mainRoomCamera.transform
-                .DOMove(defaultCameraPosition, cctvExitFadeOutDuration)
+                .DOMove(defaultCameraPosition, fadeOutDuration)
                 .SetEase(mainRoomRevealEase));
             activeSequence.Join(mainRoomCamera
-                .DOOrthoSize(defaultOrthographicSize, cctvExitFadeOutDuration)
+                .DOOrthoSize(defaultOrthographicSize, fadeOutDuration)
                 .SetEase(mainRoomRevealEase));
             activeSequence.Join(blackoutPanelImage
-                .DOFade(0f, cctvExitFadeOutDuration)
+                .DOFade(0f, fadeOutDuration)
                 .SetEase(mainRoomRevealEase));
         }
         else
         {
-            activeSequence.Append(blackoutPanelImage.DOFade(0f, cctvExitFadeOutDuration));
+            activeSequence.Append(blackoutPanelImage.DOFade(0f, fadeOutDuration));
         }
         activeSequence.OnComplete(CompleteSequence);
         return true;
@@ -279,6 +358,7 @@ public class TransitionEffect : MonoBehaviour
     private bool TryPlayQuickCctvEntry()
     {
         SetPlaying(true);
+        SoundManager.Instance?.PlayCctvEntryTransitionSfx();
         activeSequence?.Kill();
         toCctvPanel2.gameObject.SetActive(true);
         SetImageAlpha(toCctvPanel2, 0f);
@@ -308,12 +388,193 @@ public class TransitionEffect : MonoBehaviour
         return true;
     }
 
+    public bool TryPlayFailureHandCover(Action onCovered, Action onCompleted)
+    {
+        if (isPlaying || failureHandEffectRoot == null || failureLeftHand == null ||
+            failureRightHand == null || failureHandBlackoutImage == null)
+            return false;
+
+        CacheFailureHandCoveredPositions();
+        SetPlaying(true);
+        activeSequence?.Kill();
+
+        failureHandEffectRoot.SetActive(true);
+        failureHandEffectRoot.transform.SetAsLastSibling();
+        failureHandBlackoutImage.gameObject.SetActive(true);
+        failureHandBlackoutImage.transform.SetAsLastSibling();
+        SetImageAlpha(failureHandBlackoutImage, 0f);
+
+        float offscreenDistance = GetFailureHandOffscreenDistance();
+        Vector2 leftOpenPosition = failureLeftHandCoveredPosition + Vector2.left * offscreenDistance;
+        Vector2 rightOpenPosition = failureRightHandCoveredPosition + Vector2.right * offscreenDistance;
+        failureLeftHand.anchoredPosition = leftOpenPosition;
+        failureRightHand.anchoredPosition = rightOpenPosition;
+        failureLeftHand.localScale = failureLeftHandDefaultScale;
+        failureRightHand.localScale = failureRightHandDefaultScale;
+
+        float blackoutStart = failureHandCloseDuration +
+            failureHandZoomDuration * failureHandBlackoutStartNormalized;
+        float blackoutDuration = Mathf.Max(
+            0.01f,
+            failureHandZoomDuration * (1f - failureHandBlackoutStartNormalized));
+
+        activeSequence = DOTween.Sequence().SetUpdate(true);
+        activeSequence.Append(failureLeftHand
+            .DOAnchorPos(failureLeftHandCoveredPosition, failureHandCloseDuration)
+            .SetEase(failureHandCloseEase));
+        activeSequence.Join(failureRightHand
+            .DOAnchorPos(failureRightHandCoveredPosition, failureHandCloseDuration)
+            .SetEase(failureHandCloseEase));
+        activeSequence.Append(failureLeftHand
+            .DOScale(failureLeftHandDefaultScale * failureHandZoomScale, failureHandZoomDuration)
+            .SetEase(failureHandZoomEase));
+        activeSequence.Join(failureRightHand
+            .DOScale(failureRightHandDefaultScale * failureHandZoomScale, failureHandZoomDuration)
+            .SetEase(failureHandZoomEase));
+        activeSequence.Insert(blackoutStart, failureHandBlackoutImage
+            .DOFade(1f, blackoutDuration)
+            .SetEase(Ease.InQuad));
+        activeSequence.InsertCallback(
+            failureHandCloseDuration * failureHandImpactTimingNormalized,
+            () => SoundManager.Instance?.PlayFailureHandCoverSfx());
+        activeSequence.AppendCallback(() =>
+        {
+            onCovered?.Invoke();
+        });
+        activeSequence.AppendInterval(failureHandClosedHoldDuration);
+        activeSequence.AppendCallback(() =>
+        {
+            failureLeftHand.anchoredPosition = leftOpenPosition;
+            failureRightHand.anchoredPosition = rightOpenPosition;
+            failureLeftHand.localScale = failureLeftHandDefaultScale;
+            failureRightHand.localScale = failureRightHandDefaultScale;
+        });
+        activeSequence.Append(failureHandBlackoutImage
+            .DOFade(0f, failureBackgroundRevealDuration)
+            .SetEase(failureBackgroundRevealEase));
+        activeSequence.AppendInterval(failureBackgroundHoldDuration);
+        activeSequence.OnComplete(() =>
+        {
+            ResetFailureHandCoverImmediate();
+            CompleteSequence();
+            onCompleted?.Invoke();
+        });
+        return true;
+    }
+
+    public bool TryPlayResultRestartFade(Action onOpaque)
+    {
+        if (isPlaying || blackoutPanelImage == null)
+            return false;
+
+        SetPlaying(true);
+        activeSequence?.Kill();
+        blackoutPanelImage.gameObject.SetActive(true);
+        blackoutPanelImage.transform.SetAsLastSibling();
+        SetImageAlpha(blackoutPanelImage, 0f);
+
+        activeSequence = DOTween.Sequence().SetUpdate(true);
+        activeSequence.Append(blackoutPanelImage.DOFade(1f, resultRestartFadeOutDuration).SetEase(Ease.InQuad));
+        activeSequence.AppendInterval(resultRestartBlackHoldDuration);
+        activeSequence.AppendCallback(() =>
+        {
+            resultRestartFadeInRequested = true;
+            onOpaque?.Invoke();
+        });
+        activeSequence.OnComplete(CompleteSequence);
+        return true;
+    }
+
+    /// <summary>
+    /// Fades the entire screen to black for a scene handoff. Unlike the retry fade,
+    /// this does not request title skipping in the destination scene.
+    /// </summary>
+    public bool TryPlaySceneChangeFade(Action onOpaque)
+    {
+        if (isPlaying || blackoutPanelImage == null)
+            return false;
+
+        SetPlaying(true);
+        activeSequence?.Kill();
+        blackoutPanelImage.gameObject.SetActive(true);
+        blackoutPanelImage.transform.SetAsLastSibling();
+        SetImageAlpha(blackoutPanelImage, 0f);
+
+        activeSequence = DOTween.Sequence().SetUpdate(true);
+        activeSequence.Append(blackoutPanelImage.DOFade(1f, resultRestartFadeOutDuration).SetEase(Ease.InQuad));
+        activeSequence.AppendInterval(resultRestartBlackHoldDuration);
+        activeSequence.AppendCallback(() =>
+        {
+            // The next scene's TransitionEffect starts fully black and fades in,
+            // making the scene load invisible to the player.
+            resultRestartFadeInRequested = true;
+            onOpaque?.Invoke();
+        });
+        activeSequence.OnComplete(CompleteSequence);
+        return true;
+    }
+
+    /// <summary>메인룸 안의 오브젝트를 확대해 별도 상호작용 모드로 진입합니다.</summary>
+    public bool TryPlayMainRoomFocus(Transform focusTarget, float targetOrthographicSize, float duration, Action onCompleted = null)
+    {
+        ResolveReferences();
+        if (isPlaying || mainRoomCamera == null || focusTarget == null || !mainRoomCamera.orthographic)
+            return false;
+
+        CacheCameraDefaults();
+        SetPlaying(true);
+        activeSequence?.Kill();
+
+        Vector3 targetPosition = focusTarget.position;
+        targetPosition.z = defaultCameraPosition.z;
+        activeSequence = DOTween.Sequence().SetUpdate(true);
+        activeSequence.Append(mainRoomCamera.transform
+            .DOMove(targetPosition, Mathf.Max(0.05f, duration))
+            .SetEase(Ease.InOutQuad));
+        activeSequence.Join(mainRoomCamera
+            .DOOrthoSize(Mathf.Max(0.1f, targetOrthographicSize), Mathf.Max(0.05f, duration))
+            .SetEase(Ease.InOutQuad));
+        activeSequence.OnComplete(() =>
+        {
+            CompleteSequence();
+            onCompleted?.Invoke();
+        });
+        return true;
+    }
+
+    /// <summary>메인룸 오브젝트 확대 상태에서 원래 카메라 시야로 복귀합니다.</summary>
+    public bool TryPlayMainRoomFocusExit(float duration, Action onCompleted = null)
+    {
+        ResolveReferences();
+        if (isPlaying || mainRoomCamera == null || !mainRoomCamera.orthographic)
+            return false;
+
+        CacheCameraDefaults();
+        SetPlaying(true);
+        activeSequence?.Kill();
+        activeSequence = DOTween.Sequence().SetUpdate(true);
+        activeSequence.Append(mainRoomCamera.transform
+            .DOMove(defaultCameraPosition, Mathf.Max(0.05f, duration))
+            .SetEase(Ease.InOutQuad));
+        activeSequence.Join(mainRoomCamera
+            .DOOrthoSize(defaultOrthographicSize, Mathf.Max(0.05f, duration))
+            .SetEase(Ease.InOutQuad));
+        activeSequence.OnComplete(() =>
+        {
+            CompleteSequence();
+            onCompleted?.Invoke();
+        });
+        return true;
+    }
+
     /// <summary>
     /// 이상현상 적용을 가리기 위한 눈꺼풀 연출을 시작하고,
     /// 패널이 완전히 닫히는 시점까지의 시간을 반환합니다.
     /// </summary>
     public float PlayAnomalyAppearanceBlink()
     {
+        ForceCloseReportPanel();
+
         if (anomalyEye1Panel == null || anomalyEye2Panel == null)
             return 0f;
 
@@ -346,6 +607,14 @@ public class TransitionEffect : MonoBehaviour
         });
 
         return applyAfter;
+    }
+
+    public void CancelAnomalyAppearanceBlink()
+    {
+        anomalyBlinkSequence?.Kill();
+        anomalyBlinkSequence = null;
+        CacheAnomalyBlinkOpenOffsets();
+        SetAnomalyBlinkOpenImmediate();
     }
 
     private float GetAnomalyBlinkCloseDuration()
@@ -425,6 +694,49 @@ public class TransitionEffect : MonoBehaviour
             anomalyEye2Panel.offsetMax = anomalyEye2OpenOffsetMax;
     }
 
+    private void CacheFailureHandCoveredPositions()
+    {
+        if (failureHandPositionsCached || failureLeftHand == null || failureRightHand == null)
+            return;
+
+        failureLeftHandCoveredPosition = failureLeftHand.anchoredPosition;
+        failureRightHandCoveredPosition = failureRightHand.anchoredPosition;
+        failureLeftHandDefaultScale = failureLeftHand.localScale;
+        failureRightHandDefaultScale = failureRightHand.localScale;
+        failureHandPositionsCached = true;
+    }
+
+    private float GetFailureHandOffscreenDistance()
+    {
+        RectTransform effectRootRect = failureHandEffectRoot != null
+            ? failureHandEffectRoot.transform as RectTransform
+            : null;
+        float canvasWidth = effectRootRect != null ? effectRootRect.rect.width : 0f;
+        float handWidth = Mathf.Max(failureLeftHand.rect.width, failureRightHand.rect.width);
+        return Mathf.Max(canvasWidth, Screen.width) * failureHandOffscreenDistanceMultiplier + handWidth * 0.5f;
+    }
+
+    private void ResetFailureHandCoverImmediate()
+    {
+        if (failureHandPositionsCached)
+        {
+            if (failureLeftHand != null)
+            {
+                failureLeftHand.anchoredPosition = failureLeftHandCoveredPosition;
+                failureLeftHand.localScale = failureLeftHandDefaultScale;
+            }
+            if (failureRightHand != null)
+            {
+                failureRightHand.anchoredPosition = failureRightHandCoveredPosition;
+                failureRightHand.localScale = failureRightHandDefaultScale;
+            }
+        }
+
+        SetImageAlpha(failureHandBlackoutImage, 0f);
+        if (failureHandEffectRoot != null)
+            failureHandEffectRoot.SetActive(false);
+    }
+
     private void CacheCameraDefaults()
     {
         if (cameraDefaultsCached || mainRoomCamera == null) return;
@@ -436,6 +748,7 @@ public class TransitionEffect : MonoBehaviour
     private void ResolveReferences()
     {
         if (day1FlowController == null) day1FlowController = FindFirstObjectByType<Day1FlowController>();
+        if (cctvSceneUI == null) cctvSceneUI = FindFirstObjectByType<CCTVSceneUI>();
         if (mainRoomCamera == null)
         {
             GameObject cameraObject = GameObject.Find("MainCamera");
@@ -453,5 +766,13 @@ public class TransitionEffect : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void ForceCloseReportPanel()
+    {
+        if (cctvSceneUI == null)
+            cctvSceneUI = FindFirstObjectByType<CCTVSceneUI>();
+
+        cctvSceneUI?.ForceCloseReportPanel();
     }
 }

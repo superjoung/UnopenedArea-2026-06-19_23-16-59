@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum Day1FlowState
@@ -29,6 +30,12 @@ public class Day1FlowController : MonoBehaviour
     [SerializeField] private TransitionEffect transitionEffect;
     [SerializeField] private CCTVScreenEffectController screenEffectController;
     [SerializeField] private CCTVSceneUI cctvSceneUI;
+    [SerializeField] private StoryDialogueController storyDialogueController;
+    [SerializeField] private TutorialPanelController tutorialPanelController;
+    [SerializeField] private CCTVKeyTutorialController cctvKeyTutorialController;
+    [SerializeField] private MainRoomStateEffectController mainRoomStateEffectController;
+    [SerializeField] private Day2BlackoutForeshadowController day2BlackoutForeshadowController;
+    [SerializeField] private MissedAnomalyWarningOverlay missedAnomalyWarningOverlay;
 
     [Header("Tutorial Presentation")]
     [SerializeField, Min(0f)] private float tutorialChannelActivationDelay = 0.5f;
@@ -46,11 +53,18 @@ public class Day1FlowController : MonoBehaviour
 
     private DayDefinition dayDefinition;
     private int channelSwitchCount;
+    private readonly HashSet<AreaId> baselineObservedAreaIds = new HashSet<AreaId>();
+    private bool initialBaselineReviewFinished;
     private bool tutorialActivationRequested;
     private bool tutorialFinished;
+    private bool cctvKeyTutorialActive;
+    private bool cctvKeyTutorialPanCompleted;
+    private bool cctvKeyTutorialReportAvailable;
     private bool emergencyDispatchStarted;
     private bool emergencyFieldModeStarted;
+    private bool emergencySequenceCompleted;
     private Coroutine tutorialChannelActivationRoutine;
+    private Coroutine objectiveMessageRoutine;
     private Coroutine emergencyDispatchRoutine;
     private PresentationLockMode presentationLockMode;
     private bool presentationPausedDay;
@@ -70,10 +84,22 @@ public class Day1FlowController : MonoBehaviour
     public Day1FlowState State { get; private set; } = Day1FlowState.None;
     public int ChannelSwitchCount => channelSwitchCount;
     public bool TutorialFinished => tutorialFinished;
+    public bool IsCctvKeyTutorialActive => cctvKeyTutorialActive;
     public bool IsPresentationLocked => presentationLockMode != PresentationLockMode.None;
     public bool IsEmergencyPresentationLocked => presentationLockMode == PresentationLockMode.Emergency;
+    public bool IsTerminalFailurePresentationActive { get; private set; }
     public bool IsAwaitingTitleStart { get; private set; }
     public int DayNumber => dayDefinition != null ? dayDefinition.Day : 0;
+    /// <summary>
+    /// 시간 만료로 하루를 끝내도 되는지 나타냅니다. 현장이동이 설정된 일차는
+    /// 현장 목표를 해결하고 CCTV 감시로 복귀하기 전까지 시간 종료를 보류합니다.
+    /// </summary>
+    public bool CanCompleteTimedDay => dayDefinition == null ||
+                                       !dayDefinition.EnableEmergencyDispatch ||
+                                       emergencySequenceCompleted;
+    public EmergencyObjectiveType CurrentEmergencyObjectiveType => dayDefinition != null
+        ? dayDefinition.EmergencyObjectiveType
+        : global::EmergencyObjectiveType.PowerRestore;
 
     public System.Action<Day1FlowState> StateChanged;
     public System.Action<string> FlowMessageChanged;
@@ -101,8 +127,12 @@ public class Day1FlowController : MonoBehaviour
         areaTransitionController?.EnterMainRoom();
 
         DayTitleController titleController = FindFirstObjectByType<DayTitleController>();
-        IsAwaitingTitleStart = titleController != null && titleController.WaitForPlayerStart;
-        if (!IsAwaitingTitleStart)
+        // DayTitleController가 있으면 타이틀 표시 여부와 관계없이 해당 컨트롤러가
+        // 전화 시작 시점(일반 시작/재시작/다음 날 지연)을 전담한다.
+        // WaitForPlayerStart만 확인하면 타이틀을 건너뛴 재시작에서 이 Start가
+        // 지연 코루틴보다 먼저 Briefing을 시작해 전화가 즉시 울리게 된다.
+        IsAwaitingTitleStart = titleController != null;
+        if (titleController == null)
             BeginDayBriefing();
     }
 
@@ -124,7 +154,7 @@ public class Day1FlowController : MonoBehaviour
                 BeginMonitoring();
         }
 
-        if (State == Day1FlowState.Monitoring)
+        if (State == Day1FlowState.Monitoring && initialBaselineReviewFinished)
         {
             if (RequiresTutorial && !tutorialActivationRequested)
                 TryStartTutorialAnomaly();
@@ -143,6 +173,8 @@ public class Day1FlowController : MonoBehaviour
     {
         if (tutorialChannelActivationRoutine != null)
             StopCoroutine(tutorialChannelActivationRoutine);
+        if (objectiveMessageRoutine != null)
+            StopCoroutine(objectiveMessageRoutine);
         if (emergencyDispatchRoutine != null)
             StopCoroutine(emergencyDispatchRoutine);
 
@@ -177,7 +209,41 @@ public class Day1FlowController : MonoBehaviour
     public void AcceptPhoneMission()
     {
         if (State == Day1FlowState.Briefing)
-            BeginBaselineReview();
+        {
+            SoundManager.Instance?.StopPhoneRingAndPlayHangupSfx();
+
+            if (mainRoomStateEffectController == null)
+                mainRoomStateEffectController = FindFirstObjectByType<MainRoomStateEffectController>();
+            mainRoomStateEffectController?.StopPhoneRingingImmediately();
+
+            if (storyDialogueController == null)
+                storyDialogueController = FindFirstObjectByType<StoryDialogueController>();
+
+            if (storyDialogueController != null && storyDialogueController.HasDialogue)
+            {
+                storyDialogueController.PlayPhoneDialogue(ContinueAfterPhoneDialogue);
+                return;
+            }
+
+            ContinueAfterPhoneDialogue();
+        }
+    }
+
+    private void ContinueAfterPhoneDialogue()
+    {
+        if (dayDefinition != null && dayDefinition.Day == 1)
+        {
+            if (tutorialPanelController == null)
+                tutorialPanelController = FindFirstObjectByType<TutorialPanelController>(FindObjectsInactive.Include);
+
+            if (tutorialPanelController != null)
+            {
+                tutorialPanelController.Show(BeginBaselineReview);
+                return;
+            }
+        }
+
+        BeginBaselineReview();
     }
 
     /// <summary>
@@ -203,6 +269,7 @@ public class Day1FlowController : MonoBehaviour
         if (State == Day1FlowState.Monitoring)
             return;
 
+        emergencySequenceCompleted = true;
         ResumeAfterEmergencyDispatch();
         ChangeState(Day1FlowState.Monitoring, "CCTV 감시를 재개합니다.");
     }
@@ -215,7 +282,8 @@ public class Day1FlowController : MonoBehaviour
     {
         if (State != Day1FlowState.Monitoring ||
             areaTransitionController == null ||
-            areaTransitionController.CurrentMode != Day1AreaMode.CCTV)
+            areaTransitionController.CurrentMode != Day1AreaMode.CCTV ||
+            cctvKeyTutorialActive)
             return;
 
         if (transitionEffect == null)
@@ -281,7 +349,7 @@ public class Day1FlowController : MonoBehaviour
         if (!emergencyFieldModeStarted)
             return;
 
-        FlowMessageChanged?.Invoke("외부 현장에 진입했습니다. 배전반을 복구한 뒤 문으로 메인룸에 돌아가십시오.");
+        FlowMessageChanged?.Invoke(GetEmergencyFieldObjectiveMessage());
     }
 
     public void BeginMonitoring()
@@ -290,24 +358,46 @@ public class Day1FlowController : MonoBehaviour
             return;
 
         channelSwitchCount = 0;
+        baselineObservedAreaIds.Clear();
         tutorialActivationRequested = false;
         tutorialFinished = !RequiresTutorial;
+        cctvKeyTutorialActive = false;
+        cctvKeyTutorialPanCompleted = false;
+        cctvKeyTutorialReportAvailable = false;
         emergencyDispatchStarted = false;
         emergencyFieldModeStarted = false;
+        emergencySequenceCompleted = false;
+
+        if (RequiresInitialBaselineReview && sceneController?.CurrentChannel?.Area != null)
+            baselineObservedAreaIds.Add(sceneController.CurrentChannel.Area.AreaId);
+
+        initialBaselineReviewFinished = !RequiresInitialBaselineReview ||
+                                        HasObservedEveryBaselineArea();
 
         if (dayRuntimeController != null)
+        {
             dayRuntimeController.StartDay();
+            if (!initialBaselineReviewFinished)
+                dayRuntimeController.PauseDay();
+        }
 
-        // 첫 튜토리얼 이상현상이 끝날 때까지 랜덤 이벤트는 시작하지 않는다.
+        // DAY1 기준 화면 확인 또는 첫 튜토리얼 이상현상이 끝날 때까지 랜덤 이벤트는 시작하지 않는다.
         if (anomalyScheduler != null)
-            anomalyScheduler.SetGenerationPaused(RequiresTutorial);
+            anomalyScheduler.SetGenerationPaused(RequiresTutorial || !initialBaselineReviewFinished);
 
         ChangeState(Day1FlowState.Monitoring, "감시를 시작합니다. CCTV 채널을 전환해 정상 배치를 확인하십시오.");
+
+        if (UsesCctvKeyTutorial)
+            BeginCctvKeyTutorial();
     }
 
     private void TryStartTutorialAnomaly()
     {
         if (!RequiresTutorial || anomalyService == null)
+            return;
+
+        // KeyPanel 조작 안내 중에는 시간 조건으로 단계를 건너뛰지 않는다.
+        if (cctvKeyTutorialActive)
             return;
 
         bool reachedTimeCondition = dayRuntimeController != null &&
@@ -322,7 +412,28 @@ public class Day1FlowController : MonoBehaviour
 
     private void HandleChannelSelected(CCTVChannelRuntime channel)
     {
-        if (!RequiresTutorial || State != Day1FlowState.Monitoring || tutorialActivationRequested)
+        if (State != Day1FlowState.Monitoring)
+            return;
+
+        if (!initialBaselineReviewFinished && RequiresInitialBaselineReview)
+        {
+            bool hadObservedEveryArea = HasObservedEveryBaselineArea();
+            channelSwitchCount++;
+            if (channel?.Area != null)
+                baselineObservedAreaIds.Add(channel.Area.AreaId);
+
+            Debug.Log($"[Day1FlowController] Baseline review progress {baselineObservedAreaIds.Count}/{GetBaselineAreaCount()}. channel={channel?.ChannelLabel}");
+            // 세 번째 고유 방에 들어온 순간에는 아직 시작하지 않는다.
+            // 세 방을 모두 확인한 뒤 다음 채널로 한 번 더 이동했을 때 감시 시간을 시작한다.
+            if (hadObservedEveryArea)
+                CompleteInitialBaselineReview();
+            return;
+        }
+
+        if (!RequiresTutorial || tutorialActivationRequested)
+            return;
+
+        if (cctvKeyTutorialActive && !cctvKeyTutorialPanCompleted)
             return;
 
         channelSwitchCount++;
@@ -330,6 +441,14 @@ public class Day1FlowController : MonoBehaviour
 
         if (channelSwitchCount < dayDefinition.TutorialRequiredChannelSwitches)
             return;
+
+        if (cctvKeyTutorialActive)
+        {
+            // 세 번째 채널 전환 직후 Q/E 안내를 먼저 치운 뒤
+            // 대기 시간과 눈 감는 이상현상 등장 연출을 시작한다.
+            sceneController?.SetChannelSwitchInputEnabled(false);
+            cctvKeyTutorialController?.HideGuide();
+        }
 
         tutorialActivationRequested = true;
         tutorialChannelActivationRoutine = StartCoroutine(ActivateTutorialAfterChannelDelay());
@@ -348,6 +467,38 @@ public class Day1FlowController : MonoBehaviour
         tutorialChannelActivationRoutine = null;
     }
 
+    private void CompleteInitialBaselineReview()
+    {
+        if (initialBaselineReviewFinished)
+            return;
+
+        initialBaselineReviewFinished = true;
+        dayRuntimeController?.ResumeDay();
+        anomalyScheduler?.SetGenerationPaused(RequiresTutorial);
+
+        if (cctvKeyTutorialActive && !RequiresTutorial)
+        {
+            // 세 번째 채널 전환 직후에는 다른 입력을 잠시 막고,
+            // 현재 Day 1 랜덤 풀에서 첫 이상현상을 즉시 시작한다.
+            sceneController?.SetChannelSwitchInputEnabled(false);
+            anomalyScheduler?.TryTriggerRandomAnomalyNow();
+        }
+
+        FlowMessageChanged?.Invoke("모든 CCTV의 정상 상태를 확인했습니다. 이상현상 감시를 시작합니다.");
+        Debug.Log($"[Day1FlowController] Baseline review finished. observedAreas={baselineObservedAreaIds.Count}, elapsed={dayRuntimeController?.ElapsedSec ?? 0f:F1}");
+    }
+
+    private bool HasObservedEveryBaselineArea()
+    {
+        int requiredAreaCount = GetBaselineAreaCount();
+        return requiredAreaCount > 0 && baselineObservedAreaIds.Count >= requiredAreaCount;
+    }
+
+    private int GetBaselineAreaCount()
+    {
+        return sceneController?.Channels?.Count ?? 0;
+    }
+
     private void ActivateTutorialAnomaly()
     {
         AnomalyRuntime runtime = anomalyService.Activate(dayDefinition.TutorialAnomaly);
@@ -357,8 +508,67 @@ public class Day1FlowController : MonoBehaviour
             return;
         }
 
-        FlowMessageChanged?.Invoke("기준 화면과 일치하지 않는 항목을 보고하십시오.");
+        FlowMessageChanged?.Invoke(string.Empty);
         Debug.Log($"[Day1FlowController] Tutorial anomaly started. id={dayDefinition.TutorialAnomaly.AnomalyId}, channelSwitches={channelSwitchCount}, elapsed={dayRuntimeController.ElapsedSec:F1}");
+    }
+
+    private void HandleAnomalyActivated(AnomalyRuntime runtime)
+    {
+        if (!cctvKeyTutorialActive || runtime == null)
+            return;
+
+        if (RequiresTutorial && !IsTutorialRuntime(runtime))
+            return;
+
+        cctvKeyTutorialReportAvailable = true;
+        sceneController?.SetChannelSwitchInputEnabled(true);
+        cctvKeyTutorialController?.ShowReportGuide();
+        GameManager.Instance?.SetReportInputEnabled(true);
+    }
+
+    private void BeginCctvKeyTutorial()
+    {
+        cctvKeyTutorialActive = true;
+        cctvKeyTutorialPanCompleted = false;
+        cctvKeyTutorialReportAvailable = false;
+
+        sceneController?.SetCCTVInputEnabled(true);
+        sceneController?.SetChannelSwitchInputEnabled(false);
+        GameManager.Instance?.SetReportInputEnabled(false);
+        cctvKeyTutorialController.BeginPanTraining(HandleCctvPanTrainingCompleted);
+    }
+
+    private void HandleCctvPanTrainingCompleted()
+    {
+        if (!cctvKeyTutorialActive || State != Day1FlowState.Monitoring)
+            return;
+
+        cctvKeyTutorialPanCompleted = true;
+        sceneController?.SetChannelSwitchInputEnabled(true);
+        cctvKeyTutorialController?.ShowChannelGuide();
+    }
+
+    private void HandleReportPanelVisibilityChanged(bool isOpen)
+    {
+        if (!isOpen || !cctvKeyTutorialActive || !cctvKeyTutorialReportAvailable)
+            return;
+
+        cctvKeyTutorialActive = false;
+        cctvKeyTutorialController?.HideGuide();
+    }
+
+    /// <summary>
+    /// 첫 진입 준비 연출이 끝났을 때 현재 KeyPanel 단계가 허용하는 입력만 복구합니다.
+    /// </summary>
+    public bool RestoreCctvKeyTutorialInputStateAfterIntro()
+    {
+        if (!cctvKeyTutorialActive)
+            return false;
+
+        sceneController?.SetCCTVInputEnabled(true);
+        sceneController?.SetChannelSwitchInputEnabled(cctvKeyTutorialPanCompleted);
+        GameManager.Instance?.SetReportInputEnabled(cctvKeyTutorialReportAvailable);
+        return true;
     }
 
     private void HandleAnomalyResolved(AnomalyRuntime runtime)
@@ -388,13 +598,53 @@ public class Day1FlowController : MonoBehaviour
     private void FinishTutorial(bool resolved)
     {
         tutorialFinished = true;
+        cctvKeyTutorialActive = false;
+        cctvKeyTutorialController?.HideGuide();
+        sceneController?.SetChannelSwitchInputEnabled(true);
+        GameManager.Instance?.SetReportInputEnabled(true);
 
         if (anomalyScheduler != null)
             anomalyScheduler.SetGenerationPaused(false);
 
-        string result = resolved ? "첫 기록이 정상적으로 처리되었습니다." : "첫 기록이 누락되었습니다. 감시를 계속하십시오.";
-        FlowMessageChanged?.Invoke(result);
+        if (resolved)
+        {
+            ShowTimedObjectiveMessage("첫 기록이 정상적으로 처리되었습니다.");
+        }
+        else
+        {
+            FlowMessageChanged?.Invoke("첫 기록이 누락되었습니다. 감시를 계속하십시오.");
+        }
+
         Debug.Log($"[Day1FlowController] Tutorial finished. resolved={resolved}");
+    }
+
+    public void ShowAnomalyAppearedMessage()
+    {
+        ShowAnomalyAppearedMessage(null);
+    }
+
+    public void ShowAnomalyAppearedMessage(AnomalyRuntime runtime)
+    {
+        string objective = IsTutorialRuntime(runtime)
+            ? "기준 화면과 일치하지 않는 항목을 보고하십시오."
+            : "오전 6시까지 이상현상을 보고하시오.";
+        ShowTimedObjectiveMessage("이상현상이 발생했습니다.", objective);
+    }
+
+    private void ShowTimedObjectiveMessage(string message, string objective = "오전 6시까지 이상현상을 보고하시오.")
+    {
+        if (objectiveMessageRoutine != null)
+            StopCoroutine(objectiveMessageRoutine);
+
+        objectiveMessageRoutine = StartCoroutine(ShowObjectiveMessageRoutine(message, objective));
+    }
+
+    private IEnumerator ShowObjectiveMessageRoutine(string message, string objective)
+    {
+        FlowMessageChanged?.Invoke(message);
+        yield return new WaitForSecondsRealtime(2f);
+        FlowMessageChanged?.Invoke(objective);
+        objectiveMessageRoutine = null;
     }
 
     private void TryStartEmergencyDispatch()
@@ -411,9 +661,17 @@ public class Day1FlowController : MonoBehaviour
             : dayRuntimeController.ElapsedSec / dayRuntimeController.DurationSec;
         bool reachedProgress = progress >= dayDefinition.EmergencyTriggerProgress;
 
-        if (!hasRequiredReports || !reachedProgress)
+        bool shouldWaitForConditions = dayDefinition.EmergencyRequiresBothConditions
+            ? !hasRequiredReports || !reachedProgress
+            : !hasRequiredReports && !reachedProgress;
+
+        // durationSec를 테스트용으로 크게 줄여도 필수 현장이동이 하루 성공보다
+        // 먼저 실행되도록 시간 만료를 최종 보장 조건으로 사용한다.
+        bool dayTimeExpired = dayRuntimeController.RemainingSec <= 0f;
+        if (shouldWaitForConditions && !dayTimeExpired)
             return;
 
+        // 정답을 맞춘 직후 곧바로 정전되는 연출은 시간 만료 시에도 피한다.
         if (Time.unscaledTime < lastCorrectReportTime + minimumEmergencyDelayAfterCorrectReport)
             return;
 
@@ -453,6 +711,11 @@ public class Day1FlowController : MonoBehaviour
             return;
 
         emergencyDispatchStarted = true;
+        // 정전 전조(특히 Day 2 Staff 이동) 위에 미보고 5초 붉은 비네트가
+        // 겹치지 않도록 현장 전환을 확정하는 즉시 제거한다.
+        if (missedAnomalyWarningOverlay == null)
+            missedAnomalyWarningOverlay = FindFirstObjectByType<MissedAnomalyWarningOverlay>(FindObjectsInactive.Include);
+        missedAnomalyWarningOverlay?.HideForEmergencyTransition();
         emergencyDispatchRoutine = StartCoroutine(BeginEmergencyDispatchRoutine(isDebug));
     }
 
@@ -462,6 +725,12 @@ public class Day1FlowController : MonoBehaviour
             yield return null;
 
         PauseForEmergencyDispatch();
+
+        if (day2BlackoutForeshadowController == null)
+            day2BlackoutForeshadowController = FindFirstObjectByType<Day2BlackoutForeshadowController>(FindObjectsInactive.Include);
+
+        if (day2BlackoutForeshadowController != null && day2BlackoutForeshadowController.CanPlay())
+            yield return day2BlackoutForeshadowController.Play();
 
         if (transitionEffect == null)
             transitionEffect = FindFirstObjectByType<TransitionEffect>();
@@ -492,11 +761,7 @@ public class Day1FlowController : MonoBehaviour
             emergencyFieldModeStarted = fieldModeController != null && fieldModeController.EnterFieldMode();
         }
 
-        string message = emergencyFieldModeStarted
-            ? "정전 발생. 설비실로 이동하십시오."
-            : $"정전 발생. 현장 복구가 필요합니다. 임시 테스트에서는 {emergencyRecoveryKey} 키로 배전반을 복구합니다.";
-
-        message = "정전 발생. 메인룸의 문을 통해 외부 현장으로 이동하십시오.";
+        string message = GetEmergencyDispatchMessage();
 
         if (isDebug)
             message = $"[DEBUG] {message}";
@@ -516,7 +781,7 @@ public class Day1FlowController : MonoBehaviour
         // 전력은 복구됐지만 플레이어는 아직 현장에 있다. 제어실 문까지 돌아가기 전에는
         // 타이머와 스케줄러를 재개하지 않아 현장에 있는 플레이어가 보이지 않는 이상현상으로
         // 실패하는 일을 막는다.
-        ChangeState(Day1FlowState.EmergencyRecovery, "전력 복구 완료. 제어실로 돌아가 CCTV를 재가동하십시오.");
+        ChangeState(Day1FlowState.EmergencyRecovery, GetEmergencyRecoveryMessage());
     }
 
     /// <summary>
@@ -541,6 +806,42 @@ public class Day1FlowController : MonoBehaviour
         FlowMessageChanged?.Invoke("메인룸에 복귀했습니다. CCTV를 눌러 감시 업무를 재개하십시오.");
     }
 
+    private string GetEmergencyDispatchMessage()
+    {
+        if (dayDefinition != null && !string.IsNullOrWhiteSpace(dayDefinition.EmergencyDispatchText))
+            return dayDefinition.EmergencyDispatchText;
+
+        return dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection
+            ? "통신과 전력이 불안정하다. 메인룸의 문을 통해 제어실 외부를 확인하십시오."
+            : dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.ServerReboot
+                ? "서버 경보가 발생했다. 메인룸의 문을 통해 서버실 제어반을 확인하십시오."
+                : "정전이 발생했다. 메인룸의 문을 통해 제어실 외부로 나가십시오.";
+    }
+
+    private string GetEmergencyFieldObjectiveMessage()
+    {
+        if (dayDefinition != null && !string.IsNullOrWhiteSpace(dayDefinition.EmergencyFieldObjectiveText))
+            return dayDefinition.EmergencyFieldObjectiveText;
+
+        return dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection
+            ? "바닥에 수상한 기록물이 떨어져 있다. 가까이 다가가 E 키로 조사하십시오."
+            : dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.ServerReboot
+                ? "서버 제어반을 조작해 시스템을 재부팅하십시오."
+                : "배전반을 찾아 E를 꾹 눌러 전력을 복구하십시오.";
+    }
+
+    private string GetEmergencyRecoveryMessage()
+    {
+        if (dayDefinition != null && !string.IsNullOrWhiteSpace(dayDefinition.EmergencyRecoveryText))
+            return dayDefinition.EmergencyRecoveryText;
+
+        return dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection
+            ? "시스템이 자동으로 복구되고 있다. 제어실로 돌아가 감시를 재개하십시오."
+            : dayDefinition != null && dayDefinition.EmergencyObjectiveType == EmergencyObjectiveType.ServerReboot
+                ? "서버 재부팅 완료. 제어실로 돌아가 CCTV 감시를 재개하십시오."
+                : "전력 복구 완료. 제어실로 돌아가 CCTV를 재가동하십시오.";
+    }
+
     private void HandleDayCleared()
     {
         ChangeState(Day1FlowState.Completed, "근무 시간이 종료되었습니다.");
@@ -549,6 +850,24 @@ public class Day1FlowController : MonoBehaviour
     private void HandleDayFailed()
     {
         ChangeState(Day1FlowState.Failed, "인지 편차가 허용치를 초과했습니다.");
+    }
+
+    private void HandleTerminalFailureStarted(DayFailureReason reason)
+    {
+        IsTerminalFailurePresentationActive = true;
+        PauseNormalAnomalies();
+
+        if (objectiveMessageRoutine != null)
+        {
+            StopCoroutine(objectiveMessageRoutine);
+            objectiveMessageRoutine = null;
+        }
+
+        FlowMessageChanged?.Invoke(string.Empty);
+        if (transitionEffect == null)
+            transitionEffect = FindFirstObjectByType<TransitionEffect>();
+        transitionEffect?.CancelAnomalyAppearanceBlink();
+        GameManager.Instance?.SetReportInputEnabled(false);
     }
 
     private void PauseNormalAnomalies()
@@ -644,8 +963,12 @@ public class Day1FlowController : MonoBehaviour
         if (sceneController != null)
             sceneController.ChannelSelected += HandleChannelSelected;
 
+        if (cctvSceneUI != null)
+            cctvSceneUI.ReportPanelVisibilityChanged += HandleReportPanelVisibilityChanged;
+
         if (anomalyService != null)
         {
+            anomalyService.AnomalyActivated += HandleAnomalyActivated;
             anomalyService.AnomalyResolved += HandleAnomalyResolved;
             anomalyService.AnomalyMissed += HandleAnomalyMissed;
         }
@@ -654,6 +977,7 @@ public class Day1FlowController : MonoBehaviour
         {
             dayRuntimeController.DayCleared += HandleDayCleared;
             dayRuntimeController.DayFailed += HandleDayFailed;
+            dayRuntimeController.TerminalFailureStarted += HandleTerminalFailureStarted;
         }
     }
 
@@ -662,8 +986,12 @@ public class Day1FlowController : MonoBehaviour
         if (sceneController != null)
             sceneController.ChannelSelected -= HandleChannelSelected;
 
+        if (cctvSceneUI != null)
+            cctvSceneUI.ReportPanelVisibilityChanged -= HandleReportPanelVisibilityChanged;
+
         if (anomalyService != null)
         {
+            anomalyService.AnomalyActivated -= HandleAnomalyActivated;
             anomalyService.AnomalyResolved -= HandleAnomalyResolved;
             anomalyService.AnomalyMissed -= HandleAnomalyMissed;
         }
@@ -672,6 +1000,7 @@ public class Day1FlowController : MonoBehaviour
         {
             dayRuntimeController.DayCleared -= HandleDayCleared;
             dayRuntimeController.DayFailed -= HandleDayFailed;
+            dayRuntimeController.TerminalFailureStarted -= HandleTerminalFailureStarted;
         }
     }
 
@@ -703,6 +1032,24 @@ public class Day1FlowController : MonoBehaviour
 
         if (cctvSceneUI == null)
             cctvSceneUI = FindFirstObjectByType<CCTVSceneUI>(FindObjectsInactive.Include);
+
+        if (cctvKeyTutorialController == null)
+            cctvKeyTutorialController = FindFirstObjectByType<CCTVKeyTutorialController>(FindObjectsInactive.Include);
+
+        if (storyDialogueController == null)
+            storyDialogueController = FindFirstObjectByType<StoryDialogueController>();
+
+        if (tutorialPanelController == null)
+            tutorialPanelController = FindFirstObjectByType<TutorialPanelController>(FindObjectsInactive.Include);
+
+        if (mainRoomStateEffectController == null)
+            mainRoomStateEffectController = FindFirstObjectByType<MainRoomStateEffectController>();
+
+        if (day2BlackoutForeshadowController == null)
+            day2BlackoutForeshadowController = FindFirstObjectByType<Day2BlackoutForeshadowController>(FindObjectsInactive.Include);
+
+        if (missedAnomalyWarningOverlay == null)
+            missedAnomalyWarningOverlay = FindFirstObjectByType<MissedAnomalyWarningOverlay>(FindObjectsInactive.Include);
     }
 
     /// <summary>
@@ -710,4 +1057,14 @@ public class Day1FlowController : MonoBehaviour
     /// Day 2 이후처럼 TutorialAnomaly가 비어 있으면 일반 랜덤 풀을 즉시 시작합니다.
     /// </summary>
     protected virtual bool RequiresTutorial => dayDefinition != null && dayDefinition.TutorialAnomaly != null;
+
+    private bool UsesCctvKeyTutorial =>
+        dayDefinition != null && dayDefinition.Day == 1 && cctvKeyTutorialController != null;
+
+    /// <summary>
+    /// DAY1은 세 CCTV의 정상 상태를 모두 확인하고 다음 채널로 한 번 더 이동한 뒤에만
+    /// 시간과 랜덤 이상현상을 시작합니다.
+    /// </summary>
+    private bool RequiresInitialBaselineReview =>
+        dayDefinition != null && dayDefinition.Day == 1 && !RequiresTutorial;
 }

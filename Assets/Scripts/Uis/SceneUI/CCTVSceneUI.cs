@@ -8,6 +8,11 @@ using UnityEngine.EventSystems;
 
 public class CCTVSceneUI : BaseUI
 {
+    public System.Action<bool> ReportPanelVisibilityChanged;
+
+    [Header("Sound Events")]
+    [SerializeField] private UnityEngine.Events.UnityEvent onReportPanelToggled;
+
     // BaseUI.Bind에서 enum 이름과 같은 자식 UI를 찾아 캐싱한다.
     enum Texts
     {
@@ -90,8 +95,11 @@ public class CCTVSceneUI : BaseUI
     private Tween _slideTween;
     private CCTVUIEffectController _uiEffectController;
     private Coroutine missedSignalLossCoroutine;
+    private Coroutine terminalWrongReportRoutine;
     private Coroutine initialMonitoringIntroCoroutine;
+    private Coroutine initialReportSelectionRoutine;
     private bool initialMonitoringIntroPlayed;
+    private const int InitialReportSelectionMaxWaitFrames = 60;
 
     // 보고 제출 시 사용할 내부 선택값. UI 표시 문자열이 아니라 enum/id 값을 저장한다.
     private AreaId selectedAreaId = AreaId.None;
@@ -125,15 +133,34 @@ public class CCTVSceneUI : BaseUI
 
         ResolveReferences();
 
+        if (dayRuntimeController != null)
+        {
+            dayRuntimeController.DayFailed -= HandleDayFailed;
+            dayRuntimeController.DayFailed += HandleDayFailed;
+        }
+
         // 보고서 조작 버튼은 각각 다른 선택 리스트를 열지만, 최종 선택 처리는 공통 옵션 콜백으로 모은다.
         GetButton((int)Buttons.ReportSendButton).gameObject.BindEvent(OnClickReportSendButton);
         GetButton((int)Buttons.AreaReportButton).gameObject.BindEvent(OnClickAreaSelectButton);
         GetButton((int)Buttons.ObjectReportButton).gameObject.BindEvent(OnClickObjectSelectButton);
         GetButton((int)Buttons.TypeReportButton).gameObject.BindEvent(OnClickTypeSelectButton);
 
+        GameObject reportBoundary = GetObject((int)Objects.ReportBoundary);
+        if (reportBoundary != null)
+        {
+            Image boundaryImage = reportBoundary.GetComponent<Image>();
+            if (boundaryImage != null)
+                boundaryImage.raycastTarget = true;
+            reportBoundary.BindEvent(OnClickReportBoundary);
+        }
+
         EffectSetting();
         ReportHeightSetting();
         ReportContentSetting();
+
+        // CCTV 채널/Area 인스턴스는 다른 Start()에서 준비된다. 한 프레임 뒤 실제
+        // 0번 후보를 다시 확정해, 프리팹에 보이는 기본 문구와 내부 선택값이 어긋나지 않게 한다.
+        initialReportSelectionRoutine = StartCoroutine(InitializeReportSelectionsAfterSceneReady());
     }
 
     private void OnClickReportSendButton(PointerEventData eventData)
@@ -141,6 +168,14 @@ public class CCTVSceneUI : BaseUI
         Debug.Log($"[INFO] CCTVSceneUI::OnClickReportSendButton - 보고서 전송 버튼 클릭 area={selectedAreaId}, object={selectedObjectId}, target={selectedTargetId}, type={selectedReportType}");
 
         ResolveReferences();
+        EnsureInitialReportSelectionsReady();
+
+        if (!HasCompleteReportSelection())
+        {
+            Debug.LogWarning("[WARN] CCTVSceneUI::OnClickReportSendButton - 보고 선택지가 아직 준비되지 않아 제출을 보류합니다.");
+            SetReportSendInteractable(false);
+            return;
+        }
 
         if (anomalyService == null)
         {
@@ -162,8 +197,19 @@ public class CCTVSceneUI : BaseUI
                 ? matchedRuntime.Definition.AnomalyId
                 : "Unknown";
 
+            // 모든 정답 보고는 공용 해결음을 재생한다.
+            // Day 2의 첫 정답 보고만 전용 목소리를 추가로 겹쳐 재생한다.
+            bool isDay2FirstCorrectReport = dayRuntimeController != null &&
+                                            dayRuntimeController.CurrentDayDefinition != null &&
+                                            dayRuntimeController.CurrentDayDefinition.Day == 2 &&
+                                            dayRuntimeController.SuccessReportCount == 0;
+
             if (dayRuntimeController != null)
                 dayRuntimeController.RegisterCorrectReport();
+
+            SoundManager.Instance?.PlayCorrectReportSfx();
+            if (isDay2FirstCorrectReport)
+                SoundManager.Instance?.PlayDay2FirstCorrectReportSfx();
 
             if (GameManager.Instance != null)
                 GameManager.Instance.NotifyDayCorrectReport(matchedRuntime);
@@ -175,13 +221,18 @@ public class CCTVSceneUI : BaseUI
         {
             Debug.Log("[INFO] CCTVSceneUI::OnClickReportSendButton - 오보고");
 
-            if (dayRuntimeController != null)
-                dayRuntimeController.RegisterWrongReport();
+            bool reachedWrongReportLimit = dayRuntimeController != null &&
+                                           dayRuntimeController.RegisterWrongReport();
 
             if (GameManager.Instance != null)
                 GameManager.Instance.NotifyDayWrongReport();
 
+            CloseReportPanel(false);
+            SoundManager.Instance?.PlayWrongOrMissedReportSfx();
             PlayFalseReportNoise();
+
+            if (reachedWrongReportLimit)
+                terminalWrongReportRoutine = StartCoroutine(CompleteTerminalWrongReportRoutine());
         }
     }
 
@@ -224,9 +275,15 @@ public class CCTVSceneUI : BaseUI
             yield return new WaitForSecondsRealtime(initialMonitoringIntroDelay);
 
         SetInitialMonitoringHudVisible(true);
-        sceneController?.SetCCTVInputEnabled(true);
+        bool restoredByKeyTutorial = day1FlowController != null &&
+                                     day1FlowController.RestoreCctvKeyTutorialInputStateAfterIntro();
+        if (!restoredByKeyTutorial)
+        {
+            sceneController?.SetCCTVInputEnabled(true);
+            GameManager.Instance?.SetReportInputEnabled(true);
+        }
         panController?.SetInputLocked(false);
-        GameManager.Instance?.SetReportInputEnabled(true);
+        SetReportSendInteractable(CanSubmitReport());
         initialMonitoringIntroCoroutine = null;
     }
 
@@ -246,6 +303,7 @@ public class CCTVSceneUI : BaseUI
     private void OnClickAreaSelectButton(PointerEventData eventData)
     {
         Debug.Log("[INFO] CCTVSceneUI::OnClickAreaSelectButton - 구역 선택 버튼 클릭");
+        SoundManager.Instance?.PlayReportSelectionClickSfx();
 
         // 현재 일차/채널 기준 구역 후보를 갱신한 뒤 구역 리스트만 표시한다.
         RefreshAreaReportContents();
@@ -255,6 +313,7 @@ public class CCTVSceneUI : BaseUI
     private void OnClickObjectSelectButton(PointerEventData eventData)
     {
         Debug.Log("[INFO] CCTVSceneUI::OnClickObjectSelectButton - 오브젝트 선택 버튼 클릭");
+        SoundManager.Instance?.PlayReportSelectionClickSfx();
 
         // 선택된 구역이 있으면 해당 구역, 없으면 현재 CCTV 구역의 보고 가능 오브젝트를 표시한다.
         RefreshObjectReportContents();
@@ -264,6 +323,7 @@ public class CCTVSceneUI : BaseUI
     private void OnClickTypeSelectButton(PointerEventData eventData)
     {
         Debug.Log("[INFO] CCTVSceneUI::OnClickTypeSelectButton - 이상현상 타입 선택 버튼 클릭");
+        SoundManager.Instance?.PlayReportSelectionClickSfx();
 
         // 이상현상 타입은 정답 힌트를 막기 위해 활성 이상현상 기준이 아닌 고정 타입 목록을 표시한다.
         RefreshTypeReportContents();
@@ -314,10 +374,18 @@ public class CCTVSceneUI : BaseUI
         if (_reportDefaultHeight == 0.0f || panel == null) return;
 
         _slideTween?.Kill();
-
+        SoundManager.Instance?.PlayReportPaperSfx();
+        onReportPanelToggled?.Invoke();
         // W키 보고 패널 토글: 열 때는 기본 보고 높이, 닫을 때는 전체 높이 기준 아래로 내린다.
         if (!_isReport)
         {
+            // Area 프리팹 준비가 Start 순서보다 늦었던 경우에도, 화면에 보이는
+            // 프리팹 기본 문구와 실제 제출값이 어긋난 채 보고판이 열리지 않게 한다.
+            EnsureInitialReportSelectionsReady();
+
+            // 선택값은 새 씬의 최초 준비 때만 확정한다. 보고판 재오픈/CCTV 재진입에서는
+            // 플레이어가 마지막으로 고른 장소·물건·현상을 그대로 유지한다.
+            SetReportSendInteractable(CanSubmitReport());
             _slideTween = panel
                 .DOAnchorPosY(_reportDefaultHeight, 0.5f)
                 .SetEase(Ease.OutQuint);
@@ -329,6 +397,7 @@ public class CCTVSceneUI : BaseUI
                 .SetEase(Ease.OutQuint);
         }
         _isReport = !_isReport;
+        ReportPanelVisibilityChanged?.Invoke(_isReport);
     }
 
     private void PlayFalseReportNoise()
@@ -347,13 +416,35 @@ public class CCTVSceneUI : BaseUI
             screenEffectController.PlayTransitionNoise(fallbackFalseReportNoiseDuration);
     }
 
+    private IEnumerator CompleteTerminalWrongReportRoutine()
+    {
+        if (panController != null)
+            panController.SetInputLocked(true);
+        if (GameManager.Instance != null)
+            GameManager.Instance.SetReportInputEnabled(false);
+
+        float noiseDuration = GetFalseReportNoiseDuration();
+        float takeoverDelay = GetFalseReportTakeoverDelay(noiseDuration);
+        if (takeoverDelay > 0f)
+            yield return new WaitForSecondsRealtime(takeoverDelay);
+
+        sceneController?.TryTakeOverWithCCTVRoom(false);
+
+        float remainingNoiseDuration = Mathf.Max(0f, noiseDuration - takeoverDelay);
+        if (remainingNoiseDuration > 0f)
+            yield return new WaitForSecondsRealtime(remainingNoiseDuration);
+
+        dayRuntimeController?.FailDay(DayFailureReason.WrongReports);
+        terminalWrongReportRoutine = null;
+    }
+
     private IEnumerator CompleteSuccessfulReportRoutine(AnomalyRuntime runtime)
     {
         if (_isNormalizingReport || runtime == null || anomalyService == null)
             yield break;
 
         _isNormalizingReport = true;
-        CloseReportPanel();
+        CloseReportPanel(false);
         SetReportSendInteractable(false);
 
         if (panController != null)
@@ -393,17 +484,80 @@ public class CCTVSceneUI : BaseUI
             : fallbackSuccessReportNoiseDuration;
     }
 
-    private void CloseReportPanel()
+    private float GetFalseReportNoiseDuration()
+    {
+        return falseReportNoiseProfile != null
+            ? falseReportNoiseProfile.TotalTimedDuration
+            : fallbackFalseReportNoiseDuration;
+    }
+
+    private float GetFalseReportTakeoverDelay(float noiseDuration)
+    {
+        if (noiseDuration <= 0f)
+            return 0f;
+
+        if (falseReportNoiseProfile != null && falseReportNoiseProfile.FadeInTime > 0f)
+            return Mathf.Min(falseReportNoiseProfile.FadeInTime, noiseDuration);
+
+        return Mathf.Min(0.05f, noiseDuration * 0.25f);
+    }
+
+    private void CloseReportPanel(bool playPaperSfx = true)
     {
         RectTransform panel = GetObject((int)Objects.ReportBackGround)?.GetComponent<RectTransform>();
         if (panel == null)
             return;
 
         _slideTween?.Kill();
+        if (playPaperSfx)
+            SoundManager.Instance?.PlayReportPaperSfx();
+        onReportPanelToggled?.Invoke();
         _slideTween = panel
             .DOAnchorPosY(-_reportFullHeight, 0.2f)
             .SetEase(Ease.OutQuint);
+        bool wasOpen = _isReport;
         _isReport = false;
+        if (wasOpen)
+            ReportPanelVisibilityChanged?.Invoke(false);
+    }
+
+    private void OnClickReportBoundary(PointerEventData eventData)
+    {
+        if (!_isReport || eventData == null)
+            return;
+
+        RectTransform panel = GetObject((int)Objects.ReportBackGround)?.GetComponent<RectTransform>();
+        if (panel != null && RectTransformUtility.RectangleContainsScreenPoint(
+                panel,
+                eventData.position,
+                eventData.pressEventCamera))
+            return;
+
+        CloseReportPanel();
+    }
+
+    /// <summary>
+    /// 최종 실패처럼 보고 입력을 더 이상 받을 수 없는 상황에서 보고판을 즉시 내립니다.
+    /// 제출/수동 토글과 달리 종이 효과음은 재생하지 않습니다.
+    /// </summary>
+    public void ForceCloseReportPanel()
+    {
+        RectTransform panel = GetObject((int)Objects.ReportBackGround)?.GetComponent<RectTransform>();
+        if (panel == null)
+            return;
+
+        _slideTween?.Kill();
+        panel.anchoredPosition = new Vector2(panel.anchoredPosition.x, -_reportFullHeight);
+        bool wasOpen = _isReport;
+        _isReport = false;
+        if (wasOpen)
+            ReportPanelVisibilityChanged?.Invoke(false);
+        SetReportSendInteractable(false);
+    }
+
+    private void HandleDayFailed()
+    {
+        ForceCloseReportPanel();
     }
 
     private void SetReportSendInteractable(bool interactable)
@@ -411,6 +565,21 @@ public class CCTVSceneUI : BaseUI
         Button button = GetButton((int)Buttons.ReportSendButton);
         if (button != null)
             button.interactable = interactable;
+    }
+
+    private bool CanSubmitReport()
+    {
+        if (_isNormalizingReport)
+            return false;
+
+        if (dayRuntimeController != null &&
+            (dayRuntimeController.State == DayRuntimeState.Failed ||
+             dayRuntimeController.State == DayRuntimeState.Cleared))
+        {
+            return false;
+        }
+
+        return GameManager.Instance == null || GameManager.Instance.ReportInputEnabled;
     }
 
     private void ChangeReportImage()
@@ -480,6 +649,57 @@ public class CCTVSceneUI : BaseUI
             return;
 
         // 시작 시 한 번 생성하고, 버튼을 누를 때마다 최신 구역/오브젝트 상태로 다시 갱신한다.
+        RefreshInitialReportSelections();
+    }
+
+    private IEnumerator InitializeReportSelectionsAfterSceneReady()
+    {
+        // CCTVTestSceneController와 CCTVAreaView의 Start 순서는 씬 구성에 따라 달라질 수 있다.
+        // 실제 Area 오브젝트 후보가 준비될 때까지 잠시 재시도하여 프리팹 문구만 보이고
+        // 내부 선택값은 None인 초기 상태를 남기지 않는다.
+        for (int frame = 0; frame < InitialReportSelectionMaxWaitFrames; frame++)
+        {
+            yield return null;
+            EnsureInitialReportSelectionsReady();
+
+            if (HasCompleteReportSelection())
+                break;
+        }
+
+        // 눈깜빡임/강제 닫힘 연출이 이전에 버튼을 꺼두었더라도, 정상 감시 상태라면
+        // 보고판을 다시 열어 제출할 수 있어야 한다.
+        if (!_isReport)
+            SetReportSendInteractable(CanSubmitReport());
+
+        initialReportSelectionRoutine = null;
+    }
+
+    private void EnsureInitialReportSelectionsReady()
+    {
+        if (HasCompleteReportSelection())
+            return;
+
+        ResolveReferences();
+
+        if (selectedAreaId == AreaId.None)
+            RefreshAreaReportContents();
+
+        if (selectedTargetId == ReportTargetId.None && GetSelectedOrCurrentAreaInstance() != null)
+            RefreshObjectReportContents();
+
+        if (selectedReportType == AnomalyReportType.None)
+            RefreshTypeReportContents();
+    }
+
+    private bool HasCompleteReportSelection()
+    {
+        return selectedAreaId != AreaId.None &&
+               selectedTargetId != ReportTargetId.None &&
+               selectedReportType != AnomalyReportType.None;
+    }
+
+    private void RefreshInitialReportSelections()
+    {
         RefreshAreaReportContents();
         RefreshObjectReportContents();
         RefreshTypeReportContents();
@@ -533,15 +753,20 @@ public class CCTVSceneUI : BaseUI
         if (instance == null)
             return;
 
+        // 실제 오브젝트 수와 관계없이 보고 대상은 TargetId 하나당 하나만 보여준다.
+        // 예: 왼쪽/오른쪽 초상화와 여러 포스터는 각각 "초상화", "포스터" 버튼 하나로 합친다.
+        var addedTargetIds = new HashSet<ReportTargetId>();
+
         // 오보고 가능성을 위해 활성 이상현상만이 아니라 해당 구역의 모든 보고 가능 오브젝트를 후보로 보여준다.
         foreach (CCTVSceneObject sceneObject in instance.GetAllObjects())
         {
             if (sceneObject == null || !sceneObject.CanBeAnomalyTarget || sceneObject.TargetId == ReportTargetId.None)
                 continue;
 
-            string label = string.IsNullOrWhiteSpace(sceneObject.DisplayName)
-                ? CCTVReportLabelProvider.GetTargetLabel(sceneObject.TargetId)
-                : sceneObject.DisplayName;
+            if (!addedTargetIds.Add(sceneObject.TargetId))
+                continue;
+
+            string label = CCTVReportLabelProvider.GetTargetLabel(sceneObject.TargetId);
 
             var option = new ReportSelectOption
             {
@@ -612,6 +837,8 @@ public class CCTVSceneUI : BaseUI
 
     private void OnReportOptionSelected(ReportSelectOption option)
     {
+        SoundManager.Instance?.PlayReportSelectionClickSfx();
+
         // ReportContentFrame은 선택 판정을 하지 않고 option만 돌려준다. 실제 선택 상태는 여기서만 갱신한다.
         switch (option.Kind)
         {
@@ -712,6 +939,8 @@ public class CCTVSceneUI : BaseUI
 
         if (missedSignalLossCoroutine != null)
             StopCoroutine(missedSignalLossCoroutine);
+        if (terminalWrongReportRoutine != null)
+            StopCoroutine(terminalWrongReportRoutine);
 
         missedSignalLossCoroutine = StartCoroutine(PlayMissedSignalLossAfterEmergencyRoutine());
     }
@@ -880,7 +1109,7 @@ public class CCTVSceneUI : BaseUI
 
     // 미보고 단계에서만 표시되는 제어실 외부/내부 채널은 분위기와 실패 연출용 영상이다.
     // 실제 이상현상 보고 장소 후보에는 넣지 않는다.
-    private static bool IsReportSelectableArea(CCTVAreaDefinition area)
+    private bool IsReportSelectableArea(CCTVAreaDefinition area)
     {
         if (area == null || area.AreaId == AreaId.None)
             return false;
@@ -973,6 +1202,9 @@ public class CCTVSceneUI : BaseUI
         if (missedSignalLossCoroutine != null)
             StopCoroutine(missedSignalLossCoroutine);
 
+        if (initialReportSelectionRoutine != null)
+            StopCoroutine(initialReportSelectionRoutine);
+
         CancelInitialMonitoringIntro();
 
         if (GameManager.Instance != null)
@@ -983,6 +1215,9 @@ public class CCTVSceneUI : BaseUI
             GameManager.Instance.DayWrongReportCountChanged -= SetFailureCountInfo;
             GameManager.Instance.DayMissedAnomaly -= OnMissedAnomaly;
         }
+
+        if (dayRuntimeController != null)
+            dayRuntimeController.DayFailed -= HandleDayFailed;
     }
 
     private void OnDisable()
@@ -1003,9 +1238,6 @@ public class CCTVSceneUI : BaseUI
         GameManager.Instance?.SetReportInputEnabled(true);
     }
 }
-
-
-
 
 
 

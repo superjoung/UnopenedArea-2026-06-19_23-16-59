@@ -16,6 +16,8 @@ public class MainSceneUI : MonoBehaviour
     [Header("Text")]
     [SerializeField] private TMP_Text situationText;
     [SerializeField] private TMP_Text objectiveText;
+    [SerializeField] private TMP_Text fieldSituationText;
+    [SerializeField] private TMP_Text fieldObjectiveText;
 
     [Header("Visibility")]
     [SerializeField] private bool hideWhileViewingCctv = true;
@@ -31,6 +33,41 @@ public class MainSceneUI : MonoBehaviour
     private TransitionEffect subscribedTransitionEffect;
     private Coroutine messageDisplayRoutine;
     private bool wasTransitionPlaying;
+    private bool externalMessageActive;
+    private bool temporarilySuppressed;
+
+    public GameObject TextContentRoot => textContentRoot;
+    public TMP_Text SituationText => situationText;
+    public TMP_Text ObjectiveText => objectiveText;
+
+    /// <summary>Shows TempUI for a one-off presentation that is not tied to flow state.</summary>
+    public void ShowExternalMessage(string situation, string objective)
+    {
+        externalMessageActive = true;
+        CancelScheduledMessage();
+        ApplyMessage(situation, objective);
+        SetVisible(true);
+    }
+
+    public void HideExternalMessage()
+    {
+        externalMessageActive = false;
+        SetVisible(false);
+    }
+
+    /// <summary>스토리 대화처럼 다른 화면 UI를 단독으로 보여줄 때 안내 텍스트를 잠시 숨깁니다.</summary>
+    public void SetTemporarilySuppressed(bool suppressed)
+    {
+        temporarilySuppressed = suppressed;
+        if (suppressed)
+        {
+            CancelScheduledMessage();
+            SetVisible(false);
+            return;
+        }
+
+        Refresh();
+    }
 
     private void Awake()
     {
@@ -88,6 +125,19 @@ public class MainSceneUI : MonoBehaviour
 
     public void Refresh()
     {
+        if (temporarilySuppressed)
+        {
+            CancelScheduledMessage();
+            SetVisible(false);
+            return;
+        }
+
+        if (externalMessageActive)
+        {
+            SetVisible(true);
+            return;
+        }
+
         Day1FlowState flowState = day1FlowController != null
             ? day1FlowController.State
             : Day1FlowState.None;
@@ -135,7 +185,7 @@ public class MainSceneUI : MonoBehaviour
         SetVisible(false);
     }
 
-    private static void GetMessage(Day1FlowState flowState, Day1AreaMode areaMode, out string situation, out string objective)
+    private void GetMessage(Day1FlowState flowState, Day1AreaMode areaMode, out string situation, out string objective)
     {
         situation = string.Empty;
         objective = string.Empty;
@@ -165,13 +215,62 @@ public class MainSceneUI : MonoBehaviour
                 return;
 
             case Day1FlowState.EmergencyDispatch:
+                if (day1FlowController != null &&
+                    day1FlowController.CurrentEmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection)
+                {
+                    situation = areaMode == Day1AreaMode.Field
+                        ? "바닥에 수상한 기록물이 떨어져 있다."
+                        : "통신과 전력이 불안정하다.";
+                    objective = areaMode == Day1AreaMode.Field
+                        ? "가까이 다가가 E 키로 조사하십시오."
+                        : "메인룸의 문을 통해 제어실 외부를 확인하십시오.";
+                    return;
+                }
+
+                if (day1FlowController != null &&
+                    day1FlowController.CurrentEmergencyObjectiveType == EmergencyObjectiveType.ServerReboot)
+                {
+                    situation = "기록 시스템이 손상되었다.";
+                    objective = areaMode == Day1AreaMode.Field
+                        ? "서버실의 기록 단말을 찾아 손상된 관측 기록을 복구하십시오."
+                        : "메인룸의 문을 통해 서버실로 이동하십시오.";
+                    return;
+                }
+
                 situation = "정전이 발생했다.";
                 objective = areaMode == Day1AreaMode.Field
-                    ? "배전반을 찾아 전력을 복구하십시오."
+                    ? "배전반을 찾아 E를 꾹 눌러 고치세요."
                     : "메인룸의 문으로 제어실 외부로 나가십시오.";
                 return;
 
             case Day1FlowState.EmergencyRecovery:
+                if (day1FlowController != null &&
+                    day1FlowController.CurrentEmergencyObjectiveType == EmergencyObjectiveType.StoryRecordInspection)
+                {
+                    if (areaMode == Day1AreaMode.Field)
+                    {
+                        situation = "시스템이 자동으로 복구되고 있다.";
+                        objective = "제어실로 돌아가 감시를 재개하십시오.";
+                    }
+                    else
+                    {
+                        situation = "메인룸에 복귀했다.";
+                        objective = "CCTV를 다시 확인하십시오.";
+                    }
+
+                    return;
+                }
+
+                if (day1FlowController != null &&
+                    day1FlowController.CurrentEmergencyObjectiveType == EmergencyObjectiveType.ServerReboot)
+                {
+                    situation = "관측 기록 복구가 완료되었다.";
+                    objective = areaMode == Day1AreaMode.Field
+                        ? "제어실로 돌아가 CCTV 감시를 재개하십시오."
+                        : "CCTV를 다시 확인하십시오.";
+                    return;
+                }
+
                 if (areaMode == Day1AreaMode.Field)
                 {
                     situation = "전력이 복구되었다.";
@@ -278,11 +377,19 @@ public class MainSceneUI : MonoBehaviour
 
     private void ApplyMessage(string situation, string objective)
     {
-        if (situationText != null)
-            situationText.text = situation;
+        bool useFieldTexts = IsViewingField();
+        TMP_Text targetSituationText = useFieldTexts && fieldSituationText != null
+            ? fieldSituationText
+            : situationText;
+        TMP_Text targetObjectiveText = useFieldTexts && fieldObjectiveText != null
+            ? fieldObjectiveText
+            : objectiveText;
 
-        if (objectiveText != null)
-            objectiveText.text = objective;
+        if (targetSituationText != null)
+            targetSituationText.text = situation;
+
+        if (targetObjectiveText != null)
+            targetObjectiveText.text = objective;
     }
 
     private void ScheduleMessageDisplay(float delay)
@@ -321,15 +428,27 @@ public class MainSceneUI : MonoBehaviour
     private void SetVisible(bool visible)
     {
         if (textContentRoot != null)
-        {
             textContentRoot.SetActive(visible);
-            return;
-        }
 
-        if (situationText != null)
-            situationText.gameObject.SetActive(visible);
+        bool useFieldTexts = IsViewingField();
+        bool useFieldSituation = useFieldTexts && fieldSituationText != null;
+        bool useFieldObjective = useFieldTexts && fieldObjectiveText != null;
 
-        if (objectiveText != null)
-            objectiveText.gameObject.SetActive(visible);
+        SetTextActive(situationText, visible && !useFieldSituation);
+        SetTextActive(objectiveText, visible && !useFieldObjective);
+        SetTextActive(fieldSituationText, visible && useFieldSituation);
+        SetTextActive(fieldObjectiveText, visible && useFieldObjective);
+    }
+
+    private bool IsViewingField()
+    {
+        return areaTransitionController != null &&
+               areaTransitionController.CurrentMode == Day1AreaMode.Field;
+    }
+
+    private static void SetTextActive(TMP_Text text, bool active)
+    {
+        if (text != null && text.gameObject.activeSelf != active)
+            text.gameObject.SetActive(active);
     }
 }

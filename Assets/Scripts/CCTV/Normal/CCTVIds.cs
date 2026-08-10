@@ -23,6 +23,12 @@ public enum ReportTargetId
     ExitSign = 108,
     Clock = 109,
     Phone = 110,
+    Poster = 111,
+    Plant = 112,
+    Stand = 113,
+    Cart = 114,
+    Switch = 115,
+    CeilingWire = 116,
     Person = 200,
     Monitor = 202,
     ServerRack = 203,
@@ -51,6 +57,8 @@ public enum AnomalyActionType
     ChangeColor = 4,
     SetLocalEulerAngles = 5,
     MoveByLocalPositionOffset = 6,
+    PlayPresentation = 7,
+    SetAnimatorEnabled = 8,
 }
 
 public enum AnomalyState

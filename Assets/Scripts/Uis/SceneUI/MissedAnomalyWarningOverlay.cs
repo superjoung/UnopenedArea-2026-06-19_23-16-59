@@ -34,6 +34,7 @@ public class MissedAnomalyWarningOverlay : MonoBehaviour
     private CanvasGroup canvasGroup;
     private AnomalyService subscribedService;
     private Day1AreaTransitionController subscribedAreaTransitionController;
+    private bool suppressedForEmergencyTransition;
 
     private void Awake()
     {
@@ -151,8 +152,23 @@ public class MissedAnomalyWarningOverlay : MonoBehaviour
     private void HandleAreaModeChanged(Day1AreaMode mode)
     {
         if (mode == Day1AreaMode.CCTV)
+        {
+            suppressedForEmergencyTransition = false;
             return;
+        }
 
+        urgentAnomalies.Clear();
+        KillActiveTweens();
+        SetHiddenImmediate();
+    }
+
+    /// <summary>
+    /// 정전 및 현장 이동 연출이 시작될 때 진행 중인 미보고 경고를 즉시 제거하고,
+    /// 다음 CCTV 진입 전까지 새 경고가 겹쳐 나오지 않도록 합니다.
+    /// </summary>
+    public void HideForEmergencyTransition()
+    {
+        suppressedForEmergencyTransition = true;
         urgentAnomalies.Clear();
         KillActiveTweens();
         SetHiddenImmediate();
@@ -160,6 +176,9 @@ public class MissedAnomalyWarningOverlay : MonoBehaviour
 
     private void BeginUrgency(AnomalyRuntime runtime)
     {
+        if (suppressedForEmergencyTransition)
+            return;
+
         if (runtime != null)
             urgentAnomalies.Add(runtime);
 

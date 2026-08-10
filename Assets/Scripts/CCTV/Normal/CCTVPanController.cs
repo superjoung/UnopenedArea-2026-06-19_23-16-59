@@ -26,6 +26,23 @@ public class CCTVPanController : MonoBehaviour
 
     public CCTVAreaDefinition CurrentArea => currentArea;
     public bool InputLocked => inputLocked;
+    public bool CanPanHorizontally => currentArea != null && GetMaxCameraX() - GetMinCameraX() > 0.001f;
+    public float CurrentNormalizedX
+    {
+        get
+        {
+            if (currentArea == null)
+                return 0.5f;
+
+            float minX = GetMinCameraX();
+            float maxX = GetMaxCameraX();
+            if (maxX - minX <= 0.001f)
+                return 0.5f;
+
+            float currentX = targetCamera != null ? targetCamera.transform.position.x : targetX;
+            return Mathf.InverseLerp(minX, maxX, currentX);
+        }
+    }
 
     private void Awake()
     {
@@ -136,6 +153,20 @@ public class CCTVPanController : MonoBehaviour
             : Mathf.Lerp(minX, maxX, Mathf.Clamp01(normalizedX));
     }
 
+    /// <summary>연출에서 특정 CCTV 오브젝트 위치를 즉시 보여줄 때 사용합니다.</summary>
+    public void SnapToWorldX(float worldX)
+    {
+        if (currentArea == null || targetCamera == null)
+            return;
+
+        targetX = ClampCameraX(worldX);
+        velocityX = 0f;
+
+        Vector3 position = targetCamera.transform.position;
+        position.x = targetX;
+        targetCamera.transform.position = position;
+    }
+
     /// <summary>새 근무를 시작하거나 디버그 초기화를 할 때 채널별 카메라 기억값을 비웁니다.</summary>
     public void ClearSavedAreaPositions()
     {
@@ -164,15 +195,10 @@ public class CCTVPanController : MonoBehaviour
 
     private float GetHorizontalInput()
     {
-        if (blockInputOverUI &&
-            EventSystem.current != null &&
-            EventSystem.current.IsPointerOverGameObject())
-        {
-            return 0f;
-        }
-
         float input = 0f;
 
+        // 키보드 이동은 마우스 포인터의 UI 위치와 무관하게 처리한다.
+        // 전체 화면 ReportBoundary가 레이캐스트를 받더라도 A/D 입력은 유지되어야 한다.
         if (useKeyboard)
         {
             if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
@@ -182,7 +208,12 @@ public class CCTVPanController : MonoBehaviour
                 input += 1f;
         }
 
-        if (useMouseEdge)
+        bool isPointerOverUi = blockInputOverUI &&
+                               EventSystem.current != null &&
+                               EventSystem.current.IsPointerOverGameObject();
+
+        // UI 위에서는 마우스 가장자리 이동만 차단한다.
+        if (useMouseEdge && !isPointerOverUi)
         {
             Vector3 mousePosition = Input.mousePosition;
 

@@ -10,6 +10,8 @@ public class CCTVAreaDefinition : ScriptableObject
     [Header("Visual")]
     [SerializeField] private GameObject areaPrefab;
     [SerializeField] private Sprite backgroundSprite;
+    [Tooltip("CCTV 화면에서만 적용되는 밝기 배율입니다. 1이면 공용 프로필 밝기를 그대로 사용합니다.")]
+    [SerializeField, Range(0.5f, 2f)] private float cctvBrightnessMultiplier = 1f;
 
     [Header("Size")]
     [SerializeField] private Vector2Int imageSizePixels = new Vector2Int(3100, 500);
@@ -32,6 +34,7 @@ public class CCTVAreaDefinition : ScriptableObject
     public string DisplayName => displayName;
     public GameObject AreaPrefab => areaPrefab;
     public Sprite BackgroundSprite => backgroundSprite;
+    public float CctvBrightnessMultiplier => Mathf.Clamp(cctvBrightnessMultiplier, 0.5f, 2f);
     public Vector2Int ImageSizePixels => imageSizePixels;
     public float PixelsPerUnit => Mathf.Max(1f, pixelsPerUnit);
     public Vector2 AreaCenter => areaCenter;

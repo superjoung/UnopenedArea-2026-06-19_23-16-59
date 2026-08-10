@@ -21,10 +21,15 @@ public class FieldPlayerMovementController : MonoBehaviour
     [Header("Rigidbody Smoothing")]
     [SerializeField] private bool configureRigidbodyForSmoothMovement = true;
 
+    [Header("Footstep SFX")]
+    [SerializeField, Min(0.05f)] private float footstepIntervalSec = 0.42f;
+    [SerializeField, Min(0f)] private float minimumFootstepSpeed = 0.1f;
+
     [Header("State")]
     [SerializeField] private bool inputEnabled = true;
 
     private InputAction resolvedMoveAction;
+    private float footstepElapsedSec;
 
     public Vector2 MoveInput { get; private set; }
     public bool InputEnabled => inputEnabled;
@@ -78,13 +83,18 @@ public class FieldPlayerMovementController : MonoBehaviour
         float rate = Mathf.Abs(targetX) > 0.01f ? profile.Acceleration : profile.Deceleration;
         velocity.x = Mathf.MoveTowards(velocity.x, targetX, rate * Time.fixedDeltaTime);
         targetRigidbody.linearVelocity = velocity;
+
+        UpdateFootstepSfx(Mathf.Abs(velocity.x));
     }
 
     public void SetInputEnabled(bool enabled)
     {
         inputEnabled = enabled;
         if (!enabled)
+        {
             MoveInput = Vector2.zero;
+            footstepElapsedSec = 0f;
+        }
     }
 
     public void SetMoveSpeedMultiplier(float multiplier)
@@ -114,6 +124,22 @@ public class FieldPlayerMovementController : MonoBehaviour
             : profile != null ? profile.MoveSpeed : controllerMoveSpeed;
 
         return baseSpeed * moveSpeedMultiplier;
+    }
+
+    private void UpdateFootstepSfx(float currentSpeed)
+    {
+        if (!inputEnabled || currentSpeed < minimumFootstepSpeed)
+        {
+            footstepElapsedSec = 0f;
+            return;
+        }
+
+        footstepElapsedSec += Time.fixedDeltaTime;
+        if (footstepElapsedSec < footstepIntervalSec)
+            return;
+
+        footstepElapsedSec = 0f;
+        SoundManager.Instance?.PlayNextFootstepSfx();
     }
 
     private void ResolveAction()

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
@@ -22,14 +23,41 @@ public class FieldModeController : MonoBehaviour
     [SerializeField] private AudioListener cctvAudioListener;
     [SerializeField] private AudioListener fieldAudioListener;
 
+    [Header("Power Restore Light Effect")]
+    [Tooltip("비워두면 FieldModeRoot 아래의 Global Light 2D를 자동으로 사용합니다.")]
+    [SerializeField] private Light2D fieldGlobalLight;
+    [SerializeField, Min(0f)] private float restoredFieldLightIntensity = 1f;
+    [SerializeField, Range(1, 4)] private int powerRestoreFlickerCount = 2;
+    [SerializeField, Min(0.01f)] private float powerRestoreFlickerDuration = 0.08f;
+    [SerializeField, Min(0.01f)] private float powerRestoreFinalBrightenDuration = 0.2f;
+
     public bool IsFieldModeActive { get; private set; }
 
     private readonly Dictionary<Light2D, bool> cctvGlobalLightStates = new Dictionary<Light2D, bool>();
+    private Coroutine powerRestoreLightRoutine;
+    private float blackoutFieldLightIntensity;
+    private bool fieldLightIntensityCached;
+    private bool fieldPowerRestored;
 
     private void Awake()
     {
         ResolveReferences();
+        CacheFieldLightIntensity();
         SetFieldModeActive(false);
+    }
+
+    /// <summary>배전반 복구 후 필드의 어두운 조명을 점멸시키고 정상 밝기로 전환합니다.</summary>
+    public void PlayPowerRestoreLightEffect()
+    {
+        ResolveReferences();
+        CacheFieldLightIntensity();
+        if (fieldGlobalLight == null)
+            return;
+
+        fieldPowerRestored = true;
+        if (powerRestoreLightRoutine != null)
+            StopCoroutine(powerRestoreLightRoutine);
+        powerRestoreLightRoutine = StartCoroutine(PlayPowerRestoreLightRoutine());
     }
 
     /// <summary>
@@ -111,6 +139,7 @@ public class FieldModeController : MonoBehaviour
 
         if (active && fieldCamera != null)
         {
+            ApplyFieldLightIntensity(fieldPowerRestored ? restoredFieldLightIntensity : blackoutFieldLightIntensity);
             fieldCameraFollowController?.SnapToTarget();
 
             if (fieldAudioListener == null)
@@ -136,6 +165,16 @@ public class FieldModeController : MonoBehaviour
             Transform root = transform.root.Find("FieldModeRoot");
             if (root != null)
                 fieldModeRoot = root.gameObject;
+
+            // CommonRoot is a scene-level prefab while FieldModeRoot is placed
+            // alongside it in each Day scene. In that layout transform.root.Find
+            // cannot reach the sibling, so also resolve the scene root by name.
+            if (fieldModeRoot == null)
+            {
+                GameObject sceneFieldRoot = GameObject.Find("FieldModeRoot");
+                if (sceneFieldRoot != null)
+                    fieldModeRoot = sceneFieldRoot;
+            }
         }
 
         if (fieldModeRoot != null)
@@ -148,6 +187,19 @@ public class FieldModeController : MonoBehaviour
 
             if (fieldCameraFollowController == null)
                 fieldCameraFollowController = fieldModeRoot.GetComponentInChildren<FieldCameraFollowController>(true);
+
+            if (fieldGlobalLight == null)
+            {
+                Light2D[] fieldLights = fieldModeRoot.GetComponentsInChildren<Light2D>(true);
+                foreach (Light2D light in fieldLights)
+                {
+                    if (light != null && light.lightType == Light2D.LightType.Global)
+                    {
+                        fieldGlobalLight = light;
+                        break;
+                    }
+                }
+            }
         }
 
         if (cctvSystemRoot == null)
@@ -205,6 +257,52 @@ public class FieldModeController : MonoBehaviour
         }
 
         cctvGlobalLightStates.Clear();
+    }
+
+    private IEnumerator PlayPowerRestoreLightRoutine()
+    {
+        ApplyFieldLightIntensity(blackoutFieldLightIntensity);
+
+        for (int i = 0; i < powerRestoreFlickerCount; i++)
+        {
+            yield return FadeFieldLightIntensity(restoredFieldLightIntensity, powerRestoreFlickerDuration);
+            yield return FadeFieldLightIntensity(blackoutFieldLightIntensity, powerRestoreFlickerDuration);
+        }
+
+        yield return FadeFieldLightIntensity(restoredFieldLightIntensity, powerRestoreFinalBrightenDuration);
+        powerRestoreLightRoutine = null;
+    }
+
+    private IEnumerator FadeFieldLightIntensity(float targetIntensity, float duration)
+    {
+        if (fieldGlobalLight == null)
+            yield break;
+
+        float startIntensity = fieldGlobalLight.intensity;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            fieldGlobalLight.intensity = Mathf.Lerp(startIntensity, targetIntensity, Mathf.Clamp01(elapsed / duration));
+            yield return null;
+        }
+
+        fieldGlobalLight.intensity = targetIntensity;
+    }
+
+    private void CacheFieldLightIntensity()
+    {
+        if (fieldLightIntensityCached || fieldGlobalLight == null)
+            return;
+
+        blackoutFieldLightIntensity = fieldGlobalLight.intensity;
+        fieldLightIntensityCached = true;
+    }
+
+    private void ApplyFieldLightIntensity(float intensity)
+    {
+        if (fieldGlobalLight != null)
+            fieldGlobalLight.intensity = intensity;
     }
 
 }

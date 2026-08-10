@@ -13,12 +13,19 @@ public class FieldPlayerSpriteAnimator : MonoBehaviour
     [SerializeField] private FieldPointerAimController pointerAimController;
     [SerializeField] private SpriteRenderer bodyRenderer;
     [SerializeField] private SpriteRenderer headRenderer;
+    [Tooltip("걷기 프레임별 높이 보정을 적용할 머리 피벗입니다. 비워두면 Head Sprite의 부모를 사용합니다.")]
+    [SerializeField] private Transform headVisualPivot;
 
     [Header("Body Sprites")]
     [SerializeField] private Sprite idleBodySprite;
     [SerializeField] private Sprite[] walkBodySprites;
     [SerializeField, Min(0.1f)] private float walkFramesPerSecond = 10f;
     [SerializeField, Min(0.001f)] private float movementThreshold = 0.01f;
+
+    [Header("Walk Head Height Compensation")]
+    [Tooltip("걷기 프레임별 머리 높이(픽셀)입니다. 8프레임 기본값: 0, 0, 0, 1, 0, 0, 0, 1")]
+    [SerializeField] private int[] walkHeadHeightPixels = { 0, 0, 0, 1, 0, 0, 0, 1 };
+    [SerializeField, Min(0.001f)] private float worldUnitsPerHeadPixel = 0.04f;
 
     [Header("Head Look Sprites")]
     [Tooltip("0번은 정면, 이후 프레임은 반시계 방향으로 45도씩 배치합니다.")]
@@ -29,6 +36,8 @@ public class FieldPlayerSpriteAnimator : MonoBehaviour
 
     private float walkElapsed;
     private int facingSign = 1;
+    private Vector3 headVisualPivotDefaultLocalPosition;
+    private bool headVisualPivotPositionCached;
 
     /// <summary>이동 방향에 따라 현재 스프라이트가 향하는 좌우 방향입니다. 오른쪽은 1, 왼쪽은 -1입니다.</summary>
     public int FacingSign => facingSign;
@@ -71,12 +80,13 @@ public class FieldPlayerSpriteAnimator : MonoBehaviour
 
     private void ApplySprites(bool isMoving)
     {
+        int walkFrame = 0;
         if (bodyRenderer != null)
         {
             if (isMoving && walkBodySprites != null && walkBodySprites.Length > 0)
             {
-                int frame = Mathf.FloorToInt(walkElapsed * walkFramesPerSecond) % walkBodySprites.Length;
-                bodyRenderer.sprite = walkBodySprites[frame];
+                walkFrame = Mathf.FloorToInt(walkElapsed * walkFramesPerSecond) % walkBodySprites.Length;
+                bodyRenderer.sprite = walkBodySprites[walkFrame];
             }
             else if (idleBodySprite != null)
             {
@@ -99,6 +109,8 @@ public class FieldPlayerSpriteAnimator : MonoBehaviour
 
             headRenderer.sprite = lookHeadSprites[frame];
         }
+
+        ApplyWalkHeadHeightOffset(isMoving, walkFrame);
     }
 
     private static int GetFlippedLookFrame(int frame)
@@ -123,5 +135,28 @@ public class FieldPlayerSpriteAnimator : MonoBehaviour
             movementController = GetComponent<FieldPlayerMovementController>();
         if (pointerAimController == null)
             pointerAimController = GetComponent<FieldPointerAimController>();
+
+        if (headVisualPivot == null && headRenderer != null)
+            headVisualPivot = headRenderer.transform.parent;
+
+        if (headVisualPivot != null && !headVisualPivotPositionCached)
+        {
+            headVisualPivotDefaultLocalPosition = headVisualPivot.localPosition;
+            headVisualPivotPositionCached = true;
+        }
+    }
+
+    private void ApplyWalkHeadHeightOffset(bool isMoving, int walkFrame)
+    {
+        if (headVisualPivot == null || !headVisualPivotPositionCached)
+            return;
+
+        int pixelOffset = 0;
+        if (isMoving && walkHeadHeightPixels != null && walkHeadHeightPixels.Length > 0)
+            pixelOffset = walkHeadHeightPixels[walkFrame % walkHeadHeightPixels.Length];
+
+        Vector3 position = headVisualPivotDefaultLocalPosition;
+        position.y += pixelOffset * worldUnitsPerHeadPixel;
+        headVisualPivot.localPosition = position;
     }
 }

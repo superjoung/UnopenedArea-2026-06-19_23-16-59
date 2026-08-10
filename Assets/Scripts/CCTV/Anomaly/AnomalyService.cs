@@ -16,11 +16,13 @@ public class AnomalyService : MonoBehaviour
     [Header("Appearance Presentation")]
     [Tooltip("이상현상 실제 적용 직전에 눈꺼풀 연출로 화면을 가립니다. 미지정 시 자동 탐색합니다.")]
     [SerializeField] private TransitionEffect transitionEffect;
+    [SerializeField] private Day1FlowController day1FlowController;
 
     private readonly List<AnomalyRuntime> activeAnomalies = new List<AnomalyRuntime>();
     private readonly HashSet<AnomalyRuntime> urgencyNotifiedAnomalies = new HashSet<AnomalyRuntime>();
 
     public System.Action<AnomalyRuntime> AnomalyUrgencyStarted;
+    public System.Action<AnomalyRuntime> AnomalyActivated;
     public System.Action<AnomalyRuntime> AnomalyMissed;
     public System.Action<AnomalyRuntime> AnomalyResolved;
     public IReadOnlyList<AnomalyRuntime> ActiveAnomalies => activeAnomalies;
@@ -30,6 +32,9 @@ public class AnomalyService : MonoBehaviour
     {
         if (areaView == null)
             areaView = FindObjectOfType<CCTVAreaView>();
+
+        if (day1FlowController == null)
+            day1FlowController = FindFirstObjectByType<Day1FlowController>();
 
     }
 
@@ -155,14 +160,20 @@ public class AnomalyService : MonoBehaviour
     {
         CCTVAreaInstance instance = areaView != null ? areaView.CurrentInstance : null;
         if (instance != null)
+        {
+            StopAreaPresentations(instance);
             instance.RestoreBaseline();
+        }
     }
 
     public void RestoreAreaBaseline(AreaId areaId)
     {
         CCTVAreaInstance instance = GetAreaInstance(areaId);
         if (instance != null)
+        {
+            StopAreaPresentations(instance);
             instance.RestoreBaseline();
+        }
     }
 
     public void SetTimersPaused(bool paused)
@@ -211,8 +222,14 @@ public class AnomalyService : MonoBehaviour
 
     private IEnumerator ActivateRoutine(AnomalyRuntime runtime, CCTVAreaInstance instance)
     {
+        if (day1FlowController != null && day1FlowController.IsTerminalFailurePresentationActive)
+            yield break;
+
         if (runtime.Definition.WarningDurationSec > 0f)
             yield return WaitForAnomalySeconds(runtime.Definition.WarningDurationSec);
+
+        if (day1FlowController != null && day1FlowController.IsTerminalFailurePresentationActive)
+            yield break;
 
         if (transitionEffect == null)
             transitionEffect = FindFirstObjectByType<TransitionEffect>();
@@ -223,6 +240,10 @@ public class AnomalyService : MonoBehaviour
             if (appearanceLeadTime > 0f)
                 yield return new WaitForSecondsRealtime(appearanceLeadTime);
 
+            if (day1FlowController != null && day1FlowController.IsTerminalFailurePresentationActive)
+                yield break;
+
+            SoundManager.Instance?.PlayAnomalyAppearedSfx();
             foreach (AnomalyAction action in runtime.Definition.Actions)
             {
                 if (action == null)
@@ -231,6 +252,9 @@ public class AnomalyService : MonoBehaviour
                 if (action.DelaySec > 0f)
                 yield return new WaitForSecondsRealtime(action.DelaySec);
 
+                if (day1FlowController != null && day1FlowController.IsTerminalFailurePresentationActive)
+                    yield break;
+
                 ApplyAction(runtime.Definition, instance, action);
             }
 
@@ -238,11 +262,17 @@ public class AnomalyService : MonoBehaviour
             if (presentationTailDuration > 0f)
                 yield return new WaitForSecondsRealtime(presentationTailDuration);
 
+            if (day1FlowController != null && day1FlowController.IsTerminalFailurePresentationActive)
+                yield break;
+
+            day1FlowController?.ShowAnomalyAppearedMessage(runtime);
             runtime.ActivateTimer();
+            AnomalyActivated?.Invoke(runtime);
             Debug.Log($"[AnomalyService] Activated anomaly={runtime.Definition.AnomalyId}, area={runtime.Definition.AreaId}, duration={runtime.RemainingActiveTimeSec}");
             yield break;
         }
 
+        SoundManager.Instance?.PlayAnomalyAppearedSfx();
         foreach (AnomalyAction action in runtime.Definition.Actions)
         {
             if (action == null)
@@ -255,6 +285,7 @@ public class AnomalyService : MonoBehaviour
         }
 
         runtime.ActivateTimer();
+        AnomalyActivated?.Invoke(runtime);
         Debug.Log($"[AnomalyService] Activated anomaly={runtime.Definition.AnomalyId}, area={runtime.Definition.AreaId}, duration={runtime.RemainingActiveTimeSec}");
     }
 
@@ -295,6 +326,12 @@ public class AnomalyService : MonoBehaviour
             case AnomalyActionType.ChangeSprite:
                 ApplySprite(sceneObject, action.TargetSprite);
                 break;
+            case AnomalyActionType.PlayPresentation:
+                StartPresentation(definition, sceneObject, action.PresentationId);
+                break;
+            case AnomalyActionType.SetAnimatorEnabled:
+                ApplyAnimatorEnabled(definition, sceneObject, action.AnimatorEnabledValue);
+                break;
             case AnomalyActionType.ChangeColor:
                 ApplyColor(sceneObject, action.TargetColor);
                 break;
@@ -314,6 +351,41 @@ public class AnomalyService : MonoBehaviour
         renderer.sprite = sprite;
     }
 
+    private void StartPresentation(AnomalyDefinition definition, CCTVSceneObject sceneObject, string presentationId)
+    {
+        AnomalyPresentationController[] presentations = sceneObject.GetComponents<AnomalyPresentationController>();
+        AnomalyPresentationController presentation = null;
+
+        foreach (AnomalyPresentationController candidate in presentations)
+        {
+            if (candidate != null && candidate.PresentationId == presentationId)
+            {
+                presentation = candidate;
+                break;
+            }
+        }
+
+        if (presentation == null && string.IsNullOrWhiteSpace(presentationId) && presentations.Length == 1)
+            presentation = presentations[0];
+
+        if (presentation == null)
+        {
+            Debug.LogWarning($"[AnomalyService] Presentation not found. anomaly={definition.AnomalyId}, targetObject={sceneObject.name}, presentationId={presentationId}");
+            return;
+        }
+
+        presentation.PlayPresentation();
+    }
+
+    private static void StopAreaPresentations(CCTVAreaInstance instance)
+    {
+        if (instance == null)
+            return;
+
+        foreach (AnomalyPresentationController presentation in instance.GetComponentsInChildren<AnomalyPresentationController>(true))
+            presentation.StopPresentation();
+    }
+
     private void ApplyColor(CCTVSceneObject sceneObject, Color color)
     {
         SpriteRenderer renderer = sceneObject.GetComponent<SpriteRenderer>();
@@ -323,8 +395,21 @@ public class AnomalyService : MonoBehaviour
         renderer.color = color;
     }
 
+    private void ApplyAnimatorEnabled(AnomalyDefinition definition, CCTVSceneObject sceneObject, bool enabled)
+    {
+        Animator animator = sceneObject.GetComponent<Animator>();
+        if (animator == null)
+        {
+            Debug.LogWarning($"[AnomalyService] Animator toggle target has no Animator. anomaly={definition.AnomalyId}, targetObject={sceneObject.name}");
+            return;
+        }
+
+        animator.enabled = enabled;
+    }
+
     private void MarkMissed(AnomalyRuntime runtime)
     {
+        SoundManager.Instance?.PlayWrongOrMissedReportSfx();
         runtime.ChangeState(AnomalyState.Missed);
         RestoreAreaBaseline(runtime.Definition.AreaId);
         activeAnomalies.Remove(runtime);

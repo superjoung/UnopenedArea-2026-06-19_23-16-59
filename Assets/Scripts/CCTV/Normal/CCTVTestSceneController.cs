@@ -18,12 +18,17 @@ public class CCTVTestSceneController : MonoBehaviour
     [SerializeField] private CCTVNoiseProfile channelSwitchNoiseProfile;
     [SerializeField, Min(0.01f)] private float fallbackChannelTransitionNoiseDuration = 0.5f;
     [SerializeField, Min(0f)] private float channelSwitchDelay = 0.15f;
+    [SerializeField] private UnityEngine.Events.UnityEvent onChannelSwitch;
 
     [Header("Missed Approach Channel")]
     [Tooltip("미보고 누적 시 해금할 제어실 외부 고정 CCTV 구역입니다.")]
     [SerializeField] private CCTVAreaDefinition controlRoomExteriorArea;
     [SerializeField, Min(1)] private int controlRoomExteriorUnlockMissedCount = 2;
     [SerializeField] private bool selectControlRoomExteriorOnUnlock = true;
+    [Tooltip("???? 채널에 머무는 동안 반복 노이즈가 발생하는 간격입니다.")]
+    [SerializeField, Min(0.1f)] private float controlRoomExteriorNoiseIntervalSec = 1.25f;
+    [Tooltip("???? 채널의 반복 노이즈가 한 번 유지되는 시간입니다.")]
+    [SerializeField, Min(0.01f)] private float controlRoomExteriorNoiseDurationSec = 0.25f;
     [Tooltip("미보고 3회 침입 시 다른 채널을 대체할 제어실 내부 CCTV 구역입니다.")]
     [SerializeField] private CCTVAreaDefinition cctvRoomArea;
     [SerializeField, Min(1)] private int cctvRoomTakeoverMissedCount = 3;
@@ -35,13 +40,17 @@ public class CCTVTestSceneController : MonoBehaviour
     private int currentChannelIndex;
     private bool isSwitchingChannel;
     private bool cctvInputEnabled = true;
+    private bool channelSwitchInputEnabled = true;
     private bool controlRoomExteriorUnlocked;
     private bool cctvRoomTakenOver;
+    private Coroutine controlRoomExteriorNoiseRoutine;
 
     public System.Action<CCTVChannelRuntime> ChannelSelected;
     public IReadOnlyList<CCTVChannelRuntime> Channels => channels;
     public DayDefinition CurrentDayDefinition => dayDefinition;
     public bool CCTVInputEnabled => cctvInputEnabled;
+    public bool ChannelSwitchInputEnabled => channelSwitchInputEnabled;
+    public bool IsCCTVRoomTakenOver => cctvRoomTakenOver;
     public CCTVChannelRuntime CurrentChannel =>
         channels.Count == 0 ? null : channels[currentChannelIndex];
 
@@ -79,6 +88,9 @@ public class CCTVTestSceneController : MonoBehaviour
     {
         if (dayRuntimeController != null)
             dayRuntimeController.MissedAnomalyRegistered -= HandleMissedAnomalyRegistered;
+
+        StopControlRoomExteriorNoise();
+
     }
 
     private void Start()
@@ -110,10 +122,10 @@ public class CCTVTestSceneController : MonoBehaviour
         if (!cctvInputEnabled)
             return;
 
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (channelSwitchInputEnabled && Input.GetKeyDown(KeyCode.Q))
             SelectPreviousChannel();
 
-        if (Input.GetKeyDown(KeyCode.E))
+        if (channelSwitchInputEnabled && Input.GetKeyDown(KeyCode.E))
             SelectNextChannel();
 
         // 유니티 에디터용 테스트 환경
@@ -145,14 +157,62 @@ public class CCTVTestSceneController : MonoBehaviour
         StartCoroutine(SwitchChannelRoutine(index));
     }
 
+    /// <summary>
+    /// 연출에서 특정 구역 CCTV로 즉시 이동합니다. 채널 전환 노이즈는 재생하지 않습니다.
+    /// </summary>
+    public bool TrySelectChannelImmediate(AreaId areaId)
+    {
+        int index = channels.FindIndex(channel => channel != null && channel.Area != null && channel.Area.AreaId == areaId);
+        if (index < 0)
+            return false;
+
+        SelectChannelImmediate(index);
+        return true;
+    }
+
+    /// <summary>
+    /// 연출에서 평소 채널 전환과 동일한 노이즈와 효과음을 재생하며 특정 구역으로 이동합니다.
+    /// 반환된 코루틴이 끝난 뒤에는 화면 전환 노이즈도 모두 종료된 상태입니다.
+    /// </summary>
+    public IEnumerator SwitchToAreaWithNoise(AreaId areaId)
+    {
+        int index = channels.FindIndex(channel => channel != null && channel.Area != null && channel.Area.AreaId == areaId);
+        if (index < 0)
+            yield break;
+
+        yield return SwitchChannelRoutine(index);
+    }
+
+    public bool TryGetChannelArea(AreaId areaId, out CCTVAreaDefinition area)
+    {
+        int index = channels.FindIndex(channel => channel != null && channel.Area != null && channel.Area.AreaId == areaId);
+        if (index >= 0)
+        {
+            area = channels[index].Area;
+            return true;
+        }
+
+        area = null;
+        return false;
+    }
+
     public void SetCCTVInputEnabled(bool enabled)
     {
         cctvInputEnabled = enabled;
     }
 
     /// <summary>
+    /// A/D 카메라 이동은 유지한 채 Q/E 채널 전환만 잠급니다.
+    /// Day 1 첫 CCTV 조작 안내처럼 입력을 단계적으로 해금할 때 사용합니다.
+    /// </summary>
+    public void SetChannelSwitchInputEnabled(bool enabled)
+    {
+        channelSwitchInputEnabled = enabled;
+    }
+
+    /// <summary>
     /// 미보고 접근 2단계에서 제어실 외부를 새 채널로 추가합니다.
-    /// 성공하면 현재 채널 다음 번호(CCTV_04)로 생성되며, 옵션에 따라 즉시 전환합니다.
+    /// 성공하면 CCTV_04 / ???? 채널로 생성되며, 옵션에 따라 즉시 전환합니다.
     /// </summary>
     public bool TryUnlockControlRoomExterior()
     {
@@ -181,7 +241,7 @@ public class CCTVTestSceneController : MonoBehaviour
             return false;
         }
 
-        channels.Add(new CCTVChannelRuntime(channels.Count + 1, controlRoomExteriorArea));
+        channels.Add(new CCTVChannelRuntime(4, controlRoomExteriorArea));
         controlRoomExteriorUnlocked = true;
         int unlockedIndex = channels.Count - 1;
         Debug.Log($"[CCTV] Control Room Exterior unlocked. channel={channels[unlockedIndex].ChannelLabel}");
@@ -194,9 +254,9 @@ public class CCTVTestSceneController : MonoBehaviour
 
     /// <summary>
     /// 미보고 3회 침입 단계: 모든 채널을 제어실 내부 영상 하나로 고정합니다.
-    /// Q/E 입력은 유지하며, 전환 노이즈만 재생한 뒤 같은 화면으로 돌아옵니다.
+    /// 채널 전환 노이즈로 기존 영상을 가린 뒤 제어실 내부 영상으로 전환합니다.
     /// </summary>
-    public bool TryTakeOverWithCCTVRoom()
+    public bool TryTakeOverWithCCTVRoom(bool playTransitionNoise = true)
     {
         if (cctvRoomTakenOver)
             return true;
@@ -215,14 +275,59 @@ public class CCTVTestSceneController : MonoBehaviour
 
         cctvRoomTakenOver = true;
         channels.Clear();
-        channels.Add(new CCTVChannelRuntime(1, cctvRoomArea));
+        channels.Add(new CCTVChannelRuntime(0, cctvRoomArea));
         currentChannelIndex = 0;
-        SelectChannelImmediate(0);
-        if (panController != null)
-            panController.SetInputLocked(true);
+        if (playTransitionNoise)
+        {
+            StartCoroutine(PlayCCTVRoomTakeoverRoutine());
+        }
+        else
+        {
+            SelectChannelImmediate(0);
+            if (panController != null)
+                panController.SetInputLocked(true);
+        }
 
         Debug.Log("[CCTV] All channels taken over by CCTV Room.");
         return true;
+    }
+
+    private IEnumerator PlayCCTVRoomTakeoverRoutine()
+    {
+        while (isSwitchingChannel)
+            yield return null;
+
+        isSwitchingChannel = true;
+        SoundManager.Instance?.PlayCctvChannelSwitchSfx();
+        onChannelSwitch?.Invoke();
+
+        if (panController != null)
+            panController.SetInputLocked(true);
+
+        CCTVScreenEffectController effectController = GetScreenEffectController();
+        float noiseDuration = GetChannelSwitchNoiseDuration();
+        if (effectController != null)
+        {
+            if (channelSwitchNoiseProfile != null)
+                effectController.PlayNoise(channelSwitchNoiseProfile);
+            else
+                effectController.PlayTransitionNoise(fallbackChannelTransitionNoiseDuration);
+        }
+
+        float switchDelay = Mathf.Min(channelSwitchDelay, noiseDuration);
+        if (switchDelay > 0f)
+            yield return new WaitForSecondsRealtime(switchDelay);
+
+        SelectChannelImmediate(0);
+
+        float remainingDuration = Mathf.Max(0f, noiseDuration - switchDelay);
+        if (remainingDuration > 0f)
+            yield return new WaitForSecondsRealtime(remainingDuration);
+
+        if (panController != null)
+            panController.SetInputLocked(true);
+
+        isSwitchingChannel = false;
     }
 
     public void SelectNextChannel()
@@ -258,6 +363,8 @@ public class CCTVTestSceneController : MonoBehaviour
         }
 
         isSwitchingChannel = true;
+        SoundManager.Instance?.PlayCctvChannelSwitchSfx();
+        onChannelSwitch?.Invoke();
 
         if (panController != null)
             panController.SetInputLocked(true);
@@ -283,7 +390,7 @@ public class CCTVTestSceneController : MonoBehaviour
             yield return new WaitForSecondsRealtime(remainingDelay);
 
         if (panController != null)
-            panController.SetInputLocked(false);
+            panController.SetInputLocked(cctvRoomTakenOver);
 
         isSwitchingChannel = false;
     }
@@ -297,7 +404,8 @@ public class CCTVTestSceneController : MonoBehaviour
             yield break;
 
         isSwitchingChannel = true;
-
+        SoundManager.Instance?.PlayCctvChannelSwitchSfx();
+        onChannelSwitch?.Invoke();
         CCTVScreenEffectController effectController = GetScreenEffectController();
         float noiseDuration = GetChannelSwitchNoiseDuration();
         if (effectController != null)
@@ -322,6 +430,10 @@ public class CCTVTestSceneController : MonoBehaviour
         currentChannelIndex = Mathf.Clamp(index, 0, channels.Count - 1);
         CCTVAreaDefinition area = channels[currentChannelIndex].Area;
 
+        CCTVScreenEffectController effectController = GetScreenEffectController();
+        if (effectController != null)
+            effectController.SetAreaBrightnessMultiplier(area != null ? area.CctvBrightnessMultiplier : 1f);
+
         if (areaView != null)
             areaView.ShowArea(area);
 
@@ -334,6 +446,7 @@ public class CCTVTestSceneController : MonoBehaviour
         }
 
         NotifyCCTVAreaChanged(area);
+        UpdateControlRoomExteriorNoise(area);
         ChannelSelected?.Invoke(channels[currentChannelIndex]);
         Debug.Log($"[CCTV] Selected {channels[currentChannelIndex].ChannelLabel} - {area.DisplayName} ({area.AreaId})");
     }
@@ -343,9 +456,17 @@ public class CCTVTestSceneController : MonoBehaviour
         if (GameManager.Instance == null || area == null)
             return;
 
-        string areaName = string.IsNullOrWhiteSpace(area.DisplayName)
-            ? CCTVReportLabelProvider.GetAreaLabel(area.AreaId)
-            : area.DisplayName;
+        string areaName;
+        if (IsControlRoomExteriorArea(area) || IsCCTVRoomArea(area))
+        {
+            areaName = "????";
+        }
+        else
+        {
+            areaName = string.IsNullOrWhiteSpace(area.DisplayName)
+                ? CCTVReportLabelProvider.GetAreaLabel(area.AreaId)
+                : area.DisplayName;
+        }
 
         GameManager.Instance.NotifyCCTVAreaChanged(
             channels[currentChannelIndex].ChannelLabel,
@@ -416,6 +537,43 @@ public class CCTVTestSceneController : MonoBehaviour
             : fallbackChannelTransitionNoiseDuration;
     }
 
+    private void UpdateControlRoomExteriorNoise(CCTVAreaDefinition area)
+    {
+        StopControlRoomExteriorNoise();
+        if (!Application.isPlaying || !IsControlRoomExteriorArea(area))
+            return;
+
+        controlRoomExteriorNoiseRoutine = StartCoroutine(PlayControlRoomExteriorNoiseRoutine(area));
+    }
+
+    private IEnumerator PlayControlRoomExteriorNoiseRoutine(CCTVAreaDefinition exteriorArea)
+    {
+        var interval = new WaitForSecondsRealtime(Mathf.Max(0.1f, controlRoomExteriorNoiseIntervalSec));
+        while (CurrentChannel?.Area == exteriorArea)
+        {
+            yield return interval;
+            if (CurrentChannel?.Area != exteriorArea)
+                break;
+
+            CCTVScreenEffectController effectController = GetScreenEffectController();
+            if (effectController == null || effectController.IsNoisePlaying)
+                continue;
+
+            effectController.PlayTransitionNoise(Mathf.Max(0.01f, controlRoomExteriorNoiseDurationSec));
+        }
+
+        controlRoomExteriorNoiseRoutine = null;
+    }
+
+    private void StopControlRoomExteriorNoise()
+    {
+        if (controlRoomExteriorNoiseRoutine == null)
+            return;
+
+        StopCoroutine(controlRoomExteriorNoiseRoutine);
+        controlRoomExteriorNoiseRoutine = null;
+    }
+
     private void ActivateTestAnomaly(int index)
     {
         if (anomalyService == null || testAnomalies == null || index < 0 || index >= testAnomalies.Length)
@@ -433,7 +591,3 @@ public class CCTVTestSceneController : MonoBehaviour
         return screenEffectController;
     }
 }
-
-
-
-

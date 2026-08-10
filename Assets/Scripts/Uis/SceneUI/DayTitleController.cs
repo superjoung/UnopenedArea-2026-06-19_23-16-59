@@ -27,11 +27,18 @@ public class DayTitleController : MonoBehaviour
     [SerializeField, Min(0f)] private float titleFadeDuration = 0.45f;
     [Tooltip("타이틀이 완전히 사라진 뒤 전화가 울리기까지의 대기 시간입니다.")]
     [SerializeField, Min(0f)] private float phoneStartDelay = 1f;
+    [Tooltip("성공 후 다음 날로 넘어가며 타이틀을 건너뛴 경우, 씬 페이드가 끝난 뒤 전화가 울리기까지의 대기 시간입니다.")]
+    [SerializeField, Min(0f)] private float nextDayPhoneStartDelay = 4f;
 
     public bool WaitForPlayerStart => waitForPlayerStart && !hasStarted;
     public bool HasStarted => hasStarted;
     /// <summary>타이틀 클릭이 메인룸 Collider까지 전달되지 않도록 하는 전역 입력 차단 상태입니다.</summary>
     public static bool IsBlockingWorldInteractions { get; private set; }
+
+    public static void ResetGlobalInputBlock()
+    {
+        IsBlockingWorldInteractions = false;
+    }
 
     private bool hasStarted;
     private Coroutine beginDayRoutine;
@@ -43,11 +50,15 @@ public class DayTitleController : MonoBehaviour
         CacheTitleFadeTexts();
 
         // 결과/일시정지 메뉴의 다시하기는 같은 Day를 즉시 재시작하므로 타이틀 입력 대기를 다시 보여주지 않는다.
-        if (DayProgressSave.ConsumeSkipTitleOnNextSceneLoad())
+        bool skipTitleAndBeginImmediately = DayProgressSave.ConsumeSkipTitleOnNextSceneLoad();
+        if (skipTitleAndBeginImmediately)
             waitForPlayerStart = false;
 
         IsBlockingWorldInteractions = waitForPlayerStart;
         ApplyTitleVisibility(waitForPlayerStart);
+
+        if (skipTitleAndBeginImmediately)
+            BeginDayWithoutTitle();
     }
 
     private void Update()
@@ -61,6 +72,13 @@ public class DayTitleController : MonoBehaviour
             BeginDay();
     }
 
+    private void Start()
+    {
+        // Allows a day scene to permanently skip its title through the Inspector as well.
+        if (!waitForPlayerStart && !hasStarted)
+            BeginDayWithoutTitle();
+    }
+
     /// <summary>TitleCanvas의 Button OnClick에도 연결할 수 있습니다.</summary>
     public void BeginDay()
     {
@@ -70,6 +88,40 @@ public class DayTitleController : MonoBehaviour
         hasStarted = true;
         IsBlockingWorldInteractions = true;
         beginDayRoutine = StartCoroutine(BeginDayRoutine());
+    }
+
+    private void BeginDayWithoutTitle()
+    {
+        if (hasStarted)
+            return;
+
+        hasStarted = true;
+        // 씬 전환 암전이 풀리는 동안에는 메인룸 클릭이 전달되지 않게 유지한다.
+        IsBlockingWorldInteractions = true;
+        if (titleCanvasRoot != null)
+            titleCanvasRoot.SetActive(false);
+        SetHiddenUiVisible(true);
+
+        beginDayRoutine = StartCoroutine(BeginDayWithoutTitleRoutine());
+    }
+
+    private IEnumerator BeginDayWithoutTitleRoutine()
+    {
+        int day = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
+            ? dayRuntimeController.CurrentDayDefinition.Day
+            : dayFlowController != null ? dayFlowController.DayNumber : 1;
+        day = DaySessionLoader.GetLoadedDayOrFallback(day);
+        DayProgressSave.SetCurrentDay(day);
+
+        // 타이틀을 건너뛰는 재시작에서도 전화가 즉시 울리지 않게 한다.
+        // Day 1은 일반 시작 지연, Day 2 이상은 일차 전환용 지연을 사용한다.
+        float delay = day > 1 ? nextDayPhoneStartDelay : phoneStartDelay;
+        if (delay > 0f)
+            yield return new WaitForSecondsRealtime(delay);
+
+        dayFlowController?.BeginDayBriefing();
+        IsBlockingWorldInteractions = false;
+        beginDayRoutine = null;
     }
 
     private IEnumerator BeginDayRoutine()
@@ -87,6 +139,7 @@ public class DayTitleController : MonoBehaviour
         int day = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
             ? dayRuntimeController.CurrentDayDefinition.Day
             : dayFlowController != null ? dayFlowController.DayNumber : 1;
+        day = DaySessionLoader.GetLoadedDayOrFallback(day);
         DayProgressSave.SetCurrentDay(day);
         dayFlowController?.BeginDayBriefing();
         IsBlockingWorldInteractions = false;

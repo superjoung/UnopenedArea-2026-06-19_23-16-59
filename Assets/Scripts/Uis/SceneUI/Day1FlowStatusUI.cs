@@ -113,7 +113,20 @@ public class Day1FlowStatusUI : MonoBehaviour
 
     private void HandleMissedAnomaly(AnomalyRuntime runtime)
     {
-        ShowFeedback("미보고 · 실패 +1", new Color(1f, 0.72f, 0.36f));
+        string correctedAnomaly = GetCorrectedAnomalyLabel(runtime);
+        ShowFeedback($"미보고 +1\n{correctedAnomaly}", new Color(1f, 0.72f, 0.36f));
+    }
+
+    private static string GetCorrectedAnomalyLabel(AnomalyRuntime runtime)
+    {
+        AnomalyDefinition definition = runtime != null ? runtime.Definition : null;
+        if (definition == null)
+            return "이상현상이 수정되었습니다.";
+
+        string area = CCTVReportLabelProvider.GetAreaLabel(definition.AreaId);
+        string target = CCTVReportLabelProvider.GetTargetLabel(definition.ReportTargetId);
+        string type = CCTVReportLabelProvider.GetReportTypeLabel(definition.ReportType);
+        return $"수정: {area} · {target} · {type}";
     }
 
     private void ShowFeedback(string message, Color color)
@@ -159,26 +172,62 @@ public class Day1FlowStatusUI : MonoBehaviour
             primaryActionLabel.text = GetPrimaryActionLabel(state);
     }
 
-    private static string GetStatusLabel(Day1FlowState state)
+    private string GetStatusLabel(Day1FlowState state)
     {
+        int day = flowController != null && flowController.DayNumber > 0
+            ? flowController.DayNumber
+            : 1;
+
         switch (state)
         {
             case Day1FlowState.Briefing:
-                return "DAY 1 · 브리핑";
+                return $"DAY {day} · 브리핑";
             case Day1FlowState.BaselineReview:
-                return "DAY 1 · 기준 상태 확인";
+                return $"DAY {day} · 기준 상태 확인";
             case Day1FlowState.Monitoring:
-                return "DAY 1 · 감시 중";
+                return $"DAY {day} · 감시 중";
             case Day1FlowState.EmergencyDispatch:
-                return "DAY 1 · 정전 발생";
+                return $"DAY {day} · {GetEmergencyDispatchStatusLabel()}";
             case Day1FlowState.EmergencyRecovery:
-                return "DAY 1 · 전력 복구 중";
+                return $"DAY {day} · {GetEmergencyRecoveryStatusLabel()}";
             case Day1FlowState.Completed:
-                return "DAY 1 · 근무 종료";
+                return $"DAY {day} · 근무 종료";
             case Day1FlowState.Failed:
-                return "DAY 1 · 근무 실패";
+                return $"DAY {day} · 근무 실패";
             default:
                 return string.Empty;
+        }
+    }
+
+    private string GetEmergencyDispatchStatusLabel()
+    {
+        if (flowController == null)
+            return "긴급 상황";
+
+        switch (flowController.CurrentEmergencyObjectiveType)
+        {
+            case EmergencyObjectiveType.StoryRecordInspection:
+                return "현장 조사";
+            case EmergencyObjectiveType.ServerReboot:
+                return "기록 시스템 손상";
+            default:
+                return "정전 발생";
+        }
+    }
+
+    private string GetEmergencyRecoveryStatusLabel()
+    {
+        if (flowController == null)
+            return "복구 중";
+
+        switch (flowController.CurrentEmergencyObjectiveType)
+        {
+            case EmergencyObjectiveType.StoryRecordInspection:
+                return "현장 조사 완료";
+            case EmergencyObjectiveType.ServerReboot:
+                return "기록 복구 완료";
+            default:
+                return "전력 복구 중";
         }
     }
 

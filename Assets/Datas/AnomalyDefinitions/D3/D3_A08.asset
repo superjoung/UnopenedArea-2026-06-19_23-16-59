@@ -17,8 +17,19 @@ MonoBehaviour:
   reportTargetId: 204
   reportType: 105
   warningDurationSec: 0
-  activeDurationSec: 20
+  activeDurationSec: 40
   canEscalate: 0
   nextStage: {fileID: 0}
   isEmergency: 0
-  actions: []
+  actions:
+  - actionType: 7
+    targetObjectId: OBJ_SERVER_VENT_01
+    delaySec: 0
+    presentationId: D3_A08_Frames
+    activeValue: 0
+    animatorEnabledValue: 1
+    targetLocalPosition: {x: 0, y: 0, z: 0}
+    localPositionOffset: {x: 0, y: 0, z: 0}
+    targetLocalEulerAngles: {x: 0, y: 0, z: 0}
+    targetSprite: {fileID: 0}
+    targetColor: {r: 1, g: 1, b: 1, a: 1}

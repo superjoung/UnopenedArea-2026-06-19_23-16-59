@@ -13,28 +13,32 @@ MonoBehaviour:
   m_Name: TestDayDefinition
   m_EditorClassIdentifier: 
   day: 1
-  durationSec: 120
+  durationSec: 180
   maxMissed: 3
   activeAreas:
   - {fileID: 11400000, guid: 9d13d1b21e63abb4594f360b587d5f4e, type: 2}
   - {fileID: 11400000, guid: fc8ee4399cd0c2443a7ca9013befb3db, type: 2}
   - {fileID: 11400000, guid: 626dfe864efcc494f84bfe42dc893136, type: 2}
-  - {fileID: 11400000, guid: 5dffb5832f8d91640811ae7834b71080, type: 2}
-  - {fileID: 11400000, guid: 4fb5f58ae177fd444a4a7b8c818b9b30, type: 2}
   tutorialAnomaly: {fileID: 11400000, guid: 2929c5f3ddd306c46b9a707aff5a91fa, type: 2}
   tutorialRequiredChannelSwitches: 3
   tutorialFallbackElapsedSec: 60
   enableEmergencyDispatch: 1
   emergencyRequiredCorrectReports: 3
   emergencyTriggerProgress: 0.7
+  emergencyRequiresBothConditions: 1
+  emergencyObjectiveType: 0
+  emergencyDispatchText: 
+  emergencyFieldObjectiveText: 
+  emergencyRecoveryText: 
   enableMissedEscalationChannels: 0
   fixedSchedule: []
   enableRandomSchedule: 1
+  waitForFirstFixedAnomalyBeforeRandom: 0
   randomMinIntervalSec: 7
   randomMaxIntervalSec: 15
   randomPool:
   - anomaly: {fileID: 11400000, guid: 2929c5f3ddd306c46b9a707aff5a91fa, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 7a2328bfa9ca1e648b317f62bcc5dfba, type: 2}
     weight: 1
@@ -43,29 +47,77 @@ MonoBehaviour:
     weight: 1
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: f90ec369eb033c641b77afda9cc566c8, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 85ec6dcc30697084297305fd4264abf6, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: ba1faf59ff8fd3040b3db76e03dd1630, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: bd19066717dfac54cb7b073a3284ff2a, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: cafe0e04e5342bb4abfda38f2429e670, type: 2}
     weight: 1
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: c6160a2618bac0445ab3e550bd9f8c84, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 1c207aca3a894f8499bc0e9bfd3e8036, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 19093798bf2a36746a0aa62419f59f81, type: 2}
-    weight: 1
+    weight: 3
     allowRepeat: 1
   - anomaly: {fileID: 11400000, guid: 19767e4122f3d5f46b4c7f16da5653a8, type: 2}
+    weight: 3
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: a37a7ba21fb4cf24cbb881429eef34e0, type: 2}
+    weight: 3
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 2d7e5e163b5617845a9b0dca50fd42bc, type: 2}
+    weight: 3
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 257cac0dea4726843b63dd657595de1b, type: 2}
+    weight: 3
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 44be91a1b2604db6965768cc9c6c93c1, type: 2}
     weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 65639afc7a424a4083eb3aa17a3b02cf, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: c79ba548f7d741c5a7d88f7e639fa943, type: 2}
+    weight: 3
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: e680e97e7c2c4ac7a58a9c2a04315ef4, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 898be70612c14c83ae8551a519148e02, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 9b5a59e564b949f2b85ccf99f3495e7d, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 2e09500cf8864c97b221f9871ec4f0b6, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 3e5d014a3d9d1ca40a12070e4f4aa2fc, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 286810c2ed6b5ad46932cccc5ba58892, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 736ccb74835e60e4abacfbff2e532cd7, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: f0fd0f9dbd6752a4bb4c1422adb54b54, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 3e69f7299ba088b459002da40d0fb6e3, type: 2}
+    weight: 1
+    allowRepeat: 1
+  - anomaly: {fileID: 11400000, guid: 67e0d872291db2b4297adb50a2f1378b, type: 2}
+    weight: 3
     allowRepeat: 1

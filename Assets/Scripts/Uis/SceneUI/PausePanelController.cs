@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 /// <summary>
 /// Esc로 여닫는 공용 일시정지 패널입니다.
@@ -13,6 +14,12 @@ public class PausePanelController : MonoBehaviour
     [SerializeField] private GameObject restartDayButton;
     [SerializeField] private DayTitleController dayTitleController;
     [SerializeField] private DayRuntimeController dayRuntimeController;
+    [SerializeField] private FoundAnomalyPanelController foundAnomalyPanelController;
+    [SerializeField] private TutorialPanelController tutorialPanelController;
+
+    [Header("Sound Sliders")]
+    [SerializeField] private Slider bgmVolumeSlider;
+    [SerializeField] private Slider sfxVolumeSlider;
 
     [Header("Input")]
     [SerializeField] private KeyCode toggleKey = KeyCode.Escape;
@@ -25,18 +32,25 @@ public class PausePanelController : MonoBehaviour
     private void Awake()
     {
         ResolveReferences();
+        ConfigureSoundSliders();
         SetPanelVisible(false);
         IsPaused = false;
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(toggleKey))
+        if (Input.GetKeyDown(toggleKey) && !MainRoomCalendarController.IsAnyCalendarModeActive)
             TogglePause();
     }
 
     public void TogglePause()
     {
+        if (TryCloseTutorialPanel())
+            return;
+
+        if (TryCloseFoundAnomalyPanel())
+            return;
+
         if (IsPaused)
             ResumeGame();
         else
@@ -59,6 +73,7 @@ public class PausePanelController : MonoBehaviour
             restartDayButton.SetActive(dayTitleController == null || !dayTitleController.WaitForPlayerStart);
 
         SetPanelVisible(true);
+        ConfigureSoundSliders();
     }
 
     public void ResumeGame()
@@ -78,10 +93,11 @@ public class PausePanelController : MonoBehaviour
         if (dayTitleController != null && dayTitleController.WaitForPlayerStart)
             return;
 
-        IsPaused = false;
-        Time.timeScale = 1f;
-        DayProgressSave.RequestSkipTitleOnNextSceneLoad();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        int day = dayRuntimeController != null && dayRuntimeController.CurrentDayDefinition != null
+            ? dayRuntimeController.CurrentDayDefinition.Day
+            : DayProgressSave.CurrentDay;
+        day = DaySessionLoader.GetLoadedDayOrFallback(day);
+        DaySessionLoader.LoadDay(day, true);
     }
 
     public void QuitGame()
@@ -92,6 +108,18 @@ public class PausePanelController : MonoBehaviour
 #else
         Application.Quit();
 #endif
+    }
+
+    /// <summary>PausePanel의 BGM Slider On Value Changed에도 직접 연결할 수 있습니다.</summary>
+    public void SetBgmVolume(float value)
+    {
+        SoundManager.Instance?.SetBgmVolume(value);
+    }
+
+    /// <summary>PausePanel의 SFX Slider On Value Changed에도 직접 연결할 수 있습니다.</summary>
+    public void SetSfxVolume(float value)
+    {
+        SoundManager.Instance?.SetSfxVolume(value);
     }
 
     private void SetPanelVisible(bool visible)
@@ -106,6 +134,59 @@ public class PausePanelController : MonoBehaviour
             dayTitleController = FindFirstObjectByType<DayTitleController>(FindObjectsInactive.Include);
         if (dayRuntimeController == null)
             dayRuntimeController = FindFirstObjectByType<DayRuntimeController>();
+        if (foundAnomalyPanelController == null)
+            foundAnomalyPanelController = FindFirstObjectByType<FoundAnomalyPanelController>(FindObjectsInactive.Include);
+        if (tutorialPanelController == null)
+            tutorialPanelController = FindFirstObjectByType<TutorialPanelController>(FindObjectsInactive.Include);
+    }
+
+    private bool TryCloseTutorialPanel()
+    {
+        if (tutorialPanelController == null)
+            tutorialPanelController = FindFirstObjectByType<TutorialPanelController>(FindObjectsInactive.Include);
+
+        if (tutorialPanelController == null || !tutorialPanelController.IsOpen)
+            return false;
+
+        tutorialPanelController.ClosePanel();
+        return true;
+    }
+
+    private bool TryCloseFoundAnomalyPanel()
+    {
+        if (foundAnomalyPanelController == null)
+            foundAnomalyPanelController = FindFirstObjectByType<FoundAnomalyPanelController>(FindObjectsInactive.Include);
+
+        if (foundAnomalyPanelController == null || !foundAnomalyPanelController.IsOpen)
+            return false;
+
+        foundAnomalyPanelController.ClosePanel();
+        return true;
+    }
+
+    private void ConfigureSoundSliders()
+    {
+        SoundManager soundManager = SoundManager.Instance;
+        if (soundManager == null)
+            return;
+
+        if (bgmVolumeSlider != null)
+        {
+            bgmVolumeSlider.minValue = 0f;
+            bgmVolumeSlider.maxValue = 1f;
+            bgmVolumeSlider.SetValueWithoutNotify(soundManager.BgmVolume);
+            bgmVolumeSlider.onValueChanged.RemoveListener(SetBgmVolume);
+            bgmVolumeSlider.onValueChanged.AddListener(SetBgmVolume);
+        }
+
+        if (sfxVolumeSlider != null)
+        {
+            sfxVolumeSlider.minValue = 0f;
+            sfxVolumeSlider.maxValue = 1f;
+            sfxVolumeSlider.SetValueWithoutNotify(soundManager.SfxVolume);
+            sfxVolumeSlider.onValueChanged.RemoveListener(SetSfxVolume);
+            sfxVolumeSlider.onValueChanged.AddListener(SetSfxVolume);
+        }
     }
 
     private void OnDestroy()
@@ -115,5 +196,11 @@ public class PausePanelController : MonoBehaviour
             Time.timeScale = 1f;
             IsPaused = false;
         }
+    }
+
+    public static void ResetGlobalPauseState()
+    {
+        Time.timeScale = 1f;
+        IsPaused = false;
     }
 }

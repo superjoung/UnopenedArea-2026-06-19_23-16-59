@@ -3,7 +3,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-[ExecuteAlways]
 public class CCTVUIEffectController : MonoBehaviour
 {
     private static readonly int TintColorId = Shader.PropertyToID("_TintColor");
@@ -39,6 +38,7 @@ public class CCTVUIEffectController : MonoBehaviour
     private readonly List<Material> runtimeMaterials = new List<Material>();
     private readonly List<Material> panelRuntimeMaterials = new List<Material>();
     private readonly Dictionary<TMP_Text, Color> originalTextColors = new Dictionary<TMP_Text, Color>();
+    private readonly Dictionary<TMP_Text, Color> lastAppliedTextColors = new Dictionary<TMP_Text, Color>();
     private readonly Dictionary<Graphic, Material> originalGraphicMaterials = new Dictionary<Graphic, Material>();
 
     private bool targetsApplied;
@@ -141,6 +141,8 @@ public class CCTVUIEffectController : MonoBehaviour
 
                 if (!originalTextColors.ContainsKey(target))
                     originalTextColors.Add(target, target.color);
+
+                lastAppliedTextColors[target] = target.color;
             }
         }
 
@@ -224,6 +226,14 @@ public class CCTVUIEffectController : MonoBehaviour
                 ? original
                 : target.color;
 
+            float alphaMultiplier = 1f - flicker * flickerStrength * targetIntensity;
+            if (lastAppliedTextColors.TryGetValue(target, out Color lastAppliedColor) &&
+                !Mathf.Approximately(target.color.a, lastAppliedColor.a))
+            {
+                baseColor.a = target.color.a / Mathf.Max(0.0001f, alphaMultiplier);
+                originalTextColors[target] = baseColor;
+            }
+
             float luminance = baseColor.r * 0.299f + baseColor.g * 0.587f + baseColor.b * 0.114f;
             Color desaturated = Color.Lerp(baseColor, new Color(luminance, luminance, luminance, baseColor.a), desaturation * targetIntensity);
             Color targetTint = new Color(tint.r, tint.g, tint.b, baseColor.a);
@@ -231,8 +241,9 @@ public class CCTVUIEffectController : MonoBehaviour
             tinted.r *= brightness;
             tinted.g *= brightness;
             tinted.b *= brightness;
-            tinted.a = baseColor.a * (1f - flicker * flickerStrength * targetIntensity);
+            tinted.a = baseColor.a * alphaMultiplier;
             target.color = ClampColor(tinted);
+            lastAppliedTextColors[target] = target.color;
         }
     }
 
@@ -281,6 +292,7 @@ public class CCTVUIEffectController : MonoBehaviour
         }
 
         originalTextColors.Clear();
+        lastAppliedTextColors.Clear();
         originalGraphicMaterials.Clear();
         panelRuntimeMaterials.Clear();
         targetsApplied = false;

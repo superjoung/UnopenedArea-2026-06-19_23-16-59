@@ -15,9 +15,9 @@ MonoBehaviour:
   anomalyId: D1_A09
   areaId: 100
   reportTargetId: 108
-  reportType: 104
+  reportType: 103
   warningDurationSec: 0
-  activeDurationSec: 20
+  activeDurationSec: 40
   canEscalate: 0
   nextStage: {fileID: 0}
   isEmergency: 0
@@ -25,7 +25,9 @@ MonoBehaviour:
   - actionType: 5
     targetObjectId: OBJ_LAB_EXIT_SIGN_01
     delaySec: 0
+    presentationId: 
     activeValue: 0
+    animatorEnabledValue: 1
     targetLocalPosition: {x: 0, y: 0, z: 0}
     localPositionOffset: {x: 0, y: 0, z: 0}
     targetLocalEulerAngles: {x: 0, y: 0, z: -30}
