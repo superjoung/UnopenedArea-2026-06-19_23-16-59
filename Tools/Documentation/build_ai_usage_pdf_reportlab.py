@@ -27,7 +27,7 @@ from reportlab.platypus import (
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "AI_활용_기술문서_공모전_제출용.md"
+SOURCE = ROOT / "md" / "AI_활용_기술문서_공모전_제출용.md"
 OUTPUT = ROOT / "output" / "pdf" / "미기록구역_AI_활용_기술문서.pdf"
 REGULAR_FONT = Path(r"C:\Windows\Fonts\malgun.ttf")
 BOLD_FONT = Path(r"C:\Windows\Fonts\malgunbd.ttf")

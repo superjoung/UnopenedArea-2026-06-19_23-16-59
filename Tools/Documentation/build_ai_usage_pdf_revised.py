@@ -26,7 +26,7 @@ from reportlab.platypus import (
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "AI_활용_기술문서_개정판_원고.md"
+SOURCE = ROOT / "md" / "AI_활용_기술문서_개정판_원고.md"
 OUTPUT = ROOT / "output" / "pdf" / "미기록구역_AI_활용_기술문서_개정판.pdf"
 
 FONT_CANDIDATES = [
