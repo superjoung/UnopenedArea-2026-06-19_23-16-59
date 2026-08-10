@@ -89,6 +89,7 @@ public class Day1FlowController : MonoBehaviour
     public bool IsEmergencyPresentationLocked => presentationLockMode == PresentationLockMode.Emergency;
     public bool IsTerminalFailurePresentationActive { get; private set; }
     public bool IsAwaitingTitleStart { get; private set; }
+    public bool IsEmergencyFieldModeStarted => emergencyFieldModeStarted;
     public int DayNumber => dayDefinition != null ? dayDefinition.Day : 0;
     /// <summary>
     /// 시간 만료로 하루를 끝내도 되는지 나타냅니다. 현장이동이 설정된 일차는
@@ -441,6 +442,14 @@ public class Day1FlowController : MonoBehaviour
 
         if (channelSwitchCount < dayDefinition.TutorialRequiredChannelSwitches)
             return;
+
+        if (cctvKeyTutorialActive)
+        {
+            // 세 번째 채널 전환 직후 Q/E 안내를 먼저 치운 뒤
+            // 대기 시간과 눈 감는 이상현상 등장 연출을 시작한다.
+            sceneController?.SetChannelSwitchInputEnabled(false);
+            cctvKeyTutorialController?.HideGuide();
+        }
 
         tutorialActivationRequested = true;
         tutorialChannelActivationRoutine = StartCoroutine(ActivateTutorialAfterChannelDelay());

@@ -9778,6 +9778,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5986720347002467761, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: m_fontStyle
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6731803125370392505, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -9826,6 +9830,10 @@ PrefabInstance:
       propertyPath: fieldCameraFollowController
       value: 
       objectReference: {fileID: 502464379}
+    - target: {fileID: 8701950938078730308, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8710841520294549159, guid: 3588a1c671bddd9469eed695bd484c80, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0

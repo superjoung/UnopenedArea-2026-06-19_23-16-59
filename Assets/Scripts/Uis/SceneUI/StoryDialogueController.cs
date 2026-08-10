@@ -9,15 +9,15 @@ using UnityEngine.UI;
 /// 이 컴포넌트는 항상 활성 상태인 MainSceneUI 같은 부모에 붙이고,
 /// storyUiRoot에는 평소 비활성인 StoryUI를 할당합니다.
 /// </summary>
+[Serializable]
+public struct StoryDialogueLine
+{
+    public string speakerName;
+    [TextArea(2, 5)] public string dialogue;
+}
+
 public class StoryDialogueController : MonoBehaviour
 {
-    [Serializable]
-    public struct DialogueLine
-    {
-        public string speakerName;
-        [TextArea(2, 5)] public string dialogue;
-    }
-
     [Header("Story UI")]
     [SerializeField] private GameObject storyUiRoot;
     [SerializeField] private TMP_Text speakerNameText;
@@ -40,11 +40,13 @@ public class StoryDialogueController : MonoBehaviour
     [SerializeField] private KeyCode[] advanceKeys = { KeyCode.Space, KeyCode.Return };
 
     [Header("Phone Dialogue")]
-    [SerializeField] private DialogueLine[] phoneDialogue =
+    [SerializeField] private StoryDialogueLine[] phoneDialogue =
     {
-        new DialogueLine { speakerName = "관리관", dialogue = "지금부터 CCTV 감시 업무를 시작한다." },
-        new DialogueLine { speakerName = "관리관", dialogue = "기준 화면과 다른 이상 현상을 발견하면 즉시 보고해." },
+        new StoryDialogueLine { speakerName = "관리관", dialogue = "지금부터 CCTV 감시 업무를 시작한다." },
+        new StoryDialogueLine { speakerName = "관리관", dialogue = "기준 화면과 다른 이상 현상을 발견하면 즉시 보고해." },
     };
+
+    private System.Collections.Generic.IReadOnlyList<StoryDialogueLine> activePhoneDialogue;
 
     private Coroutine typingRoutine;
     private Coroutine startDialogueRoutine;
@@ -54,12 +56,20 @@ public class StoryDialogueController : MonoBehaviour
     private bool inputReady;
     private bool lineFullyShown;
 
-    public bool HasDialogue => phoneDialogue != null && phoneDialogue.Length > 0;
+    public bool HasDialogue
+    {
+        get
+        {
+            ResolvePhoneDialogue();
+            return activePhoneDialogue != null && activePhoneDialogue.Count > 0;
+        }
+    }
     public bool IsPlaying => isPlaying;
 
     private void Awake()
     {
         ResolveReferences();
+        ResolvePhoneDialogue();
         if (storyUiRoot != null)
             storyUiRoot.SetActive(false);
     }
@@ -77,6 +87,7 @@ public class StoryDialogueController : MonoBehaviour
             return;
 
         ResolveReferences();
+        ResolvePhoneDialogue();
         if (!HasDialogue)
         {
             onFinished?.Invoke();
@@ -125,7 +136,7 @@ public class StoryDialogueController : MonoBehaviour
         }
 
         currentLineIndex++;
-        if (currentLineIndex < phoneDialogue.Length)
+        if (currentLineIndex < activePhoneDialogue.Count)
         {
             ShowCurrentLine();
             return;
@@ -140,7 +151,7 @@ public class StoryDialogueController : MonoBehaviour
             StopCoroutine(typingRoutine);
         SoundManager.Instance?.StopDialogueTypingSfx();
 
-        DialogueLine line = phoneDialogue[currentLineIndex];
+        StoryDialogueLine line = activePhoneDialogue[currentLineIndex];
         if (speakerNameText != null)
             speakerNameText.text = line.speakerName ?? string.Empty;
 
@@ -273,6 +284,19 @@ public class StoryDialogueController : MonoBehaviour
             else if (dialogueText == null && text.name == "ObjectiveText")
                 dialogueText = text;
         }
+    }
+
+    private void ResolvePhoneDialogue()
+    {
+        DayRuntimeController runtimeController = FindFirstObjectByType<DayRuntimeController>();
+        DayDefinition definition = runtimeController != null ? runtimeController.CurrentDayDefinition : null;
+        if (definition != null && definition.PhoneDialogue != null && definition.PhoneDialogue.Count > 0)
+        {
+            activePhoneDialogue = definition.PhoneDialogue;
+            return;
+        }
+
+        activePhoneDialogue = phoneDialogue;
     }
 
     /// <summary>

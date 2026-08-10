@@ -93,6 +93,9 @@ public class AnomalyPresentationController : MonoBehaviour
     private bool previousPanInputLocked;
     private bool animatorEnabledBeforePresentation;
     private bool animatorStateCaptured;
+    private bool suspendedByHierarchy;
+    private int suspendedAnimatorStateHash;
+    private float suspendedAnimatorNormalizedTime;
 
     public string PresentationId => presentationId;
 
@@ -105,13 +108,61 @@ public class AnomalyPresentationController : MonoBehaviour
     {
         ResolveReferences();
         SubscribeAreaView();
-        TryStartForCurrentArea();
+
+        if (suspendedByHierarchy)
+        {
+            ResumeAfterHierarchyEnable();
+            suspendedByHierarchy = false;
+            return;
+        }
+
+        if (!isPlaying)
+            TryStartForCurrentArea();
     }
 
     private void OnDisable()
     {
         UnsubscribeAreaView();
+
+        // 메인룸/현장 모드 전환은 CCTVSystem 부모만 잠시 끈다. 이때 연출을
+        // Stop하면 활성 이상현상 런타임은 남아 있는데 회전·프레임·위치만
+        // 기준 상태로 돌아가므로, 부모 비활성화 중에는 현재 연출 상태를 보존한다.
+        if (gameObject.activeSelf && !gameObject.activeInHierarchy)
+        {
+            SuspendForHierarchyDisable();
+            return;
+        }
+
         StopPresentation();
+    }
+
+    private void SuspendForHierarchyDisable()
+    {
+        suspendedByHierarchy = true;
+        suspendedAnimatorStateHash = 0;
+        suspendedAnimatorNormalizedTime = 0f;
+
+        if (!isPlaying || presentationMode != PresentationMode.AnimatorState ||
+            targetAnimator == null || !targetAnimator.enabled)
+            return;
+
+        AnimatorStateInfo stateInfo = targetAnimator.GetCurrentAnimatorStateInfo(animatorLayer);
+        suspendedAnimatorStateHash = stateInfo.fullPathHash;
+        suspendedAnimatorNormalizedTime = stateInfo.normalizedTime;
+    }
+
+    private void ResumeAfterHierarchyEnable()
+    {
+        if (!isPlaying || presentationMode != PresentationMode.AnimatorState || targetAnimator == null)
+            return;
+
+        targetAnimator.enabled = true;
+        if (suspendedAnimatorStateHash != 0)
+            targetAnimator.Play(suspendedAnimatorStateHash, animatorLayer, suspendedAnimatorNormalizedTime);
+        else if (!string.IsNullOrWhiteSpace(animatorStateName))
+            targetAnimator.Play(animatorStateName, animatorLayer, suspendedAnimatorNormalizedTime);
+
+        targetAnimator.Update(0f);
     }
 
     private void Update()
